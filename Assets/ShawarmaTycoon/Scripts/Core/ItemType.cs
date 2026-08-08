@@ -6,7 +6,8 @@ namespace ShawarmaTycoon
         RawMeat,
         CookedMeat,
         SlicedMeat,
-        Wrap
+        Wrap,
+        Trash
     }
 
     public enum StationMode

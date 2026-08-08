@@ -38,82 +38,176 @@ namespace ShawarmaTycoon
             CreatePlayer();
 
             ItemStation meatSource = CreateStation(
-                "ET DEPOSU", new Vector3(-7f, 0.25f, 2.7f), new Vector3(2.5f, 0.9f, 2.0f),
+                "ET DEPOSU", new Vector3(-8f, 0.25f, 7.1f), new Vector3(2.5f, 0.9f, 2.0f),
                 new Color(0.74f, 0.39f, 0.26f), StationMode.Source,
                 ItemType.None, ItemType.RawMeat, 0.5f, 1, 16, 0.65f);
             DecorateMeatSource(meatSource.transform);
 
             ItemStation oven = CreateStation(
-                "OCAK", new Vector3(-3.5f, 0.25f, 2.7f), new Vector3(2.2f, 0.9f, 1.9f),
+                "OCAK", new Vector3(-4f, 0.25f, 7.1f), new Vector3(2.2f, 0.9f, 1.9f),
                 new Color(0.88f, 0.45f, 0.20f), StationMode.Processor,
                 ItemType.RawMeat, ItemType.CookedMeat, 2.2f, 10, 10, 1f);
             DecorateOven(oven.transform);
 
             ItemStation cutting = CreateStation(
-                "KESİM", new Vector3(0f, 0.25f, 2.7f), new Vector3(2.2f, 0.9f, 1.9f),
+                "KESİM", new Vector3(0f, 0.25f, 7.1f), new Vector3(2.2f, 0.9f, 1.9f),
                 new Color(0.65f, 0.70f, 0.67f), StationMode.Processor,
                 ItemType.CookedMeat, ItemType.SlicedMeat, 1.15f, 10, 10, 1f);
             DecorateCuttingCounter(cutting.transform);
 
             ItemStation wrap = CreateStation(
-                "DÜRÜM", new Vector3(3.5f, 0.25f, 2.7f), new Vector3(2.2f, 0.9f, 1.9f),
+                "DÜRÜM", new Vector3(4f, 0.25f, 7.1f), new Vector3(2.2f, 0.9f, 1.9f),
                 new Color(0.91f, 0.70f, 0.30f), StationMode.Processor,
                 ItemType.SlicedMeat, ItemType.Wrap, 0.9f, 10, 10, 1f);
             DecorateWrapCounter(wrap.transform);
 
             ItemStation service = CreateStation(
-                "SERVİS", new Vector3(7f, 0.25f, 2.7f), new Vector3(2.2f, 0.9f, 1.9f),
+                "SERVİS", new Vector3(8f, 0.25f, 7.1f), new Vector3(2.2f, 0.9f, 1.9f),
                 PrototypeVisuals.Teal, StationMode.Service,
                 ItemType.Wrap, ItemType.None, 0.1f, 1, 14, 1f);
 
+            GameObject trashBinObject = new("Çöp Kutusu");
+            trashBinObject.transform.SetParent(runtimeRoot, false);
+            trashBinObject.transform.localPosition = new Vector3(-10.4f, 0.3f, -1.4f);
+            PrototypeVisuals.CreatePrimitive("Çöp Gövdesi", PrimitiveType.Cylinder, trashBinObject.transform,
+                new Vector3(0f, 0.48f, 0f), new Vector3(0.72f, 0.92f, 0.72f), new Color(0.20f, 0.34f, 0.28f));
+            PrototypeVisuals.CreatePrimitive("Çöp Kapak", PrimitiveType.Cylinder, trashBinObject.transform,
+                new Vector3(0f, 0.98f, 0f), new Vector3(0.80f, 0.10f, 0.80f), new Color(0.12f, 0.22f, 0.18f));
+            TrashBin trashBin = trashBinObject.AddComponent<TrashBin>();
+            trashBin.Configure(playerTransform, inventory);
+
+            meatSource.SetWorldLabelVisible(false);
+            oven.SetWorldLabelVisible(false);
+            cutting.SetWorldLabelVisible(false);
+            wrap.SetWorldLabelVisible(false);
+            service.SetWorldLabelVisible(false);
+
+            ConveyorLink rawBelt = CreateConveyor("Et Bandı", meatSource, oven);
+            ConveyorLink ovenBelt = CreateConveyor("Ocak Bandı", oven, cutting);
+            ConveyorLink cutBelt = CreateConveyor("Kesim Bandı", cutting, wrap);
+            ConveyorLink wrapBelt = CreateConveyor("Dürüm Bandı", wrap, service);
+
+            GameObject managementRoot = new("Yönetim Ofisleri");
+            managementRoot.transform.SetParent(runtimeRoot, false);
+            CreateManagementArea(managementRoot.transform, "HR", new Vector3(-6.4f, 0.25f, -3.3f), new Color(0.35f, 0.55f, 0.88f));
+            CreateManagementArea(managementRoot.transform, "GM", new Vector3(-6.4f, 0.25f, -5.1f), new Color(0.75f, 0.43f, 0.70f));
+            CreateManagementPad(managementRoot.transform, "Ocak İşçisi", new Vector3(-5.1f, 0.28f, -3.3f), StationUpgradeType.Worker, 35, oven, null);
+            CreateManagementPad(managementRoot.transform, "Kesim İşçisi", new Vector3(-3.7f, 0.28f, -3.3f), StationUpgradeType.Worker, 55, cutting, null);
+            CreateManagementPad(managementRoot.transform, "Dürüm İşçisi", new Vector3(-2.3f, 0.28f, -3.3f), StationUpgradeType.Worker, 75, wrap, null);
+            CreateManagementPad(managementRoot.transform, "Et Bandı", new Vector3(-5.1f, 0.28f, -5.1f), StationUpgradeType.Conveyor, 45, null, rawBelt);
+            CreateManagementPad(managementRoot.transform, "Ocak Bandı", new Vector3(-3.7f, 0.28f, -5.1f), StationUpgradeType.Conveyor, 65, null, ovenBelt);
+            CreateManagementPad(managementRoot.transform, "Kesim Bandı", new Vector3(-2.3f, 0.28f, -5.1f), StationUpgradeType.Conveyor, 85, null, cutBelt);
+            CreateManagementPad(managementRoot.transform, "Dürüm Bandı", new Vector3(-0.9f, 0.28f, -5.1f), StationUpgradeType.Conveyor, 105, null, wrapBelt);
+            CreatePlayerUpgradePad(managementRoot.transform, "Hız Geliştirmesi", new Vector3(0.1f, 0.28f, -3.3f), PlayerUpgradeType.MoveSpeed, 55);
+            CreatePlayerUpgradePad(managementRoot.transform, "Kapasite Geliştirmesi", new Vector3(1.5f, 0.28f, -3.3f), PlayerUpgradeType.CarryCapacity, 65);
+            managementRoot.SetActive(false);
+
+            GameObject officePad = new("Ofis Açma Alanı");
+            officePad.transform.SetParent(runtimeRoot, false);
+            officePad.transform.localPosition = new Vector3(-5.2f, 0.28f, -4.2f);
+            PrototypeVisuals.CreatePrimitive("Ofis Upgrade Pad", PrimitiveType.Cylinder, officePad.transform, Vector3.zero,
+                new Vector3(0.75f, 0.06f, 0.75f), new Color(0.55f, 0.38f, 0.88f));
+            ManagementRoomUnlockPad officeUnlock = officePad.AddComponent<ManagementRoomUnlockPad>();
+            officeUnlock.Configure(playerTransform, managementRoot, 120);
+            officePad.SetActive(false);
+            managementRoot.SetActive(false);
+
+            GameObject hrWing = new("HR Wing");
+            hrWing.transform.SetParent(runtimeRoot, false);
+            ManagementOfficeTerminal hrTerminal = CreateOfficeRoom(hrWing.transform, "HR Manager Office", new Vector3(-6.15f, 0.25f, -4.4f),
+                new Color(0.28f, 0.56f, 0.91f));
+            ManagementOfficeTerminal recruitTerminal = CreateOfficeRoom(hrWing.transform, "Recruit Office", new Vector3(-2.75f, 0.25f, -4.4f),
+                new Color(0.32f, 0.70f, 0.64f));
+
+            GameObject gmWing = new("GM Office");
+            gmWing.transform.SetParent(runtimeRoot, false);
+            ManagementOfficeTerminal gmTerminal = CreateOfficeRoom(gmWing.transform, "General Manager Office", new Vector3(0.65f, 0.25f, -4.4f),
+                new Color(0.76f, 0.45f, 0.72f));
+            hrWing.SetActive(false);
+            gmWing.SetActive(false);
+
+            CreateOfficeUnlockPad("Unlock HR and Recruit", new Vector3(-6.15f, 0.28f, -2.55f), new Color(0.28f, 0.56f, 0.91f),
+                playerTransform, hrWing, 120, "office.hr", "HR + RECRUIT\n$120");
+            CreateOfficeUnlockPad("Unlock GM", new Vector3(0.65f, 0.28f, -2.55f), new Color(0.76f, 0.45f, 0.72f),
+                playerTransform, gmWing, 200, "office.gm", "GM OFFICE\n$200");
+
+
             List<CustomerTable> tables = new()
             {
-                CreateTable(runtimeRoot, "Masa 1", new Vector3(3.6f, 0.25f, -3.2f)),
-                CreateTable(runtimeRoot, "Masa 2", new Vector3(6.5f, 0.25f, -3.2f))
+                CreateTable(runtimeRoot, "Masa 1", new Vector3(1.2f, 0.25f, -1.8f)),
+                CreateTable(runtimeRoot, "Masa 2", new Vector3(4.4f, 0.25f, -1.8f))
             };
 
             List<GameObject> expansionModules = new();
             GameObject moduleOne = CreateExpansionModule(
-                "Genişleme 1", new Vector3(11f, 0f, -3.5f), new Vector3(4f, 0.5f, 7f));
-            CustomerTable tableThree = CreateTable(moduleOne.transform, "Masa 3", new Vector3(0f, 0.25f, 0f));
+                "Genişleme 1", new Vector3(16f, 0f, -3f), new Vector3(8f, 0.5f, 14f));
+            CustomerTable tableThree = CreateTable(moduleOne.transform, "Masa 3", new Vector3(-1.9f, 0.25f, -2.8f));
+            CustomerTable tableFour = CreateTable(moduleOne.transform, "Masa 4", new Vector3(1.9f, 0.25f, -2.8f));
             expansionModules.Add(moduleOne);
             tables.Add(tableThree);
+            tables.Add(tableFour);
 
             GameObject moduleTwo = CreateExpansionModule(
-                "Genişleme 2", new Vector3(15f, 0f, -3.5f), new Vector3(4f, 0.5f, 7f));
-            CustomerTable tableFour = CreateTable(moduleTwo.transform, "Masa 4", new Vector3(0f, 0.25f, 0f));
+                "Genişleme 2", new Vector3(16f, 0f, 6.5f), new Vector3(8f, 0.5f, 5f));
+            CustomerTable tableFive = CreateTable(moduleTwo.transform, "Masa 5", new Vector3(-1.9f, 0.25f, 0f));
+            CustomerTable tableSix = CreateTable(moduleTwo.transform, "Masa 6", new Vector3(1.9f, 0.25f, 0f));
             expansionModules.Add(moduleTwo);
-            tables.Add(tableFour);
+            tables.Add(tableFive);
+            tables.Add(tableSix);
+
+            GameObject previewOne = CreateLockedExpansionPlot("Locked Dining Wing", new Vector3(16f, 0.03f, -3f), new Vector3(8f, 0.5f, 14f));
+            GameObject previewTwo = CreateLockedExpansionPlot("Locked Office Wing", new Vector3(16f, 0.03f, 6.5f), new Vector3(8f, 0.5f, 5f));
 
             moduleOne.SetActive(false);
             moduleTwo.SetActive(false);
 
             DioramaExpansion expansion = root.AddComponent<DioramaExpansion>();
-            expansion.Configure(playerMotor, expansionModules, new[] { 12.8f, 16.8f });
+            expansion.Configure(playerMotor, expansionModules, new[] { previewOne, previewTwo }, new[] { 19f, 19f });
 
             GameObject upgradeRoot = new("Masa Genişletme Alanı");
             upgradeRoot.transform.SetParent(runtimeRoot, false);
-            upgradeRoot.transform.localPosition = new Vector3(7f, 0.27f, 5.3f);
+            upgradeRoot.transform.localPosition = new Vector3(10.2f, 0.27f, -3.6f);
             PrototypeVisuals.CreatePrimitive(
                 "Upgrade Pad", PrimitiveType.Cylinder, upgradeRoot.transform,
                 Vector3.zero, new Vector3(1.05f, 0.05f, 1.05f), PrototypeVisuals.Green);
             UpgradePad upgradePad = upgradeRoot.AddComponent<UpgradePad>();
             upgradePad.Configure(playerTransform, expansion, 60);
 
-            Transform entry = CreateMarker("Müşteri Girişi", new Vector3(8f, 0.88f, -6.1f));
-            Transform exit = CreateMarker("Müşteri Çıkışı", new Vector3(8.5f, 0.88f, -6.4f));
-            Transform queueFront = CreateMarker("Kuyruk Başı", new Vector3(7f, 0.88f, 0.45f));
+            Transform entry = CreateMarker("Müşteri Girişi", new Vector3(9.5f, 0.88f, -8.4f));
+            Transform exit = CreateMarker("Müşteri Çıkışı", new Vector3(10.2f, 0.88f, -8.1f));
+            Transform queueFront = CreateMarker("Kuyruk Başı", new Vector3(5.6f, 0.88f, 0.6f));
 
             GameObject customerRoot = new("Müşteriler");
             customerRoot.transform.SetParent(runtimeRoot, false);
+            CreateCustomerEntrance(entry.position);
             CustomerManager customerManager = customerRoot.AddComponent<CustomerManager>();
             customerManager.Configure(service, entry, exit, queueFront, Vector3.back, tables);
 
+            HumanResourcesSystem humanResources = root.AddComponent<HumanResourcesSystem>();
+            humanResources.Configure(playerTransform, new[] { rawBelt, ovenBelt, cutBelt, wrapBelt });
+            PlayerUpgradeSystem playerUpgrades = root.AddComponent<PlayerUpgradeSystem>();
+            playerUpgrades.Configure(playerTransform, playerMotor, inventory);
+            RecruitmentSystem recruitment = root.AddComponent<RecruitmentSystem>();
+            recruitment.Configure(customerManager, wrap, service, runtimeRoot);
+            ManagementMenuHUD managementHud = root.AddComponent<ManagementMenuHUD>();
+            managementHud.Configure(humanResources, playerUpgrades, recruitment);
+            hrTerminal.Configure(playerTransform, managementHud, ManagementMenu.HumanResources, "HR UPGRADE");
+            gmTerminal.Configure(playerTransform, managementHud, ManagementMenu.GeneralManager, "GM UPGRADE");
+            recruitTerminal.Configure(playerTransform, managementHud, ManagementMenu.Recruiting, "RECRUIT");
+
             PrototypeHUD hud = root.AddComponent<PrototypeHUD>();
             hud.Configure(inventory);
+            root.AddComponent<DailyTasksHUD>();
+            root.AddComponent<GameSessionPersistence>();
 
-            MobileStatusHUD statusHud = root.AddComponent<MobileStatusHUD>();
-            statusHud.Configure(customerManager, hud);
+            GameObject tutorial = new("Öğretici Ok");
+            tutorial.transform.SetParent(runtimeRoot, false);
+            PrototypeVisuals.CreatePrimitive("Ok Gövdesi", PrimitiveType.Cylinder, tutorial.transform, Vector3.zero,
+                new Vector3(0.20f, 0.52f, 0.20f), new Color(1f, 0.82f, 0.16f));
+            PrototypeVisuals.CreatePrimitive("Ok Ucu", PrimitiveType.Sphere, tutorial.transform, Vector3.down * 0.38f,
+                new Vector3(0.46f, 0.24f, 0.46f), new Color(1f, 0.82f, 0.16f));
+            TutorialArrow tutorialArrow = tutorial.AddComponent<TutorialArrow>();
+            tutorialArrow.Configure(inventory, meatSource.transform, oven.transform, cutting.transform, wrap.transform, service.transform);
 
             Debug.Log("[ShawarmaTycoon] Prototype ready: source → oven → cutting → wrap → service → tables → cleaning.");
         }
@@ -141,13 +235,13 @@ namespace ShawarmaTycoon
             }
 
             camera.orthographic = true;
-            camera.orthographicSize = 16.5f;
+            camera.orthographicSize = 8.0f;
             camera.nearClipPlane = 0.1f;
             camera.farClipPlane = 100f;
             camera.clearFlags = CameraClearFlags.SolidColor;
             camera.backgroundColor = new Color(0.78f, 0.90f, 0.95f);
-            camera.transform.position = new Vector3(0f, 20f, -22f);
-            camera.transform.LookAt(Vector3.zero);
+            camera.transform.position = new Vector3(0f, 16f, -12f);
+            camera.transform.LookAt(new Vector3(0.8f, 0f, -0.6f));
 
             MobileCameraRig cameraRig = camera.GetComponent<MobileCameraRig>();
             if (cameraRig == null) cameraRig = camera.gameObject.AddComponent<MobileCameraRig>();
@@ -170,14 +264,14 @@ namespace ShawarmaTycoon
         {
             GameObject island = new("Başlangıç Adası");
             island.transform.SetParent(runtimeRoot, false);
-            CreateIslandGeometry(island.transform, new Vector3(18f, 0.5f, 14f));
+            CreateIslandGeometry(island.transform, new Vector3(24f, 0.5f, 20f));
 
             Vector3[] cloudPositions =
             {
-                new(-8.5f, -2.4f, -6f),
-                new(-6f, -2.8f, 7f),
-                new(7f, -2.6f, 7f),
-                new(9f, -2.3f, -5f)
+                new(-13f, -2.4f, -9f),
+                new(-11f, -2.8f, 10f),
+                new(12f, -2.6f, 10f),
+                new(13f, -2.3f, -8f)
             };
 
             foreach (Vector3 position in cloudPositions)
@@ -191,8 +285,8 @@ namespace ShawarmaTycoon
                     new Vector3(1.5f, 0.55f, 1.0f), new Color(0.95f, 0.98f, 1f));
             }
 
-            CreateBoundaryRail(new Vector3(0f, 0.75f, 6.75f), new Vector3(18f, 1.0f, 0.22f));
-            CreateBoundaryRail(new Vector3(-8.75f, 0.75f, 0f), new Vector3(0.22f, 1.0f, 14f));
+            CreateBoundaryRail(new Vector3(0f, 0.75f, 9.75f), new Vector3(24f, 1.0f, 0.22f));
+            CreateBoundaryRail(new Vector3(-11.75f, 0.75f, 0f), new Vector3(0.22f, 1.0f, 20f));
         }
 
         private void CreateIslandGeometry(Transform parent, Vector3 topScale)
@@ -219,7 +313,7 @@ namespace ShawarmaTycoon
         {
             GameObject player = new("Player");
             player.transform.SetParent(runtimeRoot, false);
-            player.transform.localPosition = new Vector3(-6.8f, 0.26f, -2.1f);
+            player.transform.localPosition = new Vector3(-3.8f, 0.26f, -1.0f);
             playerTransform = player.transform;
 
             PrototypeVisuals.CreatePrimitive(
@@ -238,7 +332,13 @@ namespace ShawarmaTycoon
             controller.stepOffset = 0.25f;
 
             playerMotor = player.AddComponent<MobilePlayerController>();
-            playerMotor.Configure(4.6f, new Vector2(-8.35f, -6.35f), new Vector2(8.35f, 6.35f));
+            playerMotor.Configure(4.6f, new Vector2(-11.4f, -9.4f), new Vector2(11.4f, 9.4f));
+            MobileCameraRig cameraRig = Camera.main != null ? Camera.main.GetComponent<MobileCameraRig>() : null;
+            if (cameraRig != null)
+            {
+                cameraRig.SetFollowTarget(player.transform);
+                cameraRig.SetFollowBounds(new Vector2(-10.5f, 19f), new Vector2(-9f, 9f));
+            }
 
             inventory = player.AddComponent<CarryInventory>();
             inventory.Configure(12);
@@ -275,6 +375,56 @@ namespace ShawarmaTycoon
                 stationName, mode, input, output, playerTransform, inventory,
                 duration, inputCapacity, outputCapacity, refillInterval);
             return station;
+        }
+
+        private ConveyorLink CreateConveyor(string beltName, ItemStation from, ItemStation to)
+        {
+            Vector3 start = from.transform.position;
+            Vector3 end = to.transform.position;
+            Vector3 midpoint = (start + end) * 0.5f + Vector3.back * 1.15f;
+            GameObject belt = new(beltName);
+            belt.transform.SetParent(runtimeRoot, false);
+            belt.transform.position = midpoint;
+            float length = Vector3.Distance(start, end) - 1.5f;
+            PrototypeVisuals.CreatePrimitive("Bant", PrimitiveType.Cube, belt.transform, Vector3.zero,
+                new Vector3(Mathf.Max(0.7f, length), 0.12f, 0.52f), new Color(0.35f, 0.32f, 0.30f));
+            ConveyorLink link = belt.AddComponent<ConveyorLink>();
+            link.Configure(from, to);
+            return link;
+        }
+
+        private void CreateManagementArea(Transform parent, string title, Vector3 position, Color color)
+        {
+            GameObject desk = new(title);
+            desk.transform.SetParent(parent, false);
+            desk.transform.localPosition = position;
+            PrototypeVisuals.CreatePrimitive("Manager Desk", PrimitiveType.Cube, desk.transform, new Vector3(0f, 0.48f, 0f),
+                new Vector3(1.5f, 0.9f, 0.8f), color);
+            PrototypeVisuals.CreatePrimitive("Manager", PrimitiveType.Capsule, desk.transform, new Vector3(0f, 1.15f, 0.25f),
+                new Vector3(0.42f, 0.56f, 0.42f), PrototypeVisuals.Cream);
+            PrototypeVisuals.CreateLabel(title, desk.transform, new Vector3(0f, 1.95f, 0f), 0.14f);
+        }
+
+        private void CreateManagementPad(Transform parent, string name, Vector3 position, StationUpgradeType type, int cost, ItemStation station, ConveyorLink conveyor)
+        {
+            GameObject pad = new(name);
+            pad.transform.SetParent(parent, false);
+            pad.transform.localPosition = position;
+            PrototypeVisuals.CreatePrimitive("Satın Alma Alanı", PrimitiveType.Cylinder, pad.transform, Vector3.zero,
+                new Vector3(0.55f, 0.05f, 0.55f), type == StationUpgradeType.Worker ? new Color(0.38f, 0.72f, 0.95f) : new Color(0.75f, 0.48f, 0.85f));
+            StationUpgradePad upgrade = pad.AddComponent<StationUpgradePad>();
+            upgrade.Configure(playerTransform, type, cost, station, conveyor);
+        }
+
+        private void CreatePlayerUpgradePad(Transform parent, string name, Vector3 position, PlayerUpgradeType type, int cost)
+        {
+            GameObject pad = new(name);
+            pad.transform.SetParent(parent, false);
+            pad.transform.localPosition = position;
+            PrototypeVisuals.CreatePrimitive("Oyuncu Upgrade", PrimitiveType.Cylinder, pad.transform, Vector3.zero,
+                new Vector3(0.55f, 0.05f, 0.55f), new Color(0.28f, 0.68f, 0.92f));
+            PlayerUpgradePad upgrade = pad.AddComponent<PlayerUpgradePad>();
+            upgrade.Configure(playerTransform, playerMotor, inventory, type, cost);
         }
 
         private static void DecorateMeatSource(Transform station)
@@ -328,6 +478,69 @@ namespace ShawarmaTycoon
                 new Color(0.30f, 0.70f, 0.30f));
         }
 
+        private ManagementOfficeTerminal CreateOfficeRoom(Transform parent, string roomName, Vector3 position, Color accent)
+        {
+            GameObject room = new(roomName);
+            room.transform.SetParent(parent, false);
+            room.transform.localPosition = position;
+
+            Color floor = new Color(0.94f, 0.80f, 0.61f);
+            Color wall = new Color(0.98f, 0.91f, 0.76f);
+            PrototypeVisuals.CreatePrimitive("Office Floor", PrimitiveType.Cube, room.transform, Vector3.zero,
+                new Vector3(2.95f, 0.08f, 2.70f), floor);
+            PrototypeVisuals.CreatePrimitive("Back Wall", PrimitiveType.Cube, room.transform, new Vector3(0f, 0.92f, 1.28f),
+                new Vector3(2.95f, 1.82f, 0.12f), wall);
+            PrototypeVisuals.CreatePrimitive("Left Wall", PrimitiveType.Cube, room.transform, new Vector3(-1.42f, 0.92f, 0f),
+                new Vector3(0.12f, 1.82f, 2.70f), wall);
+            PrototypeVisuals.CreatePrimitive("Right Wall", PrimitiveType.Cube, room.transform, new Vector3(1.42f, 0.92f, 0f),
+                new Vector3(0.12f, 1.82f, 2.70f), wall);
+            PrototypeVisuals.CreatePrimitive("Door Beam", PrimitiveType.Cube, room.transform, new Vector3(0f, 1.55f, -1.22f),
+                new Vector3(1.35f, 0.16f, 0.16f), accent);
+            PrototypeVisuals.CreatePrimitive("Door Left", PrimitiveType.Cube, room.transform, new Vector3(-0.67f, 0.76f, -1.22f),
+                new Vector3(0.14f, 1.55f, 0.16f), accent);
+            PrototypeVisuals.CreatePrimitive("Door Right", PrimitiveType.Cube, room.transform, new Vector3(0.67f, 0.76f, -1.22f),
+                new Vector3(0.14f, 1.55f, 0.16f), accent);
+
+            GameObject desk = new("Manager Desk");
+            desk.transform.SetParent(room.transform, false);
+            desk.transform.localPosition = new Vector3(0f, 0f, 0.46f);
+            PrototypeVisuals.CreatePrimitive("Desk", PrimitiveType.Cube, desk.transform, new Vector3(0f, 0.46f, 0f),
+                new Vector3(1.55f, 0.82f, 0.62f), accent);
+            PrototypeVisuals.CreatePrimitive("Manager", PrimitiveType.Capsule, desk.transform, new Vector3(0f, 1.10f, 0.32f),
+                new Vector3(0.42f, 0.58f, 0.42f), PrototypeVisuals.Cream);
+            PrototypeVisuals.CreatePrimitive("Manager Hat", PrimitiveType.Sphere, desk.transform, new Vector3(0f, 1.78f, 0.32f),
+                new Vector3(0.48f, 0.14f, 0.48f), accent);
+
+            return desk.AddComponent<ManagementOfficeTerminal>();
+        }
+
+        private void CreateOfficeUnlockPad(string padName, Vector3 position, Color color, Transform player, GameObject roomRoot, int cost, string saveKey, string title)
+        {
+            GameObject pad = new(padName);
+            pad.transform.SetParent(runtimeRoot, false);
+            pad.transform.localPosition = position;
+            PrototypeVisuals.CreatePrimitive("Office Unlock Pad", PrimitiveType.Cylinder, pad.transform, Vector3.zero,
+                new Vector3(0.80f, 0.06f, 0.80f), color);
+            ManagementRoomUnlockPad unlock = pad.AddComponent<ManagementRoomUnlockPad>();
+            unlock.Configure(player, roomRoot, cost, saveKey, title);
+        }
+
+        private void CreateCustomerEntrance(Vector3 position)
+        {
+            GameObject gate = new("Customer Entrance Gate");
+            gate.transform.SetParent(runtimeRoot, false);
+            gate.transform.position = position + new Vector3(0f, -0.85f, 0f);
+            Color frame = new Color(0.92f, 0.34f, 0.20f);
+            PrototypeVisuals.CreatePrimitive("Entrance Top", PrimitiveType.Cube, gate.transform, new Vector3(0f, 1.72f, 0f),
+                new Vector3(2.0f, 0.24f, 0.25f), frame);
+            PrototypeVisuals.CreatePrimitive("Entrance Left", PrimitiveType.Cube, gate.transform, new Vector3(-0.90f, 0.82f, 0f),
+                new Vector3(0.22f, 1.65f, 0.25f), frame);
+            PrototypeVisuals.CreatePrimitive("Entrance Right", PrimitiveType.Cube, gate.transform, new Vector3(0.90f, 0.82f, 0f),
+                new Vector3(0.22f, 1.65f, 0.25f), frame);
+            TextMesh sign = PrototypeVisuals.CreateLabel("ENTRANCE", gate.transform, new Vector3(0f, 2.02f, 0f), 0.11f);
+            sign.color = new Color(0.95f, 0.22f, 0.16f);
+        }
+
         private CustomerTable CreateTable(Transform parent, string tableName, Vector3 localPosition)
         {
             GameObject tableObject = new(tableName);
@@ -352,6 +565,25 @@ namespace ShawarmaTycoon
             CustomerTable table = tableObject.AddComponent<CustomerTable>();
             table.Configure(playerTransform, seat.transform);
             return table;
+        }
+
+        private GameObject CreateLockedExpansionPlot(string plotName, Vector3 position, Vector3 scale)
+        {
+            GameObject plot = new(plotName);
+            plot.transform.SetParent(runtimeRoot, false);
+            plot.transform.localPosition = position;
+
+            Color lockedGround = new(0.38f, 0.34f, 0.31f);
+            Color lockGold = new(0.93f, 0.68f, 0.18f);
+            PrototypeVisuals.CreatePrimitive("Locked Ground", PrimitiveType.Cube, plot.transform, Vector3.zero,
+                new Vector3(scale.x, 0.10f, scale.z), lockedGround);
+            PrototypeVisuals.CreatePrimitive("Unlock Pad", PrimitiveType.Cylinder, plot.transform, new Vector3(0f, 0.10f, 0f),
+                new Vector3(1.20f, 0.06f, 1.20f), lockGold);
+            PrototypeVisuals.CreatePrimitive("Lock Body", PrimitiveType.Cube, plot.transform, new Vector3(0f, 0.42f, 0f),
+                new Vector3(0.62f, 0.48f, 0.20f), new Color(0.98f, 0.84f, 0.32f));
+            PrototypeVisuals.CreatePrimitive("Lock Loop", PrimitiveType.Cylinder, plot.transform, new Vector3(0f, 0.75f, 0f),
+                new Vector3(0.34f, 0.24f, 0.16f), new Color(0.98f, 0.84f, 0.32f));
+            return plot;
         }
 
         private GameObject CreateExpansionModule(string moduleName, Vector3 position, Vector3 scale)

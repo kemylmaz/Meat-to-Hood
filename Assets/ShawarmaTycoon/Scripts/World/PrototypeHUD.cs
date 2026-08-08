@@ -20,16 +20,6 @@ namespace ShawarmaTycoon
             int coins = GameEconomy.Instance != null ? GameEconomy.Instance.Coins : 0;
             GUI.Box(new Rect(Screen.width - 190f, 22f, 165f, 54f), $"₺ {coins}", coinStyle);
 
-            string carried = inventory == null || inventory.Count == 0
-                ? "Elinde ürün yok"
-                : $"{ReadableName(inventory.HeldType)} × {inventory.Count}";
-            GUI.Box(new Rect(24f, 22f, 230f, 54f), carried, coinStyle);
-
-            string objective = ObjectiveText();
-            GUI.Box(
-                new Rect(Screen.width * 0.5f - 210f, Screen.height - 92f, 420f, 58f),
-                objective,
-                objectiveStyle);
         }
 
         private string ObjectiveText()

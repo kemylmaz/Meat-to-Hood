@@ -21,7 +21,7 @@ namespace ShawarmaTycoon
         public void Configure(int initialCoins)
         {
             startingCoins = Mathf.Max(0, initialCoins);
-            Coins = startingCoins;
+            Coins = GameProgress.GetInt("coins", startingCoins);
             CoinsChanged?.Invoke(Coins);
         }
 
@@ -29,6 +29,7 @@ namespace ShawarmaTycoon
         {
             if (amount <= 0) return;
             Coins += amount;
+            GameProgress.SetInt("coins", Coins);
             CoinsChanged?.Invoke(Coins);
         }
 
@@ -36,6 +37,7 @@ namespace ShawarmaTycoon
         {
             if (amount <= 0 || Coins < amount) return false;
             Coins -= amount;
+            GameProgress.SetInt("coins", Coins);
             CoinsChanged?.Invoke(Coins);
             return true;
         }

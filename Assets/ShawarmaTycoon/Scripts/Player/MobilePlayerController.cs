@@ -18,6 +18,7 @@ namespace ShawarmaTycoon
         private float verticalVelocity;
         private Vector2 minBounds = new(-8.4f, -6.4f);
         private Vector2 maxBounds = new(8.4f, 6.4f);
+        private float baseMoveSpeed;
 
         public Vector2 JoystickValue => joystickValue;
 
@@ -29,6 +30,7 @@ namespace ShawarmaTycoon
         public void Configure(float speed, Vector2 minimumBounds, Vector2 maximumBounds)
         {
             moveSpeed = Mathf.Max(0.1f, speed);
+            baseMoveSpeed = moveSpeed;
             minBounds = minimumBounds;
             maxBounds = maximumBounds;
         }
@@ -36,6 +38,12 @@ namespace ShawarmaTycoon
         public void ExpandMaximumX(float maximumX)
         {
             maxBounds.x = Mathf.Max(maxBounds.x, maximumX);
+        }
+
+        public void SetUpgradeLevel(int level)
+        {
+            if (baseMoveSpeed <= 0f) baseMoveSpeed = moveSpeed;
+            moveSpeed = baseMoveSpeed + Mathf.Max(0, level) * 0.55f;
         }
 
         private void Update()

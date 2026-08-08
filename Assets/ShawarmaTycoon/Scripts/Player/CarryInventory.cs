@@ -15,6 +15,8 @@ namespace ShawarmaTycoon
         [SerializeField] private GameObject wrapPrefab;
 
         private readonly List<GameObject> visuals = new();
+        private TextMesh capacityLabel;
+        private int baseCapacity;
 
         public ItemType HeldType { get; private set; } = ItemType.None;
         public int Count { get; private set; }
@@ -30,11 +32,23 @@ namespace ShawarmaTycoon
                 root.transform.localPosition = new Vector3(0f, 1.15f, -0.28f);
                 stackRoot = root.transform;
             }
+
+            capacityLabel = PrototypeVisuals.CreateLabel("MAX", transform, new Vector3(0f, 2.75f, 0f), 0.14f);
+            capacityLabel.color = PrototypeVisuals.Red;
+            capacityLabel.gameObject.SetActive(false);
         }
 
         public void Configure(int newCapacity)
         {
             capacity = Mathf.Max(1, newCapacity);
+            baseCapacity = capacity;
+            RefreshVisuals();
+        }
+
+        public void SetCapacityUpgradeLevel(int level)
+        {
+            if (baseCapacity <= 0) baseCapacity = capacity;
+            capacity = baseCapacity + Mathf.Max(0, level) * 3;
             RefreshVisuals();
         }
 
@@ -60,6 +74,15 @@ namespace ShawarmaTycoon
             if (Count == 0) HeldType = ItemType.None;
             RefreshVisuals();
             return true;
+        }
+
+        public int Clear()
+        {
+            int removed = Count;
+            Count = 0;
+            HeldType = ItemType.None;
+            RefreshVisuals();
+            return removed;
         }
 
         private void RefreshVisuals()
@@ -90,6 +113,7 @@ namespace ShawarmaTycoon
             }
 
             Changed?.Invoke();
+            if (capacityLabel != null) capacityLabel.gameObject.SetActive(Count >= capacity);
         }
 
         private GameObject PrefabFor(ItemType type)

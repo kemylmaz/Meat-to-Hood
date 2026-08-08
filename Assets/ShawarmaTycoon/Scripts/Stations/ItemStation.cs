@@ -24,11 +24,14 @@ namespace ShawarmaTycoon
         private Transform inputRoot;
         private Transform outputRoot;
         private TextMesh statusLabel;
+        private TextMesh maxLabel;
         private int inputCount;
         private int outputCount;
         private float processTimer;
         private float sourceTimer;
         private float transferTimer;
+        private bool workerAssigned;
+        private int workerLevel;
 
         public StationMode Mode => mode;
         public ItemType InputType => inputType;
@@ -36,6 +39,18 @@ namespace ShawarmaTycoon
         public int InputCount => inputCount;
         public int OutputCount => outputCount;
         public float ProcessProgress => processDuration <= 0f ? 0f : Mathf.Clamp01(processTimer / processDuration);
+        public bool WorkerAssigned => workerAssigned;
+        public int WorkerLevel => workerLevel;
+        private int EffectiveInputCapacity => inputCapacity + HumanResourcesSystem.WorkerCapacityBonus;
+        private int EffectiveOutputCapacity => outputCapacity + HumanResourcesSystem.WorkerCapacityBonus;
+
+        public bool CanReceiveInput => inputCount < EffectiveInputCapacity;
+        public bool HasOutput => outputCount > 0;
+
+        public void SetWorldLabelVisible(bool visible)
+        {
+            if (statusLabel != null) statusLabel.gameObject.SetActive(visible);
+        }
 
         public void Configure(
             string displayName,
@@ -63,6 +78,9 @@ namespace ShawarmaTycoon
             inputRoot = CreateRoot("Input Stack", new Vector3(-0.48f, 0.78f, 0f));
             outputRoot = CreateRoot("Output Stack", new Vector3(0.48f, 0.78f, 0f));
             statusLabel = PrototypeVisuals.CreateLabel(displayName, transform, new Vector3(0f, 1.55f, 0f), 0.13f);
+            maxLabel = PrototypeVisuals.CreateLabel("MAX", transform, new Vector3(0f, 2.05f, 0f), 0.15f);
+            maxLabel.color = PrototypeVisuals.Red;
+            maxLabel.gameObject.SetActive(false);
 
             if (mode == StationMode.Source)
                 outputCount = outputCapacity;
@@ -98,7 +116,7 @@ namespace ShawarmaTycoon
 
         private void UpdateSource()
         {
-            if (outputCount >= outputCapacity) return;
+            if (outputCount >= EffectiveOutputCapacity) return;
             sourceTimer += Time.deltaTime;
             if (sourceTimer < sourceInterval) return;
             sourceTimer = 0f;
@@ -108,13 +126,17 @@ namespace ShawarmaTycoon
 
         private void UpdateProcessor()
         {
-            if (inputCount <= 0 || outputCount >= outputCapacity)
+            if (inputCount <= 0 || outputCount >= EffectiveOutputCapacity)
             {
                 processTimer = 0f;
                 return;
             }
 
-            processTimer += Time.deltaTime;
+            bool playerOperating = player != null &&
+                Vector3.SqrMagnitude(player.position - transform.position) <= interactionRadius * interactionRadius;
+            float workerSpeed = (1f + Mathf.Max(0, workerLevel - 1) * 0.45f) * HumanResourcesSystem.WorkerSpeedMultiplier;
+            float workSpeed = workerAssigned ? workerSpeed : playerOperating ? 1f : 0.34f;
+            processTimer += Time.deltaTime * workSpeed;
             if (processTimer < processDuration) return;
 
             processTimer = 0f;
@@ -130,7 +152,7 @@ namespace ShawarmaTycoon
 
             if (mode == StationMode.Service)
             {
-                if (inventory.HeldType == inputType && outputCount < outputCapacity && inventory.TryRemove(inputType))
+                if (inventory.HeldType == inputType && outputCount < EffectiveOutputCapacity && inventory.TryRemove(inputType))
                 {
                     outputCount++;
                     RefreshVisuals();
@@ -139,7 +161,7 @@ namespace ShawarmaTycoon
                 return false;
             }
 
-            if (inventory.HeldType == inputType && inputCount < inputCapacity && inventory.TryRemove(inputType))
+            if (inventory.HeldType == inputType && inputCount < EffectiveInputCapacity && inventory.TryRemove(inputType))
             {
                 inputCount++;
                 RefreshVisuals();
@@ -164,6 +186,71 @@ namespace ShawarmaTycoon
             outputCount--;
             RefreshVisuals();
             return true;
+        }
+
+        public void AssignWorker()
+        {
+            SetWorkerLevel(Mathf.Max(1, workerLevel));
+        }
+
+        public void SetWorkerLevel(int level)
+        {
+            workerLevel = Mathf.Max(0, level);
+            workerAssigned = workerLevel > 0;
+            UpdateLabel();
+            UpdateMaxIndicator();
+        }
+
+        private void UpdateMaxIndicator()
+        {
+            if (maxLabel == null) return;
+            bool isFull = mode == StationMode.Source
+                ? false
+                : mode == StationMode.Service
+                    ? outputCount >= EffectiveOutputCapacity
+                    : inputCount >= EffectiveInputCapacity || outputCount >= EffectiveOutputCapacity;
+            maxLabel.gameObject.SetActive(isFull);
+        }
+
+        public bool TryReceiveFromConveyor(ItemType item)
+        {
+            if (mode == StationMode.Source || item != inputType)
+                return false;
+
+            if (mode == StationMode.Service)
+            {
+                if (outputCount >= EffectiveOutputCapacity) return false;
+                outputCount++;
+                RefreshVisuals();
+                return true;
+            }
+
+            if (inputCount >= EffectiveInputCapacity) return false;
+
+            inputCount++;
+            RefreshVisuals();
+            return true;
+        }
+
+        public bool TryTakeOutputForConveyor(out ItemType item)
+        {
+            item = ItemType.None;
+            if (mode == StationMode.Service || outputCount <= 0)
+                return false;
+
+            item = outputType;
+            outputCount--;
+            RefreshVisuals();
+            return true;
+        }
+
+        public void ReturnOutputFromConveyor(ItemType item)
+        {
+            if (mode != StationMode.Service && item == outputType && outputCount < EffectiveOutputCapacity)
+            {
+                outputCount++;
+                RefreshVisuals();
+            }
         }
 
         private void RefreshVisuals()
@@ -205,7 +292,8 @@ namespace ShawarmaTycoon
                 StationMode.Service => outputCount.ToString(),
                 _ => $"{inputCount}  →  {outputCount}"
             };
-            statusLabel.text = $"{name}\n{countText}";
+            string workerText = workerAssigned ? "  👷" : "";
+            statusLabel.text = $"{name}{workerText}\n{countText}";
         }
 
         private void OnDrawGizmosSelected()

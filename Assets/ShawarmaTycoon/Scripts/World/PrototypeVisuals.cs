@@ -17,6 +17,7 @@ namespace ShawarmaTycoon
         public static readonly Color Teal = new(0.16f, 0.58f, 0.52f);
         public static readonly Color Green = new(0.31f, 0.75f, 0.38f);
         public static readonly Color Red = new(0.85f, 0.28f, 0.24f);
+        public static readonly Color Trash = new(0.32f, 0.38f, 0.34f);
 
         public static Material Material(Color color)
         {
@@ -42,6 +43,7 @@ namespace ShawarmaTycoon
                 ItemType.CookedMeat => CookedMeat,
                 ItemType.SlicedMeat => SlicedMeat,
                 ItemType.Wrap => Wrap,
+                ItemType.Trash => Trash,
                 _ => Color.white
             };
         }
@@ -73,13 +75,14 @@ namespace ShawarmaTycoon
 
         public static GameObject CreateItemVisual(ItemType type, Transform parent, Vector3 localPosition, float scale = 1f)
         {
-            PrimitiveType primitive = type == ItemType.Wrap ? PrimitiveType.Capsule : PrimitiveType.Cube;
+            PrimitiveType primitive = type == ItemType.Wrap ? PrimitiveType.Capsule : type == ItemType.Trash ? PrimitiveType.Sphere : PrimitiveType.Cube;
             Vector3 size = type switch
             {
                 ItemType.RawMeat => new Vector3(0.52f, 0.13f, 0.34f),
                 ItemType.CookedMeat => new Vector3(0.48f, 0.12f, 0.31f),
                 ItemType.SlicedMeat => new Vector3(0.40f, 0.09f, 0.28f),
                 ItemType.Wrap => new Vector3(0.18f, 0.38f, 0.18f),
+                ItemType.Trash => new Vector3(0.30f, 0.30f, 0.30f),
                 _ => Vector3.one * 0.2f
             };
 

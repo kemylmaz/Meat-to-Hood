@@ -26,10 +26,12 @@ namespace ShawarmaTycoon
             player = playerTransform;
             expansion = targetExpansion;
             baseCost = Mathf.Max(1, initialCost);
+            purchaseCount = expansion != null ? expansion.UnlockedCount : 0;
 
             padRenderer = GetComponentInChildren<Renderer>();
             label = PrototypeVisuals.CreateLabel("", transform, new Vector3(0f, 0.35f, 0f), 0.14f);
             UpdateLabel();
+            label.gameObject.SetActive(false);
         }
 
         private void Update()
@@ -42,6 +44,7 @@ namespace ShawarmaTycoon
 
             bool nearby = player != null &&
                 Vector3.SqrMagnitude(player.position - transform.position) <= interactionRadius * interactionRadius;
+            if (label != null) label.gameObject.SetActive(nearby);
 
             if (!nearby)
             {

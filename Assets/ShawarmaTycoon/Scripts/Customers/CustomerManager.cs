@@ -48,6 +48,20 @@ namespace ShawarmaTycoon
             if (table != null && !tables.Contains(table)) tables.Add(table);
         }
 
+        public bool TryCollectTableCashByWorker()
+        {
+            for (int i = 0; i < tables.Count; i++)
+                if (tables[i] != null && tables[i].TryAutoCollectCash()) return true;
+            return false;
+        }
+
+        public bool TryCleanTableByWorker()
+        {
+            for (int i = 0; i < tables.Count; i++)
+                if (tables[i] != null && tables[i].TryAutoCleanTrash()) return true;
+            return false;
+        }
+
         private void Update()
         {
             UpdateSpawning();
