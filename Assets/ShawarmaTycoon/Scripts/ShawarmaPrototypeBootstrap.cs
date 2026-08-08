@@ -112,6 +112,9 @@ namespace ShawarmaTycoon
             PrototypeHUD hud = root.AddComponent<PrototypeHUD>();
             hud.Configure(inventory);
 
+            MobileStatusHUD statusHud = root.AddComponent<MobileStatusHUD>();
+            statusHud.Configure(customerManager, hud);
+
             Debug.Log("[ShawarmaTycoon] Prototype ready: source → oven → cutting → wrap → service → tables → cleaning.");
         }
 
@@ -145,6 +148,10 @@ namespace ShawarmaTycoon
             camera.backgroundColor = new Color(0.78f, 0.90f, 0.95f);
             camera.transform.position = new Vector3(0f, 20f, -22f);
             camera.transform.LookAt(Vector3.zero);
+
+            MobileCameraRig cameraRig = camera.GetComponent<MobileCameraRig>();
+            if (cameraRig == null) cameraRig = camera.gameObject.AddComponent<MobileCameraRig>();
+            cameraRig.Configure(camera);
 
             Light light = Object.FindFirstObjectByType<Light>();
             if (light != null)
