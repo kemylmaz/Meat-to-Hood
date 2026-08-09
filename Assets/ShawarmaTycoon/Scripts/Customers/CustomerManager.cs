@@ -101,14 +101,19 @@ namespace ShawarmaTycoon
                 new(0.64f, 0.45f, 0.72f)
             };
 
-            GameObject customer = PrototypeVisuals.CreatePrimitive(
-                $"Musteri {++customerIndex}",
-                PrimitiveType.Capsule,
-                transform,
-                Vector3.zero,
-                new Vector3(0.48f, 0.62f, 0.48f),
-                colors[customerIndex % colors.Length]);
+            GameObject customer = new($"Musteri {++customerIndex}");
+            customer.transform.SetParent(transform, false);
             customer.transform.position = entryPoint.position;
+
+            if (MeshyVisuals.TryAttach(
+                    customer.transform, "02_customer_character", new Vector3(0.9f, 1.68f, 0.9f),
+                    Vector3.zero, new Vector3(0f, 180f, 0f), false) == null)
+            {
+                PrototypeVisuals.CreatePrimitive(
+                    "Customer Fallback", PrimitiveType.Capsule, customer.transform,
+                    new Vector3(0f, 0.82f, 0f), new Vector3(0.48f, 0.82f, 0.48f),
+                    colors[customerIndex % colors.Length]);
+            }
 
             CustomerAgent agent = customer.AddComponent<CustomerAgent>();
             agent.Configure(this, exitPoint, 2.4f, 4.5f, 15);

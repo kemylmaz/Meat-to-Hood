@@ -38,43 +38,77 @@ namespace ShawarmaTycoon
             CreatePlayer();
 
             ItemStation meatSource = CreateStation(
-                "ET DEPOSU", new Vector3(-8f, 0.25f, 7.1f), new Vector3(2.5f, 0.9f, 2.0f),
+                "ET DEPOSU", new Vector3(-8f, 0.25f, 8.15f), new Vector3(2.5f, 0.9f, 2.0f),
                 new Color(0.74f, 0.39f, 0.26f), StationMode.Source,
                 ItemType.None, ItemType.RawMeat, 0.5f, 1, 16, 0.65f);
             DecorateMeatSource(meatSource.transform);
+            MeshyVisuals.TryReplaceDirect(
+                meatSource.transform, "04_meat_storage_rack", new Vector3(2.4f, 2.25f, 1.75f),
+                Vector3.zero, new Vector3(0f, 180f, 0f), false,
+                "Counter", "Work Top", "Rack Back", "RawMeat");
+            meatSource.SetVisualLayout(
+                new Vector3(-0.48f, 0.25f, -1.05f), new Vector3(0.48f, 0.25f, -1.05f), 2.9f);
 
             ItemStation oven = CreateStation(
-                "OCAK", new Vector3(-4f, 0.25f, 7.1f), new Vector3(2.2f, 0.9f, 1.9f),
+                "OCAK", new Vector3(-4f, 0.25f, 8.15f), new Vector3(2.2f, 0.9f, 1.9f),
                 new Color(0.88f, 0.45f, 0.20f), StationMode.Processor,
                 ItemType.RawMeat, ItemType.CookedMeat, 2.2f, 10, 10, 1f);
             DecorateOven(oven.transform);
+            MeshyVisuals.TryReplaceDirect(
+                oven.transform, "06_shawarma_rotisserie", new Vector3(2.1f, 2.25f, 1.75f),
+                Vector3.zero, new Vector3(0f, 180f, 0f), false,
+                "Counter", "Work Top", "Heater Left", "Heater Right", "Doner Spit");
+            oven.SetVisualLayout(
+                new Vector3(-0.52f, 1.02f, -0.72f), new Vector3(0.52f, 1.02f, -0.72f), 2.9f);
 
             ItemStation cutting = CreateStation(
-                "KESİM", new Vector3(0f, 0.25f, 7.1f), new Vector3(2.2f, 0.9f, 1.9f),
+                "KESİM", new Vector3(0f, 0.25f, 8.15f), new Vector3(2.2f, 0.9f, 1.9f),
                 new Color(0.65f, 0.70f, 0.67f), StationMode.Processor,
                 ItemType.CookedMeat, ItemType.SlicedMeat, 1.15f, 10, 10, 1f);
             DecorateCuttingCounter(cutting.transform);
+            MeshyVisuals.TryReplaceDirect(
+                cutting.transform, "08_cutting_station", new Vector3(2.05f, 1.2f, 1.75f),
+                Vector3.zero, new Vector3(0f, 180f, 0f), false,
+                "Counter", "Work Top", "Cutting Board", "Knife");
+            cutting.SetVisualLayout(
+                new Vector3(-0.50f, 1.42f, -0.38f), new Vector3(0.50f, 1.42f, -0.38f), 1.9f);
 
             ItemStation wrap = CreateStation(
-                "DÜRÜM", new Vector3(4f, 0.25f, 7.1f), new Vector3(2.2f, 0.9f, 1.9f),
+                "DÜRÜM", new Vector3(4f, 0.25f, 8.15f), new Vector3(2.2f, 0.9f, 1.9f),
                 new Color(0.91f, 0.70f, 0.30f), StationMode.Processor,
                 ItemType.SlicedMeat, ItemType.Wrap, 0.9f, 10, 10, 1f);
             DecorateWrapCounter(wrap.transform);
+            MeshyVisuals.TryReplaceDirect(
+                wrap.transform, "10_wrap_preparation_station", new Vector3(2.05f, 1.2f, 1.75f),
+                Vector3.zero, new Vector3(0f, 180f, 0f), false,
+                "Counter", "Work Top", "Lavash", "Greens");
+            wrap.SetVisualLayout(
+                new Vector3(-0.50f, 1.42f, -0.38f), new Vector3(0.50f, 1.42f, -0.38f), 1.9f);
 
             ItemStation service = CreateStation(
-                "SERVİS", new Vector3(8f, 0.25f, 7.1f), new Vector3(2.2f, 0.9f, 1.9f),
+                "SERVİS", new Vector3(8f, 0.25f, 8.15f), new Vector3(2.2f, 0.9f, 1.9f),
                 PrototypeVisuals.Teal, StationMode.Service,
                 ItemType.Wrap, ItemType.None, 0.1f, 1, 14, 1f);
+            MeshyVisuals.TryReplaceDirect(
+                service.transform, "12_service_cashier_counter", new Vector3(2.05f, 1.2f, 1.75f),
+                Vector3.zero, new Vector3(0f, 180f, 0f), false,
+                "Counter", "Work Top");
+            service.SetVisualLayout(
+                new Vector3(-0.50f, 1.42f, -0.38f), new Vector3(0.50f, 1.42f, -0.38f), 1.9f);
 
             GameObject trashBinObject = new("Çöp Kutusu");
             trashBinObject.transform.SetParent(runtimeRoot, false);
-            trashBinObject.transform.localPosition = new Vector3(-10.4f, 0.3f, -1.4f);
+            trashBinObject.transform.localPosition = new Vector3(-10.2f, 0.3f, -1.1f);
             PrototypeVisuals.CreatePrimitive("Çöp Gövdesi", PrimitiveType.Cylinder, trashBinObject.transform,
                 new Vector3(0f, 0.48f, 0f), new Vector3(0.72f, 0.92f, 0.72f), new Color(0.20f, 0.34f, 0.28f));
             PrototypeVisuals.CreatePrimitive("Çöp Kapak", PrimitiveType.Cylinder, trashBinObject.transform,
                 new Vector3(0f, 0.98f, 0f), new Vector3(0.80f, 0.10f, 0.80f), new Color(0.12f, 0.22f, 0.18f));
             TrashBin trashBin = trashBinObject.AddComponent<TrashBin>();
             trashBin.Configure(playerTransform, inventory);
+            MeshyVisuals.TryReplaceDirect(
+                trashBinObject.transform, "17_trash_bin", new Vector3(1.25f, 1.45f, 1.25f),
+                Vector3.zero, Vector3.zero, false,
+                "Çöp Gövdesi", "Çöp Kapak");
 
             meatSource.SetWorldLabelVisible(false);
             oven.SetWorldLabelVisible(false);
@@ -126,16 +160,16 @@ namespace ShawarmaTycoon
             hrWing.SetActive(false);
             gmWing.SetActive(false);
 
-            CreateOfficeUnlockPad("Unlock HR and Recruit", new Vector3(-6.15f, 0.28f, -2.55f), new Color(0.28f, 0.56f, 0.91f),
+            CreateOfficeUnlockPad("Unlock HR and Recruit", new Vector3(-6.15f, 0.28f, -6.10f), new Color(0.28f, 0.56f, 0.91f),
                 playerTransform, hrWing, 120, "office.hr", "HR + RECRUIT\n$120");
-            CreateOfficeUnlockPad("Unlock GM", new Vector3(0.65f, 0.28f, -2.55f), new Color(0.76f, 0.45f, 0.72f),
+            CreateOfficeUnlockPad("Unlock GM", new Vector3(0.65f, 0.28f, -6.10f), new Color(0.76f, 0.45f, 0.72f),
                 playerTransform, gmWing, 200, "office.gm", "GM OFFICE\n$200");
 
 
             List<CustomerTable> tables = new()
             {
-                CreateTable(runtimeRoot, "Masa 1", new Vector3(1.2f, 0.25f, -1.8f)),
-                CreateTable(runtimeRoot, "Masa 2", new Vector3(4.4f, 0.25f, -1.8f))
+                CreateTable(runtimeRoot, "Masa 1", new Vector3(0.8f, 0.25f, -0.55f)),
+                CreateTable(runtimeRoot, "Masa 2", new Vector3(4.5f, 0.25f, -0.55f))
             };
 
             List<GameObject> expansionModules = new();
@@ -166,16 +200,16 @@ namespace ShawarmaTycoon
 
             GameObject upgradeRoot = new("Masa Genişletme Alanı");
             upgradeRoot.transform.SetParent(runtimeRoot, false);
-            upgradeRoot.transform.localPosition = new Vector3(10.2f, 0.27f, -3.6f);
+            upgradeRoot.transform.localPosition = new Vector3(10.25f, 0.27f, 1.0f);
             PrototypeVisuals.CreatePrimitive(
                 "Upgrade Pad", PrimitiveType.Cylinder, upgradeRoot.transform,
                 Vector3.zero, new Vector3(1.05f, 0.05f, 1.05f), PrototypeVisuals.Green);
             UpgradePad upgradePad = upgradeRoot.AddComponent<UpgradePad>();
             upgradePad.Configure(playerTransform, expansion, 60);
 
-            Transform entry = CreateMarker("Müşteri Girişi", new Vector3(9.5f, 0.88f, -8.4f));
-            Transform exit = CreateMarker("Müşteri Çıkışı", new Vector3(10.2f, 0.88f, -8.1f));
-            Transform queueFront = CreateMarker("Kuyruk Başı", new Vector3(5.6f, 0.88f, 0.6f));
+            Transform entry = CreateMarker("Müşteri Girişi", new Vector3(10.0f, 0.25f, -8.35f));
+            Transform exit = CreateMarker("Müşteri Çıkışı", new Vector3(11.15f, 0.25f, -8.15f));
+            Transform queueFront = CreateMarker("Kuyruk Başı", new Vector3(8f, 0.25f, 6.35f));
 
             GameObject customerRoot = new("Müşteriler");
             customerRoot.transform.SetParent(runtimeRoot, false);
@@ -235,12 +269,12 @@ namespace ShawarmaTycoon
             }
 
             camera.orthographic = true;
-            camera.orthographicSize = 8.0f;
+            camera.orthographicSize = 5.4f;
             camera.nearClipPlane = 0.1f;
             camera.farClipPlane = 100f;
             camera.clearFlags = CameraClearFlags.SolidColor;
             camera.backgroundColor = new Color(0.78f, 0.90f, 0.95f);
-            camera.transform.position = new Vector3(0f, 16f, -12f);
+            camera.transform.position = new Vector3(9.8f, 16.5f, -11.6f);
             camera.transform.LookAt(new Vector3(0.8f, 0f, -0.6f));
 
             MobileCameraRig cameraRig = camera.GetComponent<MobileCameraRig>();
@@ -299,6 +333,32 @@ namespace ShawarmaTycoon
                 new Vector3(0f, -1.05f, 0f),
                 new Vector3(topScale.x * 0.90f, 1.65f, topScale.z * 0.90f),
                 PrototypeVisuals.IslandSide);
+
+            CreateFloorGrid(parent, topScale);
+        }
+
+        private static void CreateFloorGrid(Transform parent, Vector3 floorSize)
+        {
+            const float spacing = 1.5f;
+            Color grout = new(0.73f, 0.55f, 0.41f);
+            float halfWidth = floorSize.x * 0.5f;
+            float halfDepth = floorSize.z * 0.5f;
+
+            for (float x = -halfWidth + spacing; x < halfWidth; x += spacing)
+            {
+                PrototypeVisuals.CreatePrimitive(
+                    "Floor Grout X", PrimitiveType.Cube, parent,
+                    new Vector3(x, floorSize.y * 0.5f + 0.006f, 0f),
+                    new Vector3(0.025f, 0.012f, floorSize.z - 0.08f), grout);
+            }
+
+            for (float z = -halfDepth + spacing; z < halfDepth; z += spacing)
+            {
+                PrototypeVisuals.CreatePrimitive(
+                    "Floor Grout Z", PrimitiveType.Cube, parent,
+                    new Vector3(0f, floorSize.y * 0.5f + 0.006f, z),
+                    new Vector3(floorSize.x - 0.08f, 0.012f, 0.025f), grout);
+            }
         }
 
         private void CreateBoundaryRail(Vector3 position, Vector3 scale)
@@ -313,7 +373,7 @@ namespace ShawarmaTycoon
         {
             GameObject player = new("Player");
             player.transform.SetParent(runtimeRoot, false);
-            player.transform.localPosition = new Vector3(-3.8f, 0.26f, -1.0f);
+            player.transform.localPosition = new Vector3(-6.0f, 0.26f, 2.2f);
             playerTransform = player.transform;
 
             PrototypeVisuals.CreatePrimitive(
@@ -342,6 +402,9 @@ namespace ShawarmaTycoon
 
             inventory = player.AddComponent<CarryInventory>();
             inventory.Configure(12);
+            MeshyVisuals.TryReplaceDirect(
+                player.transform, "01_player_character", new Vector3(1.05f, 1.75f, 1.05f),
+                Vector3.zero, new Vector3(0f, 180f, 0f), false, "Body", "Apron");
         }
 
         private ItemStation CreateStation(
@@ -381,13 +444,13 @@ namespace ShawarmaTycoon
         {
             Vector3 start = from.transform.position;
             Vector3 end = to.transform.position;
-            Vector3 midpoint = (start + end) * 0.5f + Vector3.back * 1.15f;
+            Vector3 midpoint = (start + end) * 0.5f + Vector3.back * 0.68f + Vector3.up * 0.78f;
             GameObject belt = new(beltName);
             belt.transform.SetParent(runtimeRoot, false);
             belt.transform.position = midpoint;
             float length = Vector3.Distance(start, end) - 1.5f;
             PrototypeVisuals.CreatePrimitive("Bant", PrimitiveType.Cube, belt.transform, Vector3.zero,
-                new Vector3(Mathf.Max(0.7f, length), 0.12f, 0.52f), new Color(0.35f, 0.32f, 0.30f));
+                new Vector3(Mathf.Max(0.7f, length), 0.14f, 0.56f), new Color(0.35f, 0.32f, 0.30f));
             ConveyorLink link = belt.AddComponent<ConveyorLink>();
             link.Configure(from, to);
             return link;
@@ -529,7 +592,7 @@ namespace ShawarmaTycoon
         {
             GameObject gate = new("Customer Entrance Gate");
             gate.transform.SetParent(runtimeRoot, false);
-            gate.transform.position = position + new Vector3(0f, -0.85f, 0f);
+            gate.transform.position = position;
             Color frame = new Color(0.92f, 0.34f, 0.20f);
             PrototypeVisuals.CreatePrimitive("Entrance Top", PrimitiveType.Cube, gate.transform, new Vector3(0f, 1.72f, 0f),
                 new Vector3(2.0f, 0.24f, 0.25f), frame);
@@ -537,7 +600,7 @@ namespace ShawarmaTycoon
                 new Vector3(0.22f, 1.65f, 0.25f), frame);
             PrototypeVisuals.CreatePrimitive("Entrance Right", PrimitiveType.Cube, gate.transform, new Vector3(0.90f, 0.82f, 0f),
                 new Vector3(0.22f, 1.65f, 0.25f), frame);
-            TextMesh sign = PrototypeVisuals.CreateLabel("ENTRANCE", gate.transform, new Vector3(0f, 2.02f, 0f), 0.11f);
+            TextMesh sign = PrototypeVisuals.CreateLabel("ENTRANCE", gate.transform, new Vector3(0f, 2.55f, 0f), 0.11f);
             sign.color = new Color(0.95f, 0.22f, 0.16f);
         }
 
@@ -559,11 +622,15 @@ namespace ShawarmaTycoon
 
             GameObject seat = new("Customer Seat");
             seat.transform.SetParent(tableObject.transform, false);
-            seat.transform.localPosition = new Vector3(0f, 0.63f, -1.05f);
+            seat.transform.localPosition = new Vector3(0f, 0f, -1.05f);
             seat.transform.localRotation = Quaternion.Euler(0f, 0f, 0f);
 
             CustomerTable table = tableObject.AddComponent<CustomerTable>();
             table.Configure(playerTransform, seat.transform);
+            MeshyVisuals.TryReplaceDirect(
+                tableObject.transform, "15_dining_table_clean", new Vector3(2.0f, 1.05f, 1.8f),
+                Vector3.zero, Vector3.zero, false,
+                "Table Top", "Table Leg", "Chair");
             return table;
         }
 

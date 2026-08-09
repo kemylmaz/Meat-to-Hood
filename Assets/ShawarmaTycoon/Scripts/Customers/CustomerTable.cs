@@ -35,9 +35,13 @@ namespace ShawarmaTycoon
             statusLabel = PrototypeVisuals.CreateLabel("Table", transform, new Vector3(0f, 1.25f, 0f), 0.12f);
             statusLabel.gameObject.SetActive(false);
 
-            cashPad = PrototypeVisuals.CreatePrimitive("Cash Pad", PrimitiveType.Cube, transform,
-                new Vector3(1.22f, 0.075f, -0.62f), new Vector3(0.62f, 0.04f, 0.40f), new Color(0.12f, 0.66f, 0.27f));
-            cashPad.SetActive(false);
+            cashPad = new GameObject("Cash Pad");
+            cashPad.transform.SetParent(transform, false);
+            cashPad.transform.localPosition = new Vector3(1.22f, 0.02f, -0.62f);
+            PrototypeVisuals.CreatePrimitive(
+                "Cash Pad Surface", PrimitiveType.Cube, cashPad.transform,
+                new Vector3(0f, 0.055f, 0f), new Vector3(0.62f, 0.04f, 0.40f),
+                new Color(0.12f, 0.66f, 0.27f));
             cashLabel = PrototypeVisuals.CreateLabel("", cashPad.transform, Vector3.up * 0.36f, 0.13f);
 
             cashStack = new GameObject("Cash Stack");
@@ -50,6 +54,7 @@ namespace ShawarmaTycoon
                     i % 2 == 0 ? new Color(0.25f, 0.88f, 0.33f) : new Color(0.14f, 0.68f, 0.24f));
             }
             cashStack.SetActive(false);
+            cashPad.SetActive(false);
         }
 
         public bool TryReserve(CustomerAgent customer)

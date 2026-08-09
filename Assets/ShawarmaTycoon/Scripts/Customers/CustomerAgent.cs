@@ -116,7 +116,7 @@ namespace ShawarmaTycoon
             {
                 angryFace = new GameObject("Kızgın Emoji");
                 angryFace.transform.SetParent(transform, false);
-                angryFace.transform.localPosition = new Vector3(0f, 1.2f, 0f);
+                angryFace.transform.localPosition = new Vector3(0f, 2.0f, 0f);
                 PrototypeVisuals.CreatePrimitive("Yüz", PrimitiveType.Sphere, angryFace.transform,
                     Vector3.zero, new Vector3(0.42f, 0.42f, 0.15f), PrototypeVisuals.Red);
                 PrototypeVisuals.CreatePrimitive("Kaş Sol", PrimitiveType.Cube, angryFace.transform,

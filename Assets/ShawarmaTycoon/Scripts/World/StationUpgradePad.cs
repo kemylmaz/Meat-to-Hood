@@ -72,10 +72,22 @@ namespace ShawarmaTycoon
         private void CreateWorker()
         {
             if (workerVisual != null) return;
-            workerVisual = PrototypeVisuals.CreatePrimitive("Isci", PrimitiveType.Capsule, transform.parent,
-                transform.localPosition + new Vector3(0f, 0.65f, -0.9f), new Vector3(0.42f, 0.58f, 0.42f), new Color(0.95f, 0.35f, 0.26f));
-            PrototypeVisuals.CreatePrimitive("Sapka", PrimitiveType.Sphere, workerVisual.transform,
-                new Vector3(0f, 0.7f, 0f), new Vector3(0.5f, 0.16f, 0.5f), PrototypeVisuals.Cream);
+            Transform host = station != null ? station.transform.parent : transform.parent;
+            Vector3 position = station != null
+                ? station.transform.localPosition + new Vector3(0f, 0f, -1.05f)
+                : transform.localPosition + new Vector3(0f, 0f, -0.9f);
+            workerVisual = new GameObject(station != null ? "Isci " + station.name : "Isci");
+            workerVisual.transform.SetParent(host, false);
+            workerVisual.transform.localPosition = position;
+            if (MeshyVisuals.TryAttach(
+                    workerVisual.transform, "03_cashier_worker", new Vector3(0.9f, 1.68f, 0.9f),
+                    Vector3.zero, new Vector3(0f, 180f, 0f), false) == null)
+            {
+                PrototypeVisuals.CreatePrimitive(
+                    "Worker Fallback", PrimitiveType.Capsule, workerVisual.transform,
+                    new Vector3(0f, 0.72f, 0f), new Vector3(0.42f, 0.72f, 0.42f),
+                    new Color(0.95f, 0.35f, 0.26f));
+            }
         }
 
         private void RefreshLabel()

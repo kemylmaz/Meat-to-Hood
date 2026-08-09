@@ -52,6 +52,14 @@ namespace ShawarmaTycoon
             if (statusLabel != null) statusLabel.gameObject.SetActive(visible);
         }
 
+        public void SetVisualLayout(Vector3 inputLocalPosition, Vector3 outputLocalPosition, float maxLabelHeight)
+        {
+            if (inputRoot != null) inputRoot.localPosition = inputLocalPosition;
+            if (outputRoot != null) outputRoot.localPosition = outputLocalPosition;
+            if (maxLabel != null)
+                maxLabel.transform.localPosition = new Vector3(0f, Mathf.Max(0.5f, maxLabelHeight), 0f);
+        }
+
         public void Configure(
             string displayName,
             StationMode stationMode,
@@ -135,7 +143,9 @@ namespace ShawarmaTycoon
             bool playerOperating = player != null &&
                 Vector3.SqrMagnitude(player.position - transform.position) <= interactionRadius * interactionRadius;
             float workerSpeed = (1f + Mathf.Max(0, workerLevel - 1) * 0.45f) * HumanResourcesSystem.WorkerSpeedMultiplier;
-            float workSpeed = workerAssigned ? workerSpeed : playerOperating ? 1f : 0.34f;
+            // Before a worker is hired the player must stay at the station and
+            // perform the step. Unattended production is unlocked only by staff.
+            float workSpeed = workerAssigned ? workerSpeed : playerOperating ? 1f : 0f;
             processTimer += Time.deltaTime * workSpeed;
             if (processTimer < processDuration) return;
 

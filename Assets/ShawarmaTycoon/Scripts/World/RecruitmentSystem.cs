@@ -120,9 +120,9 @@ namespace ShawarmaTycoon
 
             Vector3 position = role switch
             {
-                RecruitRole.Cashier => new Vector3(7.55f, 0.64f, 3.95f),
-                RecruitRole.Cleaner => new Vector3(2.15f, 0.64f, -2.2f),
-                _ => new Vector3(5.2f, 0.64f, 3.95f)
+                RecruitRole.Cashier => new Vector3(8f, 0.25f, 9.05f),
+                RecruitRole.Cleaner => new Vector3(-1.4f, 0.25f, 0f),
+                _ => new Vector3(6f, 0.25f, 6.7f)
             };
             Color color = role switch
             {
@@ -131,10 +131,23 @@ namespace ShawarmaTycoon
                 _ => new Color(0.47f, 0.54f, 0.90f)
             };
 
-            GameObject worker = PrototypeVisuals.CreatePrimitive("Recruit " + role, PrimitiveType.Capsule, visualParent, position,
-                new Vector3(0.42f, 0.58f, 0.42f), color);
-            PrototypeVisuals.CreatePrimitive("Hat", PrimitiveType.Sphere, worker.transform, new Vector3(0f, 0.68f, 0f),
-                new Vector3(0.50f, 0.16f, 0.50f), PrototypeVisuals.Cream);
+            GameObject worker = new("Recruit " + role);
+            worker.transform.SetParent(visualParent, false);
+            worker.transform.localPosition = position;
+            worker.transform.localRotation = role == RecruitRole.Cashier
+                ? Quaternion.Euler(0f, 180f, 0f)
+                : Quaternion.identity;
+            if (MeshyVisuals.TryAttach(
+                    worker.transform, "03_cashier_worker", new Vector3(0.9f, 1.68f, 0.9f),
+                    Vector3.zero, new Vector3(0f, 180f, 0f), false) == null)
+            {
+                PrototypeVisuals.CreatePrimitive(
+                    "Worker Fallback", PrimitiveType.Capsule, worker.transform,
+                    new Vector3(0f, 0.72f, 0f), new Vector3(0.42f, 0.72f, 0.42f), color);
+            }
+            PrototypeVisuals.CreatePrimitive(
+                "Role Badge", PrimitiveType.Sphere, worker.transform,
+                new Vector3(0f, 1.48f, -0.30f), new Vector3(0.13f, 0.13f, 0.06f), color);
         }
     }
 }
