@@ -462,12 +462,20 @@ def bevel(ob, width=0.014, segments=2, angle=40.0, clamp=True):
     return apply_modifiers(ob)
 
 
-def clean_mesh(ob, dist=2e-5):
-    """Weld coincident verts and dissolve degenerate (zero area) faces."""
+def clean_mesh(ob, dist=2e-5, weld=True):
+    """Dissolve degenerate (zero area) faces, optionally welding coincident
+    vertices first.
+
+    Welding must stay OFF for joined meshes: two parts that merely touch (a
+    shopfront sitting exactly on a plinth, a kerb flush with a pavement) share
+    corner positions, and welding those turns their shared edges into
+    non-manifold ones.
+    """
     me = ob.data
     bm = bmesh.new()
     bm.from_mesh(me)
-    bmesh.ops.remove_doubles(bm, verts=bm.verts, dist=dist)
+    if weld:
+        bmesh.ops.remove_doubles(bm, verts=bm.verts, dist=dist)
     bmesh.ops.dissolve_degenerate(bm, dist=dist, edges=bm.edges)
     bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
     bm.to_mesh(me)
@@ -476,8 +484,8 @@ def clean_mesh(ob, dist=2e-5):
     return ob
 
 
-def shade(ob, sharp_angle=38.0, weighted=True):
-    clean_mesh(ob)
+def shade(ob, sharp_angle=38.0, weighted=True, weld=True):
+    clean_mesh(ob, weld=weld)
     me = ob.data
     for p in me.polygons:
         p.use_smooth = True
@@ -517,7 +525,7 @@ def decimate(ob, ratio):
     m.ratio = ratio
     m.use_collapse_triangulate = True
     apply_modifiers(ob)
-    shade(ob, 38.0, weighted=False)
+    shade(ob, 38.0, weighted=False, weld=False)
     return ob
 
 
@@ -707,7 +715,7 @@ def make_lods(asset, lod0_parts, face_parts=None, r1=0.5, r2=0.2):
     b0 = dup_object(body, "b0")
     parts0 = [b0] + ([dup_object(face, "f0")] if face else [])
     lod0 = join_objects(parts0, asset.name + "_LOD0")
-    shade(lod0, 38.0, weighted=True)
+    shade(lod0, 38.0, weighted=True, weld=False)
 
     # ---- LOD1 : decimate the body only, keep facial features
     b1 = dup_object(body, "b1")
@@ -719,7 +727,7 @@ def make_lods(asset, lod0_parts, face_parts=None, r1=0.5, r2=0.2):
     decimate(b1, ratio)
     parts1 = [b1] + ([dup_object(face, "f1")] if face else [])
     lod1 = join_objects(parts1, asset.name + "_LOD1")
-    shade(lod1, 38.0, weighted=True)
+    shade(lod1, 38.0, weighted=True, weld=False)
 
     # ---- LOD2
     b2 = dup_object(lod0, "b2")

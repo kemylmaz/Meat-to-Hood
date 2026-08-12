@@ -174,8 +174,12 @@ namespace ShawarmaTycoon
                 return cached;
 
             GameObject prefab = null;
+            // Legacy gameplay names are aliased onto the approved pack; anything
+            // authored later (the city kit) already uses its own name.
             if (Phase1Aliases.TryGetValue(assetName, out string phase1Name))
                 prefab = Resources.Load<GameObject>(Phase1ResourceFolder + phase1Name);
+            if (prefab == null)
+                prefab = Resources.Load<GameObject>(Phase1ResourceFolder + assetName);
             if (prefab == null)
                 prefab = Resources.Load<GameObject>(LegacyResourceFolder + assetName);
             Prefabs[assetName] = prefab;

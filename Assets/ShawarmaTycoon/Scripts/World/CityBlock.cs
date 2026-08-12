@@ -108,10 +108,28 @@ namespace ShawarmaTycoon
 
         // --- pavement + road --------------------------------------------------
 
+        private const string RoadTile = "40_road_straight";
+        private const string WalkTile = "41_sidewalk_straight";
+        private const string LampModel = "45_street_lamp";
+        private const string BuildingA = "43_city_building_a";
+        private const string BuildingB = "44_city_building_b";
+
         private static void BuildSidewalks(Transform city, CityLayout layout)
         {
             GameObject walks = new("Sidewalks");
             walks.transform.SetParent(city, false);
+
+            if (CityKit.Has(WalkTile))
+            {
+                float span = layout.GroundWidth * 0.86f;
+                // Authored kerb sits on the tile's -Z edge: the near pavement has
+                // to face the other way, so it is turned around.
+                CityKit.Tile(WalkTile, walks.transform, layout.CenterX,
+                    layout.NearWalkCenterZ, span, 180f);
+                CityKit.Tile(WalkTile, walks.transform, layout.CenterX,
+                    layout.FarWalkCenterZ, span, 0f);
+                return;
+            }
 
             // near pavement between the lot and the road; its kerb faces the road
             Strip(walks.transform, "Near Walk",
@@ -158,6 +176,14 @@ namespace ShawarmaTycoon
             GameObject road = new("Road");
             road.transform.SetParent(city, false);
 
+            if (CityKit.Has(RoadTile))
+            {
+                CityKit.Tile(RoadTile, road.transform, layout.CenterX,
+                    layout.RoadCenterZ, layout.GroundWidth * 0.92f);
+                AddCrossing(road.transform, layout);
+                return;
+            }
+
             PrototypeVisuals.CreatePrimitive("Asphalt", PrimitiveType.Cube, road.transform,
                 new Vector3(layout.CenterX, 0.02f, layout.RoadCenterZ),
                 new Vector3(layout.GroundWidth * 0.92f, 0.12f, layout.RoadWidth),
@@ -177,11 +203,16 @@ namespace ShawarmaTycoon
                         layout.RoadCenterZ + side * (layout.RoadWidth * 0.5f - 0.35f)),
                     new Vector3(layout.GroundWidth * 0.92f, 0.02f, 0.12f), RoadLine);
 
-            // pedestrian crossing lined up with the restaurant entrance
+            AddCrossing(road.transform, layout);
+        }
+
+        /// <summary>Zebra stripes marking the drive-through / service stop.</summary>
+        private static void AddCrossing(Transform road, CityLayout layout)
+        {
             for (int i = 0; i < 6; i++)
-                PrototypeVisuals.CreatePrimitive("Crossing", PrimitiveType.Cube, road.transform,
-                    new Vector3(layout.CrossingX - 1.5f + i * 0.6f, 0.086f, layout.RoadCenterZ),
-                    new Vector3(0.34f, 0.02f, layout.RoadWidth - 0.9f), RoadLine);
+                PrototypeVisuals.CreatePrimitive("Crossing", PrimitiveType.Cube, road,
+                    new Vector3(layout.CrossingX - 1.5f + i * 0.6f, 0.155f, layout.RoadCenterZ),
+                    new Vector3(0.34f, 0.02f, layout.RoadWidth - 1.6f), RoadLine);
         }
 
         // --- skyline ----------------------------------------------------------
@@ -194,24 +225,50 @@ namespace ShawarmaTycoon
 
             // The main row sits across the road and faces the camera, so it is
             // the wall the player actually reads behind the traffic.
-            RowOfBuildings(skyline.transform,
-                layout.FarWalkCenterZ + layout.WalkDepth * 0.5f, 1f,
-                layout.CenterX - layout.GroundWidth * 0.46f,
-                layout.CenterX + layout.GroundWidth * 0.46f,
-                9f, 18f, ref seed);
+            float frontLine = layout.FarWalkCenterZ + layout.WalkDepth * 0.5f;
+            float fromX = layout.CenterX - layout.GroundWidth * 0.46f;
+            float toX = layout.CenterX + layout.GroundWidth * 0.46f;
 
-            // a taller second row staggers the skyline behind the first
-            RowOfBuildings(skyline.transform,
-                layout.FarWalkCenterZ + layout.WalkDepth * 0.5f + 9.5f, 1f,
+            if (!AuthoredRow(skyline.transform, frontLine, fromX, toX, ref seed))
+                RowOfBuildings(skyline.transform, frontLine, 1f, fromX, toX, 9f, 18f, ref seed);
+
+            // a taller blocked-in second row staggers the skyline behind the first
+            RowOfBuildings(skyline.transform, frontLine + 10.5f, 1f,
                 layout.CenterX - layout.GroundWidth * 0.40f + 3.5f,
                 layout.CenterX + layout.GroundWidth * 0.40f,
-                14f, 24f, ref seed);
+                15f, 25f, ref seed);
 
             // side walls of the block
             SideBuildings(skyline.transform, layout, -1f, ref seed);
             SideBuildings(skyline.transform, layout, 1f, ref seed);
 
             BuildLamps(skyline.transform, layout);
+        }
+
+        /// <summary>
+        /// Row of authored facades along a street line. The models already face
+        /// -Z, so the front wall lands exactly on <paramref name="frontZ"/>.
+        /// </summary>
+        private static bool AuthoredRow(
+            Transform parent, float frontZ, float fromX, float toX, ref int seed)
+        {
+            if (!CityKit.Has(BuildingA) || !CityKit.Has(BuildingB))
+                return false;
+
+            float x = fromX;
+            bool alternate = false;
+            while (x < toX)
+            {
+                string model = alternate ? BuildingB : BuildingA;
+                alternate = !alternate;
+                float width = CityKit.TileWidth(model, 8f);
+                float depth = CityKit.TileDepth(model, 6f);
+                if (x + width > toX) break;
+                CityKit.Spawn(model, parent,
+                    new Vector3(x + width * 0.5f, 0f, frontZ + depth * 0.5f));
+                x += width + Random(ref seed, 0.25f, 1.0f);
+            }
+            return true;
         }
 
         private static void RowOfBuildings(
@@ -237,16 +294,38 @@ namespace ShawarmaTycoon
             // Asymmetric on purpose: the -X side can hug the lot and fill the
             // empty left of frame, while +X has to clear the expansion plots.
             float offset = side < 0f ? layout.LotWidth * 0.5f + 7f : layout.LotWidth * 0.5f + 14f;
-            float x = layout.CenterX + side * offset;
+            float frontX = layout.CenterX + side * offset;
             float z = layout.FrontEdgeZ + 2f;
             float end = layout.RoadCenterZ - layout.RoadWidth * 0.5f - 1f;
+
+            // Authored facades face -Z, so turn them to look across the lot.
+            bool authored = CityKit.Has(BuildingA) && CityKit.Has(BuildingB);
+            float yaw = side < 0f ? -90f : 90f;
+            bool alternate = false;
+
             while (z < end)
             {
-                float depth = Random(ref seed, 5.5f, 8.5f);
-                float height = Random(ref seed, 8f, 15f);
-                Building(parent, new Vector3(x, 0f, z + depth * 0.5f), 9f, depth, height,
-                    -side, ref seed, sideFacing: true);
-                z += depth + Random(ref seed, 0.4f, 1.2f);
+                if (authored)
+                {
+                    string model = alternate ? BuildingB : BuildingA;
+                    alternate = !alternate;
+                    // Rotated a quarter turn, the model's width runs along Z and
+                    // its depth along X.
+                    float along = CityKit.TileWidth(model, 8f);
+                    float deep = CityKit.TileDepth(model, 6f);
+                    if (z + along > end) break;
+                    CityKit.Spawn(model, parent,
+                        new Vector3(frontX - side * deep * 0.5f, 0f, z + along * 0.5f), yaw);
+                    z += along + Random(ref seed, 0.25f, 0.9f);
+                }
+                else
+                {
+                    float depth = Random(ref seed, 5.5f, 8.5f);
+                    float height = Random(ref seed, 8f, 15f);
+                    Building(parent, new Vector3(frontX, 0f, z + depth * 0.5f), 9f, depth, height,
+                        -side, ref seed, sideFacing: true);
+                    z += depth + Random(ref seed, 0.4f, 1.2f);
+                }
             }
         }
 
@@ -299,13 +378,26 @@ namespace ShawarmaTycoon
             GameObject lamps = new("Street Lamps");
             lamps.transform.SetParent(parent, false);
             float half = layout.GroundWidth * 0.40f;
+            bool authored = CityKit.Has(LampModel);
             for (float x = -half; x <= half; x += 9f)
             {
-                // arm reaches out over the road from each pavement
-                Lamp(lamps.transform, new Vector3(layout.CenterX + x, 0.18f,
-                    layout.NearWalkCenterZ - layout.WalkDepth * 0.26f), -1f);
-                Lamp(lamps.transform, new Vector3(layout.CenterX + x + 4.5f, 0.18f,
-                    layout.FarWalkCenterZ + layout.WalkDepth * 0.26f), 1f);
+                Vector3 near = new(layout.CenterX + x, 0.16f,
+                    layout.NearWalkCenterZ - layout.WalkDepth * 0.26f);
+                Vector3 far = new(layout.CenterX + x + 4.5f, 0.16f,
+                    layout.FarWalkCenterZ + layout.WalkDepth * 0.26f);
+
+                if (authored)
+                {
+                    // Authored arm hangs toward +Z once the import offset is
+                    // applied, so the far pavement lamp is the one spun round.
+                    CityKit.Spawn(LampModel, lamps.transform, near, 0f);
+                    CityKit.Spawn(LampModel, lamps.transform, far, 180f);
+                }
+                else
+                {
+                    Lamp(lamps.transform, near, -1f);
+                    Lamp(lamps.transform, far, 1f);
+                }
             }
         }
 
@@ -354,8 +446,9 @@ namespace ShawarmaTycoon
         // Kept shallow on purpose: the isometric camera has to fit the lot AND
         // the street behind it in one portrait frame.
         public float LotDepth = 17f;
-        public float WalkDepth = 2.2f;
-        public float RoadWidth = 6.4f;
+        // Match the authored tile depths so modular pieces line up exactly.
+        public float WalkDepth = 2.6f;
+        public float RoadWidth = 7.2f;
         public float CenterX = 0f;
         public float CrossingX = 6f;
 

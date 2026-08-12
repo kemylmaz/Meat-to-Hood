@@ -1,0 +1,66 @@
+{
+  "01_player_character": {
+    "fbx": "C:/Users/kemyl/shawarmatycoon/ArtSource/BlenderGenerated/ReviewFBX/01_player_character.fbx",
+    "bytes": 897724,
+    "bake_space_transform": true,
+    "alt_fbx": "C:/Users/kemyl/shawarmatycoon/ArtSource/BlenderGenerated/ReviewFBX/_alt_no_bake_transform/01_player_character.fbx",
+    "alt_bytes": 899372
+  },
+  "02_customer_character": {
+    "fbx": "C:/Users/kemyl/shawarmatycoon/ArtSource/BlenderGenerated/ReviewFBX/02_customer_character.fbx",
+    "bytes": 888492,
+    "bake_space_transform": true,
+    "alt_fbx": "C:/Users/kemyl/shawarmatycoon/ArtSource/BlenderGenerated/ReviewFBX/_alt_no_bake_transform/02_customer_character.fbx",
+    "alt_bytes": 889868
+  },
+  "06_rotisserie_station": {
+    "fbx": "C:/Users/kemyl/shawarmatycoon/ArtSource/BlenderGenerated/ReviewFBX/06_rotisserie_station.fbx",
+    "bytes": 484476,
+    "bake_space_transform": true
+  },
+  "15_dining_table": {
+    "fbx": "C:/Users/kemyl/shawarmatycoon/ArtSource/BlenderGenerated/ReviewFBX/15_dining_table.fbx",
+    "bytes": 178636,
+    "bake_space_transform": true
+  },
+  "17_trash_bin": {
+    "fbx": "C:/Users/kemyl/shawarmatycoon/ArtSource/BlenderGenerated/ReviewFBX/17_trash_bin.fbx",
+    "bytes": 110492,
+    "bake_space_transform": true
+  },
+  "40_road_straight": {
+    "fbx": "C:/Users/kemyl/shawarmatycoon/ArtSource/BlenderGenerated/ReviewFBX/40_road_straight.fbx",
+    "bytes": 54844,
+    "bake_space_transform": true
+  },
+  "41_sidewalk_straight": {
+    "fbx": "C:/Users/kemyl/shawarmatycoon/ArtSource/BlenderGenerated/ReviewFBX/41_sidewalk_straight.fbx",
+    "bytes": 67628,
+    "bake_space_transform": true
+  },
+  "42_sidewalk_corner": {
+    "fbx": "C:/Users/kemyl/shawarmatycoon/ArtSource/BlenderGenerated/ReviewFBX/42_sidewalk_corner.fbx",
+    "bytes": 59852,
+    "bake_space_transform": true
+  },
+  "43_city_building_a": {
+    "fbx": "C:/Users/kemyl/shawarmatycoon/ArtSource/BlenderGenerated/ReviewFBX/43_city_building_a.fbx",
+    "bytes": 139500,
+    "bake_space_transform": true
+  },
+  "44_city_building_b": {
+    "fbx": "C:/Users/kemyl/shawarmatycoon/ArtSource/BlenderGenerated/ReviewFBX/44_city_building_b.fbx",
+    "bytes": 193692,
+    "bake_space_transform": true
+  },
+  "45_street_lamp": {
+    "fbx": "C:/Users/kemyl/shawarmatycoon/ArtSource/BlenderGenerated/ReviewFBX/45_street_lamp.fbx",
+    "bytes": 55052,
+    "bake_space_transform": true
+  },
+  "46_city_car": {
+    "fbx": "C:/Users/kemyl/shawarmatycoon/ArtSource/BlenderGenerated/ReviewFBX/46_city_car.fbx",
+    "bytes": 151068,
+    "bake_space_transform": true
+  }
+}

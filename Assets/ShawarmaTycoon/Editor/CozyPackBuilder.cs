@@ -14,7 +14,7 @@ namespace ShawarmaTycoon.EditorTools
     /// authored material slots, anchors and (for characters) one shared rig.
     /// </summary>
     [InitializeOnLoad]
-    public static class CozyPackPhase1Builder
+    public static class CozyPackBuilder
     {
         public const string ModelFolder = "Assets/ShawarmaTycoon/Art/BlenderPhase1/Models";
         public const string MaterialFolder = "Assets/ShawarmaTycoon/Art/BlenderPhase1/Materials";
@@ -25,7 +25,8 @@ namespace ShawarmaTycoon.EditorTools
         {
             Character,
             Station,
-            Prop
+            Prop,
+            Environment
         }
 
         private readonly struct AssetSpec
@@ -77,7 +78,15 @@ namespace ShawarmaTycoon.EditorTools
             new("02_customer_character", "02_customer_character", AssetProfile.Character, true, 0f),
             new("06_rotisserie_station", "06_shawarma_rotisserie", AssetProfile.Station, false, 180f),
             new("15_dining_table", "15_dining_table_clean", AssetProfile.Prop, false, 0f),
-            new("17_trash_bin", "17_trash_bin", AssetProfile.Prop, false, 0f)
+            new("17_trash_bin", "17_trash_bin", AssetProfile.Prop, false, 0f),
+            // --- phase 2A city kit ---
+            new("40_road_straight", "40_road_straight", AssetProfile.Environment, false, 0f),
+            new("41_sidewalk_straight", "41_sidewalk_straight", AssetProfile.Environment, false, 0f),
+            new("42_sidewalk_corner", "42_sidewalk_corner", AssetProfile.Environment, false, 0f),
+            new("43_city_building_a", "43_city_building_a", AssetProfile.Environment, false, 0f),
+            new("44_city_building_b", "44_city_building_b", AssetProfile.Environment, false, 0f),
+            new("45_street_lamp", "45_street_lamp", AssetProfile.Environment, false, 0f),
+            new("46_city_car", "46_city_car", AssetProfile.Prop, false, 0f)
         };
 
         private static readonly PaletteEntry[] Palette =
@@ -102,23 +111,36 @@ namespace ShawarmaTycoon.EditorTools
             new("MAT_HeatOrange", 0xF08A3C),
             new("MAT_WoodLight", 0xBE8354),
             new("MAT_BinGreen", 0x4C6B58),
-            new("MAT_Steel", 0xC9CDD2, 1f, 0.65f)
+            new("MAT_Steel", 0xC9CDD2, 1f, 0.65f),
+            // --- phase 2A city kit ---
+            new("MAT_Asphalt", 0x4E4E56, 0f, 0.10f),
+            new("MAT_RoadLine", 0xEFE3C8),
+            new("MAT_Sidewalk", 0xCBBDA8, 0f, 0.15f),
+            new("MAT_CurbStone", 0xA2937F, 0f, 0.15f),
+            new("MAT_BrickWarm", 0xC4785B, 0f, 0.18f),
+            new("MAT_BrickCool", 0x8E9AA6, 0f, 0.18f),
+            new("MAT_WindowGlass", 0x9FD3E0, 0f, 0.72f),
+            new("MAT_LampPost", 0x3A4148, 0f, 0.40f),
+            new("MAT_LampGlow", 0xFFE9A8, 0f, 0.55f),
+            new("MAT_CarGlass", 0x7FB6C9, 0f, 0.78f),
+            new("MAT_Tire", 0x26262A, 0f, 0.12f),
+            new("MAT_Awning", 0xD9564A)
         };
 
         private static bool building;
 
-        static CozyPackPhase1Builder()
+        static CozyPackBuilder()
         {
             EditorApplication.delayCall += BuildIfNeeded;
         }
 
-        [MenuItem("Shawarma Tycoon/CozyPack/Rebuild Phase 1 Prefabs", priority = 110)]
+        [MenuItem("Shawarma Tycoon/CozyPack/Rebuild Cozy Prefabs", priority = 110)]
         public static void RebuildMenu()
         {
             BuildAll(force: true);
         }
 
-        [MenuItem("Shawarma Tycoon/CozyPack/Rebuild Phase 1 Prefabs", true)]
+        [MenuItem("Shawarma Tycoon/CozyPack/Rebuild Cozy Prefabs", true)]
         private static bool ValidateRebuildMenu()
         {
             return !EditorApplication.isPlayingOrWillChangePlaymode &&
@@ -155,7 +177,7 @@ namespace ShawarmaTycoon.EditorTools
                     .ToList();
                 if (missing.Count > 0)
                 {
-                    Debug.LogError("[CozyPack Phase 1] Missing FBX files:\n" + string.Join("\n", missing));
+                    Debug.LogError("[CozyPack] Missing FBX files:\n" + string.Join("\n", missing));
                     return 0;
                 }
 
@@ -176,9 +198,9 @@ namespace ShawarmaTycoon.EditorTools
                 AssetDatabase.SaveAssets();
                 AssetDatabase.Refresh();
                 if (built == Specs.Length)
-                    Debug.Log($"[CozyPack Phase 1] Built {built}/{Specs.Length} approved prefabs.");
+                    Debug.Log($"[CozyPack] Built {built}/{Specs.Length} approved prefabs.");
                 else
-                    Debug.LogError($"[CozyPack Phase 1] Built only {built}/{Specs.Length} prefabs.");
+                    Debug.LogError($"[CozyPack] Built only {built}/{Specs.Length} prefabs.");
                 return built;
             }
             finally
@@ -300,7 +322,7 @@ namespace ShawarmaTycoon.EditorTools
             if (idle == null || walk == null || carryWalk == null)
             {
                 Debug.LogError(
-                    $"[CozyPack Phase 1] {spec.SourceId} animation clips incomplete. " +
+                    $"[CozyPack] {spec.SourceId} animation clips incomplete. " +
                     $"Found: {string.Join(", ", clips.Select(clip => clip.name))}");
                 return null;
             }
@@ -350,7 +372,7 @@ namespace ShawarmaTycoon.EditorTools
                 Renderer[] renderers = model.GetComponentsInChildren<Renderer>(true);
                 if (renderers.Length == 0)
                 {
-                    Debug.LogError($"[CozyPack Phase 1] {spec.SourceId} contains no renderers.");
+                    Debug.LogError($"[CozyPack] {spec.SourceId} contains no renderers.");
                     return false;
                 }
 
@@ -363,7 +385,7 @@ namespace ShawarmaTycoon.EditorTools
                         if (materials.TryGetValue(materialName, out Material material))
                             slots[i] = material;
                         else
-                            Debug.LogWarning($"[CozyPack Phase 1] Unmapped material '{materialName}' on {renderer.name}.");
+                            Debug.LogWarning($"[CozyPack] Unmapped material '{materialName}' on {renderer.name}.");
                     }
                     renderer.sharedMaterials = slots;
                     renderer.shadowCastingMode = ShadowCastingMode.On;
@@ -379,7 +401,7 @@ namespace ShawarmaTycoon.EditorTools
                 if (lod0.Length == 0 || lod1.Length == 0 || lod2.Length == 0)
                 {
                     Debug.LogError(
-                        $"[CozyPack Phase 1] {spec.SourceId} LOD renderers incomplete: " +
+                        $"[CozyPack] {spec.SourceId} LOD renderers incomplete: " +
                         $"{lod0.Length}/{lod1.Length}/{lod2.Length}.");
                     return false;
                 }
@@ -388,6 +410,8 @@ namespace ShawarmaTycoon.EditorTools
                 {
                     AssetProfile.Character => new[] { 0.18f, 0.08f, 0.025f },
                     AssetProfile.Station => new[] { 0.20f, 0.09f, 0.025f },
+                    // Street dressing is background: drop to cheap LODs early.
+                    AssetProfile.Environment => new[] { 0.11f, 0.045f, 0.012f },
                     _ => new[] { 0.16f, 0.07f, 0.020f }
                 };
                 LODGroup lodGroup = prefabRoot.AddComponent<LODGroup>();
@@ -434,12 +458,12 @@ namespace ShawarmaTycoon.EditorTools
                 PrefabUtility.SaveAsPrefabAsset(prefabRoot, spec.PrefabPath, out bool saved);
                 if (!saved)
                 {
-                    Debug.LogError($"[CozyPack Phase 1] Failed to save {spec.PrefabPath}.");
+                    Debug.LogError($"[CozyPack] Failed to save {spec.PrefabPath}.");
                     return false;
                 }
 
                 Debug.Log(
-                    $"[CozyPack Phase 1] {spec.SourceId} -> {spec.RuntimeId}; " +
+                    $"[CozyPack] {spec.SourceId} -> {spec.RuntimeId}; " +
                     $"front {importedFront:F2}, runtime yaw offset {runtimeOffset:0.#}°.");
                 return true;
             }
@@ -462,7 +486,7 @@ namespace ShawarmaTycoon.EditorTools
             Transform front = FindDeepChild(root, "FRONT_DIRECTION");
             if (front == null)
             {
-                Debug.LogWarning($"[CozyPack Phase 1] FRONT_DIRECTION missing under {root.name}.");
+                Debug.LogWarning($"[CozyPack] FRONT_DIRECTION missing under {root.name}.");
                 return Vector3.forward;
             }
 

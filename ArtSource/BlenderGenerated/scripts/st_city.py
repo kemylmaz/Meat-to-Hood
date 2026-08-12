@@ -78,16 +78,25 @@ def build_sidewalk_straight():
     p.append(box("walk_curb", (TILE, 0.26, top + 0.06),
                  (0, -depth * 0.5 + 0.13, (top + 0.06) * 0.5),
                  mat="MAT_CurbStone"))
-    # paving joints
+    # paving joints - kept thick enough that the bevel never collapses them
     for i in range(3):
         x = -TILE * 0.5 + TILE * (i + 1) / 4.0
-        p.append(box("walk_joint_%d" % i, (0.05, depth - 0.30, 0.012),
-                     (x, 0.06, top + 0.004), mat="MAT_CurbStone"))
-    p.append(box("walk_joint_long", (TILE - 0.10, 0.05, 0.012),
-                 (0, 0.42, top + 0.004), mat="MAT_CurbStone"))
+        p.append(box("walk_joint_%d" % i, (0.06, depth - 0.30, 0.03),
+                     (x, 0.06, top - 0.005), mat="MAT_CurbStone"))
+    p.append(box("walk_joint_long", (TILE - 0.10, 0.06, 0.03),
+                 (0, 0.42, top - 0.005), mat="MAT_CurbStone"))
+    # storm drain against the kerb: third material and a readable detail
+    p.append(box("walk_drain", (0.52, 0.30, 0.05),
+                 (TILE * 0.25, -depth * 0.5 + 0.34, top - 0.012),
+                 mat="MAT_LampPost"))
+    for i in range(3):
+        p.append(box("walk_drain_bar_%d" % i, (0.44, 0.035, 0.03),
+                     (TILE * 0.25, -depth * 0.5 + 0.26 + i * 0.08, top + 0.004),
+                     mat="MAT_CurbStone"))
 
     for o in p:
-        finalize(o, bevel_w=0.014, bevel_seg=2)
+        finalize(o, bevel_w=0.005 if ("joint" in o.name or "bar" in o.name) else 0.014,
+                 bevel_seg=2)
 
     l0, l1, l2 = make_lods(A, p, None, r1=0.5, r2=0.2)
     for lv, ob in ((0, l0), (1, l1), (2, l2)):
@@ -120,12 +129,24 @@ def build_sidewalk_corner():
                    [(0.0, 0.0), (0.62, 0.0), (0.62, top + 0.06), (0.0, top + 0.06)],
                    18, loc=(-size * 0.5 + 0.62, -size * 0.5 + 0.62, 0.0),
                    mat="MAT_CurbStone"))
-    p.append(box("corner_joint", (size - 0.4, 0.05, 0.012),
-                 (0.1, 0.35, top + 0.004), mat="MAT_CurbStone"))
+    p.append(box("corner_joint", (size - 0.4, 0.06, 0.03),
+                 (0.1, 0.35, top - 0.005), mat="MAT_CurbStone"))
+    # matching drain so the corner shares the straight tile's palette
+    p.append(box("corner_drain", (0.46, 0.28, 0.05),
+                 (0.55, -size * 0.5 + 0.34, top - 0.012), mat="MAT_LampPost"))
+    for i in range(3):
+        p.append(box("corner_drain_bar_%d" % i, (0.38, 0.035, 0.03),
+                     (0.55, -size * 0.5 + 0.27 + i * 0.075, top + 0.004),
+                     mat="MAT_CurbStone"))
 
     for o in p:
-        rounded = "round" in o.name
-        finalize(o, bevel_w=0.0 if rounded else 0.014, bevel_seg=2)
+        if "round" in o.name:
+            width = 0.0
+        elif "joint" in o.name or "bar" in o.name:
+            width = 0.005
+        else:
+            width = 0.014
+        finalize(o, bevel_w=width, bevel_seg=2)
 
     l0, l1, l2 = make_lods(A, p, None, r1=0.5, r2=0.2)
     for lv, ob in ((0, l0), (1, l1), (2, l2)):
@@ -157,8 +178,10 @@ def _building(name, width, depth, floors, wall_mat, accent_mat, awning=False):
                      (0, -depth * 0.5 - 0.42, ground_h - 0.35),
                      mat="MAT_Awning", taper_bot=1.0))
         for sx in (1, -1):
+            # capsule ends are hemispheres: start at the radius so the foot
+            # lands exactly on Z = 0 instead of sinking below it
             p.append(capsule("bld_awning_post_%d" % sx,
-                             (sx * width * 0.36, -depth * 0.5 - 0.80, 0.0),
+                             (sx * width * 0.36, -depth * 0.5 - 0.80, 0.055),
                              (sx * width * 0.36, -depth * 0.5 - 0.80, ground_h - 0.42),
                              0.055, 0.055, 10, 3, mat="MAT_LampPost"))
 
@@ -185,8 +208,13 @@ def _building(name, width, depth, floors, wall_mat, accent_mat, awning=False):
                  (0, 0, height + 0.34 + 0.275), mat=wall_mat, taper_top=0.97))
 
     for o in p:
-        rounded = "post" in o.name
-        finalize(o, bevel_w=0.0 if rounded else 0.022, bevel_seg=2)
+        if "post" in o.name:
+            width = 0.0                      # already round
+        elif any(k in o.name for k in ("glass", "win", "sill", "door")):
+            width = 0.008                    # thin inset panels
+        else:
+            width = 0.022
+        finalize(o, bevel_w=width, bevel_seg=2)
 
     l0, l1, l2 = make_lods(A, p, None, r1=0.5, r2=0.2)
     for lv, ob in ((0, l0), (1, l1), (2, l2)):
@@ -197,7 +225,8 @@ def _building(name, width, depth, floors, wall_mat, accent_mat, awning=False):
 
 
 def build_building_a():
-    return _building("43_city_building_a", 6.4, 5.0, 3,
+    # Chunky rather than tower-like: the cozy style wants a wide silhouette.
+    return _building("43_city_building_a", 8.0, 5.4, 2,
                      "MAT_BrickWarm", "MAT_Cream", awning=True)
 
 

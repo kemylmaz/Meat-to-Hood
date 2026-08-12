@@ -117,6 +117,9 @@ namespace ShawarmaTycoon
     /// <summary>A single pooled car. Visuals fall back to primitives.</summary>
     public sealed class CityCar : MonoBehaviour
     {
+        private static readonly int BaseColorId = Shader.PropertyToID("_BaseColor");
+        private static readonly int ColorId = Shader.PropertyToID("_Color");
+
         private TrafficSystem owner;
         private int direction = 1;
         private float endX;
@@ -134,7 +137,31 @@ namespace ShawarmaTycoon
             if (MeshyVisuals.TryAttach(go.transform, "46_city_car",
                     new Vector3(1.9f, 1.5f, 4.2f), Vector3.zero, Vector3.zero) == null)
                 BuildPrimitiveCar(go.transform, bodyColor);
+            else
+                TintBody(go.transform, bodyColor);
             return car;
+        }
+
+        /// <summary>
+        /// The authored car ships one shared body material, so every instance
+        /// would be the same red. Recolour just the body submesh through a
+        /// property block, which keeps batching and touches no shared asset.
+        /// </summary>
+        private static void TintBody(Transform root, Color bodyColor)
+        {
+            MaterialPropertyBlock block = new();
+            block.SetColor(BaseColorId, bodyColor);
+            block.SetColor(ColorId, bodyColor);
+
+            foreach (Renderer renderer in root.GetComponentsInChildren<Renderer>(true))
+            {
+                Material[] slots = renderer.sharedMaterials;
+                for (int i = 0; i < slots.Length; i++)
+                {
+                    if (slots[i] == null || !slots[i].name.Contains("WarmRed")) continue;
+                    renderer.SetPropertyBlock(block, i);
+                }
+            }
         }
 
         private static void BuildPrimitiveCar(Transform parent, Color bodyColor)

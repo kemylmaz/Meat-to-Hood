@@ -544,5 +544,692 @@
     "has_rig": false,
     "actions": [],
     "cameras_or_lights_inside": []
+  },
+  {
+    "name": "40_road_straight",
+    "dims_XYZ": [
+      4.0,
+      7.2,
+      0.14
+    ],
+    "bbox_min": [
+      -2.0,
+      -3.6,
+      0.0
+    ],
+    "bbox_max": [
+      2.0,
+      3.6,
+      0.14
+    ],
+    "ground_contact_z": 0.0,
+    "origin_bottom_center": [
+      0.0,
+      0.0
+    ],
+    "root_location": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "root_rotation_deg": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "root_scale": [
+      1.0,
+      1.0,
+      1.0
+    ],
+    "front_direction_local": [
+      0.0,
+      -1.0,
+      0.0
+    ],
+    "tris": {
+      "LOD0": 756,
+      "LOD1": 378,
+      "LOD2": 150
+    },
+    "materials": [
+      "MAT_Asphalt",
+      "MAT_RoadLine",
+      "MAT_CurbStone"
+    ],
+    "mesh_checks": {
+      "LOD0": {
+        "non_manifold_edges": 0,
+        "duplicate_faces": 0,
+        "zero_area_faces": 0
+      },
+      "LOD1": {
+        "non_manifold_edges": 0,
+        "duplicate_faces": 0,
+        "zero_area_faces": 0
+      },
+      "LOD2": {
+        "non_manifold_edges": 0,
+        "duplicate_faces": 0,
+        "zero_area_faces": 0
+      }
+    },
+    "unapplied_modifiers": {
+      "LOD0": [],
+      "LOD1": [],
+      "LOD2": []
+    },
+    "anchors": {
+      "40_road_straight_ROOT": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "FRONT_DIRECTION.005": [
+        0.0,
+        -1.0,
+        0.0
+      ],
+      "TILE_NEXT": [
+        4.0,
+        0.0,
+        0.0
+      ],
+      "LANE_NEAR": [
+        0.0,
+        -1.8,
+        0.13
+      ],
+      "LANE_FAR": [
+        0.0,
+        1.8,
+        0.13
+      ]
+    },
+    "has_rig": false,
+    "actions": [],
+    "cameras_or_lights_inside": []
+  },
+  {
+    "name": "41_sidewalk_straight",
+    "dims_XYZ": [
+      4.0,
+      2.6,
+      0.22
+    ],
+    "bbox_min": [
+      -2.0,
+      -1.3,
+      0.0
+    ],
+    "bbox_max": [
+      2.0,
+      1.3,
+      0.22
+    ],
+    "ground_contact_z": 0.0,
+    "origin_bottom_center": [
+      0.0,
+      0.0
+    ],
+    "root_location": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "root_rotation_deg": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "root_scale": [
+      1.0,
+      1.0,
+      1.0
+    ],
+    "front_direction_local": [
+      0.0,
+      -1.0,
+      0.0
+    ],
+    "tris": {
+      "LOD0": 1080,
+      "LOD1": 540,
+      "LOD2": 216
+    },
+    "materials": [
+      "MAT_Sidewalk",
+      "MAT_CurbStone",
+      "MAT_LampPost"
+    ],
+    "mesh_checks": {
+      "LOD0": {
+        "non_manifold_edges": 0,
+        "duplicate_faces": 0,
+        "zero_area_faces": 0
+      },
+      "LOD1": {
+        "non_manifold_edges": 0,
+        "duplicate_faces": 0,
+        "zero_area_faces": 0
+      },
+      "LOD2": {
+        "non_manifold_edges": 0,
+        "duplicate_faces": 0,
+        "zero_area_faces": 0
+      }
+    },
+    "unapplied_modifiers": {
+      "LOD0": [],
+      "LOD1": [],
+      "LOD2": []
+    },
+    "anchors": {
+      "41_sidewalk_straight_ROOT": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "FRONT_DIRECTION.006": [
+        0.0,
+        -1.0,
+        0.0
+      ],
+      "TILE_NEXT.001": [
+        4.0,
+        0.0,
+        0.0
+      ],
+      "WALK_SURFACE": [
+        0.0,
+        0.35,
+        0.16
+      ]
+    },
+    "has_rig": false,
+    "actions": [],
+    "cameras_or_lights_inside": []
+  },
+  {
+    "name": "42_sidewalk_corner",
+    "dims_XYZ": [
+      2.6,
+      2.6,
+      0.22
+    ],
+    "bbox_min": [
+      -1.3,
+      -1.3,
+      0.0
+    ],
+    "bbox_max": [
+      1.3,
+      1.3,
+      0.22
+    ],
+    "ground_contact_z": 0.0,
+    "origin_bottom_center": [
+      0.0,
+      0.0
+    ],
+    "root_location": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "root_rotation_deg": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "root_scale": [
+      1.0,
+      1.0,
+      1.0
+    ],
+    "front_direction_local": [
+      0.0,
+      -1.0,
+      0.0
+    ],
+    "tris": {
+      "LOD0": 936,
+      "LOD1": 468,
+      "LOD2": 186
+    },
+    "materials": [
+      "MAT_Sidewalk",
+      "MAT_CurbStone",
+      "MAT_LampPost"
+    ],
+    "mesh_checks": {
+      "LOD0": {
+        "non_manifold_edges": 0,
+        "duplicate_faces": 0,
+        "zero_area_faces": 0
+      },
+      "LOD1": {
+        "non_manifold_edges": 0,
+        "duplicate_faces": 0,
+        "zero_area_faces": 0
+      },
+      "LOD2": {
+        "non_manifold_edges": 0,
+        "duplicate_faces": 0,
+        "zero_area_faces": 0
+      }
+    },
+    "unapplied_modifiers": {
+      "LOD0": [],
+      "LOD1": [],
+      "LOD2": []
+    },
+    "anchors": {
+      "42_sidewalk_corner_ROOT": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "FRONT_DIRECTION.007": [
+        0.0,
+        -1.0,
+        0.0
+      ]
+    },
+    "has_rig": false,
+    "actions": [],
+    "cameras_or_lights_inside": []
+  },
+  {
+    "name": "43_city_building_a",
+    "dims_XYZ": [
+      8.3,
+      6.42,
+      11.09
+    ],
+    "bbox_min": [
+      -4.15,
+      -3.57,
+      0.0
+    ],
+    "bbox_max": [
+      4.15,
+      2.85,
+      11.09
+    ],
+    "ground_contact_z": 0.0,
+    "origin_bottom_center": [
+      0.0,
+      -0.36
+    ],
+    "root_location": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "root_rotation_deg": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "root_scale": [
+      1.0,
+      1.0,
+      1.0
+    ],
+    "front_direction_local": [
+      0.0,
+      -1.0,
+      0.0
+    ],
+    "tris": {
+      "LOD0": 2792,
+      "LOD1": 1396,
+      "LOD2": 558
+    },
+    "materials": [
+      "MAT_Cream",
+      "MAT_WindowGlass",
+      "MAT_WarmWood",
+      "MAT_Awning",
+      "MAT_LampPost",
+      "MAT_BrickWarm"
+    ],
+    "mesh_checks": {
+      "LOD0": {
+        "non_manifold_edges": 0,
+        "duplicate_faces": 0,
+        "zero_area_faces": 0
+      },
+      "LOD1": {
+        "non_manifold_edges": 0,
+        "duplicate_faces": 0,
+        "zero_area_faces": 0
+      },
+      "LOD2": {
+        "non_manifold_edges": 0,
+        "duplicate_faces": 0,
+        "zero_area_faces": 0
+      }
+    },
+    "unapplied_modifiers": {
+      "LOD0": [],
+      "LOD1": [],
+      "LOD2": []
+    },
+    "anchors": {
+      "43_city_building_a_ROOT": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "FRONT_DIRECTION.008": [
+        0.0,
+        -1.0,
+        0.0
+      ],
+      "FACADE_CENTER": [
+        0.0,
+        -2.7,
+        1.9
+      ]
+    },
+    "has_rig": false,
+    "actions": [],
+    "cameras_or_lights_inside": []
+  },
+  {
+    "name": "44_city_building_b",
+    "dims_XYZ": [
+      8.5,
+      5.9,
+      17.49
+    ],
+    "bbox_min": [
+      -4.25,
+      -2.95,
+      0.0
+    ],
+    "bbox_max": [
+      4.25,
+      2.95,
+      17.49
+    ],
+    "ground_contact_z": 0.0,
+    "origin_bottom_center": [
+      0.0,
+      0.0
+    ],
+    "root_location": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "root_rotation_deg": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "root_scale": [
+      1.0,
+      1.0,
+      1.0
+    ],
+    "front_direction_local": [
+      0.0,
+      -1.0,
+      0.0
+    ],
+    "tris": {
+      "LOD0": 4212,
+      "LOD1": 2106,
+      "LOD2": 842
+    },
+    "materials": [
+      "MAT_Sidewalk",
+      "MAT_WindowGlass",
+      "MAT_WarmWood",
+      "MAT_BrickCool"
+    ],
+    "mesh_checks": {
+      "LOD0": {
+        "non_manifold_edges": 0,
+        "duplicate_faces": 0,
+        "zero_area_faces": 0
+      },
+      "LOD1": {
+        "non_manifold_edges": 0,
+        "duplicate_faces": 0,
+        "zero_area_faces": 0
+      },
+      "LOD2": {
+        "non_manifold_edges": 0,
+        "duplicate_faces": 0,
+        "zero_area_faces": 0
+      }
+    },
+    "unapplied_modifiers": {
+      "LOD0": [],
+      "LOD1": [],
+      "LOD2": []
+    },
+    "anchors": {
+      "44_city_building_b_ROOT": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "FRONT_DIRECTION.009": [
+        0.0,
+        -1.0,
+        0.0
+      ],
+      "FACADE_CENTER.001": [
+        0.0,
+        -2.8,
+        1.9
+      ]
+    },
+    "has_rig": false,
+    "actions": [],
+    "cameras_or_lights_inside": []
+  },
+  {
+    "name": "45_street_lamp",
+    "dims_XYZ": [
+      0.64,
+      1.4251,
+      4.76
+    ],
+    "bbox_min": [
+      -0.32,
+      -1.1651,
+      0.0
+    ],
+    "bbox_max": [
+      0.32,
+      0.26,
+      4.76
+    ],
+    "ground_contact_z": 0.0,
+    "origin_bottom_center": [
+      0.0,
+      -0.4526
+    ],
+    "root_location": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "root_rotation_deg": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "root_scale": [
+      1.0,
+      1.0,
+      1.0
+    ],
+    "front_direction_local": [
+      0.0,
+      -1.0,
+      0.0
+    ],
+    "tris": {
+      "LOD0": 792,
+      "LOD1": 396,
+      "LOD2": 158
+    },
+    "materials": [
+      "MAT_LampPost",
+      "MAT_LampGlow",
+      "MAT_Mustard"
+    ],
+    "mesh_checks": {
+      "LOD0": {
+        "non_manifold_edges": 0,
+        "duplicate_faces": 0,
+        "zero_area_faces": 0
+      },
+      "LOD1": {
+        "non_manifold_edges": 0,
+        "duplicate_faces": 0,
+        "zero_area_faces": 0
+      },
+      "LOD2": {
+        "non_manifold_edges": 0,
+        "duplicate_faces": 0,
+        "zero_area_faces": 0
+      }
+    },
+    "unapplied_modifiers": {
+      "LOD0": [],
+      "LOD1": [],
+      "LOD2": []
+    },
+    "anchors": {
+      "45_street_lamp_ROOT": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "FRONT_DIRECTION.010": [
+        0.0,
+        -1.0,
+        0.0
+      ],
+      "LIGHT_ANCHOR": [
+        0.0,
+        -0.85,
+        4.35
+      ]
+    },
+    "has_rig": false,
+    "actions": [],
+    "cameras_or_lights_inside": []
+  },
+  {
+    "name": "46_city_car",
+    "dims_XYZ": [
+      2.02,
+      4.3048,
+      1.59
+    ],
+    "bbox_min": [
+      -1.01,
+      -2.1767,
+      -0.0
+    ],
+    "bbox_max": [
+      1.01,
+      2.1281,
+      1.59
+    ],
+    "ground_contact_z": -0.0,
+    "origin_bottom_center": [
+      0.0,
+      -0.0243
+    ],
+    "root_location": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "root_rotation_deg": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "root_scale": [
+      1.0,
+      1.0,
+      1.0
+    ],
+    "front_direction_local": [
+      0.0,
+      -1.0,
+      0.0
+    ],
+    "tris": {
+      "LOD0": 3368,
+      "LOD1": 1684,
+      "LOD2": 672
+    },
+    "materials": [
+      "MAT_WarmRed",
+      "MAT_CarGlass",
+      "MAT_DarkBlueGray",
+      "MAT_LampGlow",
+      "MAT_Tire",
+      "MAT_Steel"
+    ],
+    "mesh_checks": {
+      "LOD0": {
+        "non_manifold_edges": 0,
+        "duplicate_faces": 0,
+        "zero_area_faces": 0
+      },
+      "LOD1": {
+        "non_manifold_edges": 0,
+        "duplicate_faces": 0,
+        "zero_area_faces": 0
+      },
+      "LOD2": {
+        "non_manifold_edges": 0,
+        "duplicate_faces": 0,
+        "zero_area_faces": 0
+      }
+    },
+    "unapplied_modifiers": {
+      "LOD0": [],
+      "LOD1": [],
+      "LOD2": []
+    },
+    "anchors": {
+      "46_city_car_ROOT": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "FRONT_DIRECTION.011": [
+        0.0,
+        -1.0,
+        0.0
+      ],
+      "DRIVER_WINDOW": [
+        0.93,
+        -0.25,
+        1.29
+      ],
+      "EXHAUST": [
+        -0.5208,
+        2.05,
+        0.24
+      ]
+    },
+    "has_rig": false,
+    "actions": [],
+    "cameras_or_lights_inside": []
   }
 ]
