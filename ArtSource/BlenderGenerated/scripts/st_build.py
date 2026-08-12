@@ -13,6 +13,7 @@ from st_lib import (get_mat, new_collection, move_to_collection, bbox_of,
                     tri_count, build_all_materials, box, lathe, D2R)
 import st_chars
 import st_props
+import st_city
 
 ROOT_DIR = os.path.normpath(
     os.path.join(os.path.dirname(os.path.abspath(__file__)), "..")
@@ -22,8 +23,10 @@ PREV_DIR = ROOT_DIR + "/Previews"
 FBX_DIR = ROOT_DIR + "/ReviewFBX"
 DATA_JSON = ROOT_DIR + "/phase1_data.json"
 
-ASSET_ORDER = ["01_player_character", "02_customer_character",
-               "06_rotisserie_station", "15_dining_table", "17_trash_bin"]
+PHASE1_ORDER = ["01_player_character", "02_customer_character",
+                "06_rotisserie_station", "15_dining_table", "17_trash_bin"]
+CITY_ORDER = [name for name, _ in st_city.CITY_BUILDERS]
+ASSET_ORDER = PHASE1_ORDER + CITY_ORDER
 CHARACTERS = {"01_player_character", "02_customer_character"}
 
 VIEWS = {
@@ -258,7 +261,7 @@ def build_all():
         ("06_rotisserie_station", st_props.build_rotisserie),
         ("15_dining_table", st_props.build_dining_table),
         ("17_trash_bin", st_props.build_trash_bin),
-    ]
+    ] + list(st_city.CITY_BUILDERS)
     first_rig = None
     for name, fn in builders:
         a = fn()
@@ -358,9 +361,19 @@ def render_lod_strip(name, size=760):
 
 # ---- sheets ---------------------------------------------------------------
 
-LAYOUT_X = {"01_player_character": -3.5, "02_customer_character": -1.85,
-            "06_rotisserie_station": 0.0, "15_dining_table": 1.95,
-            "17_trash_bin": 3.75}
+def layout_row(names, gap=1.0):
+    """Spread assets along X with a gap, sized from their own footprints."""
+    widths = []
+    for name in names:
+        lo, hi = bbox_of(lod_objs(name)[:1])
+        widths.append(max(0.4, hi.x - lo.x))
+    total = sum(widths) + gap * (len(widths) - 1)
+    cursor = -total * 0.5
+    layout = {}
+    for name, width in zip(names, widths):
+        layout[name] = cursor + width * 0.5
+        cursor += width + gap
+    return layout
 
 
 def make_label(text, loc, coll, size=0.24, rot_z=0.0):
@@ -413,15 +426,17 @@ def render_labeled_iso(name, size=920):
     return path
 
 
-def render_sheets():
+def render_sheets(names=None, tag=""):
+    names = list(names or PHASE1_ORDER)
     sc = bpy.context.scene
     coll = bpy.data.collections["PREVIEW_RIG"]
     cam = bpy.data.objects["PRV_CAM"]
     show_all()
 
-    # ---------------- contact sheet: 5 framed iso shots in a 3x2 grid ------
-    tiles = [render_labeled_iso(n) for n in ASSET_ORDER]
-    contact = compose(tiles, PREV_DIR + "/_contact_sheet.png", cols=3, pad=16)
+    # ---------------- contact sheet: framed iso shots in a grid ------------
+    tiles = [render_labeled_iso(n) for n in names]
+    contact = compose(tiles, "%s/_contact_sheet%s.png" % (PREV_DIR, tag),
+                      cols=3 if len(names) <= 6 else 4, pad=16)
     for t in tiles:
         try:
             os.remove(t)
@@ -429,27 +444,29 @@ def render_sheets():
             pass
 
     # ---------------- orientation sheet (top down, FRONT markers) ----------
-    for n, x in LAYOUT_X.items():
+    layout = layout_row(names, gap=1.4)
+    for n, x in layout.items():
         asset_root(n).location.x = x
     bpy.context.view_layer.update()
-    front_y = min(bbox_of(lod_objs(n)[:1])[0].y for n in ASSET_ORDER) - 0.12
+    front_y = min(bbox_of(lod_objs(n)[:1])[0].y for n in names) - 0.12
+    label_size = 0.145 if len(names) <= 6 else 0.20
     temp = []
-    for n, x in LAYOUT_X.items():
+    for n, x in layout.items():
         temp += make_arrow("ARW_" + n, x, front_y, coll)
-        temp.append(make_label(n, (x, 1.32, 0.004), coll, 0.145))
-        temp.append(make_label("FRONT_DIRECTION  (0,-1,0)",
-                               (x, front_y - 1.05, 0.004), coll, 0.115))
+        temp.append(make_label(n, (x, 1.32, 0.004), coll, label_size))
+        temp.append(make_label("FRONT  (0,-1,0)",
+                               (x, front_y - 1.05, 0.004), coll, label_size * 0.8))
     temp.append(make_label("TOP VIEW   -   screen down = local -Y = FRONT",
-                           (0.0, 1.95, 0.004), coll, 0.20))
+                           (0.0, 2.35, 0.004), coll, label_size * 1.6))
     sc.render.resolution_x = 2800
     sc.render.resolution_y = 1250
-    aim_camera(cam, [o for n in ASSET_ORDER for o in lod_objs(n)[:1]] + temp,
+    aim_camera(cam, [o for n in names for o in lod_objs(n)[:1]] + temp,
                (0.0, 0.0, 1.0), margin=1.05)
-    orient = render_to(PREV_DIR + "/_orientation_sheet.png")
+    orient = render_to("%s/_orientation_sheet%s.png" % (PREV_DIR, tag))
     for t in temp:
         bpy.data.objects.remove(t, do_unlink=True)
 
-    for n in LAYOUT_X:
+    for n in layout:
         asset_root(n).location.x = 0.0
     bpy.context.view_layer.update()
     return contact, orient

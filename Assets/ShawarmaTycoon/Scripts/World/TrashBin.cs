@@ -31,6 +31,7 @@ namespace ShawarmaTycoon
             ItemType discardedType = inventory.HeldType;
             int discarded = inventory.Clear();
             if (discardedType == ItemType.Trash) GameProgress.RecordTrash(discarded);
+            AudioDirector.Play(GameSfx.Trash);
             cooldown = 0.4f;
         }
     }

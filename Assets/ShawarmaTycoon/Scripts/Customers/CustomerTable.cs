@@ -115,6 +115,7 @@ namespace ShawarmaTycoon
             dirty = false;
             if (dirtyIndicator != null) dirtyIndicator.SetActive(false);
             UpdateLabel();
+            AudioDirector.Play(GameSfx.Pickup);
             ComboSystem.Instance?.RegisterManualAction();
         }
 
@@ -147,6 +148,7 @@ namespace ShawarmaTycoon
             else ComboSystem.Instance?.RegisterManualAction();
             Vector3 feedbackPosition = cashPad != null ? cashPad.transform.position + Vector3.up * 0.35f : transform.position + Vector3.up;
             CoinBurst.SpawnGain(feedbackPosition, collected);
+            AudioDirector.Play(GameSfx.CashRegister);
             if (cashPad != null) cashPad.SetActive(false);
             if (cashStack != null) cashStack.SetActive(false);
             UpdateCashLabel();

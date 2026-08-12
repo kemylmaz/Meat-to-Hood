@@ -152,6 +152,7 @@ namespace ShawarmaTycoon
             processTimer = 0f;
             inputCount--;
             outputCount++;
+            AudioDirector.Play(GameSfx.Cook, 0.7f);
             RefreshVisuals();
         }
 
@@ -165,6 +166,7 @@ namespace ShawarmaTycoon
                 if (inventory.HeldType == inputType && outputCount < EffectiveOutputCapacity && inventory.TryRemove(inputType))
                 {
                     outputCount++;
+                    AudioDirector.Play(GameSfx.Drop, 0.7f);
                     RefreshVisuals();
                     return true;
                 }
@@ -174,6 +176,7 @@ namespace ShawarmaTycoon
             if (inventory.HeldType == inputType && inputCount < EffectiveInputCapacity && inventory.TryRemove(inputType))
             {
                 inputCount++;
+                AudioDirector.Play(GameSfx.Drop, 0.7f);
                 RefreshVisuals();
                 return true;
             }
@@ -186,6 +189,7 @@ namespace ShawarmaTycoon
             if (outputCount <= 0 || !inventory.CanAccept(outputType)) return false;
             if (!inventory.TryAdd(outputType)) return false;
             outputCount--;
+            AudioDirector.Play(GameSfx.Pickup, 0.7f);
             RefreshVisuals();
             return true;
         }

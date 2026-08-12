@@ -35,10 +35,16 @@ namespace ShawarmaTycoon
 
         public bool TrySpend(int amount)
         {
-            if (amount <= 0 || Coins < amount) return false;
+            if (amount <= 0 || Coins < amount)
+            {
+                AudioDirector.Play(GameSfx.Error, 0.6f);
+                return false;
+            }
+
             Coins -= amount;
             GameProgress.SetInt("coins", Coins);
             CoinsChanged?.Invoke(Coins);
+            AudioDirector.Play(GameSfx.Coin);
             return true;
         }
     }

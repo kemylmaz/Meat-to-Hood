@@ -1,3 +1,4 @@
+using ShawarmaTycoon.UI;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -8,20 +9,19 @@ namespace ShawarmaTycoon
     {
         [SerializeField, Min(0.1f)] private float moveSpeed = 4.5f;
         [SerializeField, Min(1f)] private float rotationSpeed = 14f;
-        [SerializeField, Min(20f)] private float joystickRadius = 90f;
-        [SerializeField, Min(0f)] private float inputDeadZone = 0.08f;
 
         private CharacterController characterController;
-        private Vector2 pointerOrigin;
-        private Vector2 joystickValue;
-        private bool pointerActive;
+        private TouchJoystick joystick;
         private float verticalVelocity;
         private Vector2 minBounds = new(-8.4f, -6.4f);
         private Vector2 maxBounds = new(8.4f, 6.4f);
         private float baseMoveSpeed;
         private Vector3 safePosition;
 
-        public Vector2 JoystickValue => joystickValue;
+        public Vector2 JoystickValue => joystick != null ? joystick.Value : Vector2.zero;
+
+        /// <summary>The on-screen stick now lives in the uGUI HUD, not in OnGUI.</summary>
+        public void SetJoystick(TouchJoystick stick) => joystick = stick;
 
         private void Awake()
         {
@@ -50,9 +50,8 @@ namespace ShawarmaTycoon
 
         private void Update()
         {
-            ReadPointerInput();
             Vector2 input = ReadKeyboardInput();
-            if (input.sqrMagnitude < 0.01f) input = joystickValue;
+            if (input.sqrMagnitude < 0.01f) input = JoystickValue;
 
             Transform cameraTransform = Camera.main != null ? Camera.main.transform : null;
             Vector3 forward = cameraTransform != null ? cameraTransform.forward : Vector3.forward;
@@ -98,30 +97,6 @@ namespace ShawarmaTycoon
             verticalVelocity = -1f;
         }
 
-        private void ReadPointerInput()
-        {
-            Pointer pointer = Pointer.current;
-            bool pressed = pointer != null && pointer.press.isPressed;
-            Vector2 position = pointer != null ? pointer.position.ReadValue() : Vector2.zero;
-
-            if (pressed && !pointerActive)
-            {
-                pointerActive = true;
-                pointerOrigin = position;
-            }
-
-            if (!pressed)
-            {
-                pointerActive = false;
-                joystickValue = Vector2.zero;
-                return;
-            }
-
-            Vector2 delta = Vector2.ClampMagnitude(position - pointerOrigin, joystickRadius);
-            joystickValue = delta / joystickRadius;
-            if (joystickValue.magnitude < inputDeadZone) joystickValue = Vector2.zero;
-        }
-
         private static Vector2 ReadKeyboardInput()
         {
             Keyboard keyboard = Keyboard.current;
@@ -136,21 +111,5 @@ namespace ShawarmaTycoon
             return Vector2.ClampMagnitude(new Vector2(x, y), 1f);
         }
 
-        private void OnGUI()
-        {
-            if (!pointerActive) return;
-
-            float scale = Mathf.Max(0.75f, Screen.dpi > 0f ? Screen.dpi / 180f : 1f);
-            float radius = joystickRadius * scale;
-            Vector2 origin = new(pointerOrigin.x, Screen.height - pointerOrigin.y);
-            Vector2 knob = origin + new Vector2(joystickValue.x, -joystickValue.y) * radius;
-
-            Color oldColor = GUI.color;
-            GUI.color = new Color(0.20f, 0.12f, 0.10f, 0.22f);
-            GUI.DrawTexture(new Rect(origin.x - radius, origin.y - radius, radius * 2f, radius * 2f), Texture2D.whiteTexture);
-            GUI.color = new Color(1f, 0.88f, 0.65f, 0.65f);
-            GUI.DrawTexture(new Rect(knob.x - radius * 0.32f, knob.y - radius * 0.32f, radius * 0.64f, radius * 0.64f), Texture2D.whiteTexture);
-            GUI.color = oldColor;
-        }
     }
 }

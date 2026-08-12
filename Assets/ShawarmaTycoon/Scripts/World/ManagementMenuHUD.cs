@@ -1,25 +1,37 @@
+using ShawarmaTycoon.UI;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace ShawarmaTycoon
 {
-    /// <summary>Reference-style three-card upgrade menus for the two manager offices and recruiting desk.</summary>
+    /// <summary>
+    /// Three-card upgrade menus for the manager offices and the recruiting desk.
+    /// Built as uGUI under the shared HUD canvas and rebuilt lazily on first open.
+    /// </summary>
     public sealed class ManagementMenuHUD : MonoBehaviour
     {
+        private const int MaxLevel = 5;
+
         private HumanResourcesSystem hr;
         private PlayerUpgradeSystem gm;
         private RecruitmentSystem recruitment;
         private ManagementMenu? activeMenu;
-        private GUIStyle panelStyle;
-        private GUIStyle headerStyle;
-        private GUIStyle cardStyle;
-        private GUIStyle cardTitleStyle;
-        private GUIStyle bodyStyle;
-        private GUIStyle pipStyle;
-        private GUIStyle freeButtonStyle;
-        private GUIStyle cashButtonStyle;
-        private GUIStyle closeStyle;
-        private string feedback = string.Empty;
+
+        private RectTransform root;
+        private Text titleLabel;
+        private Text feedbackLabel;
+        private Card[] cards;
         private float feedbackTimer;
+
+        private sealed class Card
+        {
+            public Text Title;
+            public Text Pips;
+            public Button Free;
+            public Button Paid;
+            public Text PaidLabel;
+            public Text MaxLabel;
+        }
 
         public void Configure(HumanResourcesSystem humanResources, PlayerUpgradeSystem generalManager, RecruitmentSystem recruitSystem)
         {
@@ -30,179 +42,219 @@ namespace ShawarmaTycoon
 
         public void Open(ManagementMenu menu)
         {
+            EnsureBuilt();
+            if (root == null) return;
             activeMenu = menu;
-            feedback = string.Empty;
+            root.gameObject.SetActive(true);
+            feedbackLabel.text = string.Empty;
+            AudioDirector.Play(GameSfx.Pickup);
+            Refresh();
         }
 
         public void Close(ManagementMenu menu)
         {
-            if (activeMenu == menu) activeMenu = null;
+            if (activeMenu == menu) CloseAll();
+        }
+
+        private void CloseAll()
+        {
+            activeMenu = null;
+            if (root != null) root.gameObject.SetActive(false);
         }
 
         private void Update()
         {
-            feedbackTimer -= Time.deltaTime;
-            if (feedbackTimer <= 0f) feedback = string.Empty;
-        }
-
-        private void OnGUI()
-        {
-            if (!activeMenu.HasValue) return;
-            EnsureStyles();
-
-            float width = Mathf.Min(560f, Screen.width - 24f);
-            float height = 356f;
-            float x = (Screen.width - width) * 0.5f;
-            float y = Mathf.Max(26f, (Screen.height - height) * 0.5f - 30f);
-            Rect panel = new(x, y, width, height);
-
-            GUI.Box(panel, GUIContent.none, panelStyle);
-            GUI.Box(new Rect(x, y, width, 58f), TitleFor(activeMenu.Value), headerStyle);
-            if (GUI.Button(new Rect(x + width - 52f, y - 14f, 48f, 48f), "X", closeStyle))
-                activeMenu = null;
-
-            if (activeMenu == ManagementMenu.HumanResources)
+            if (feedbackTimer > 0f)
             {
-                DrawUpgradeCards(panel, new[] { "Movement\nSpeed", "Capacity", "Adopt / Use" },
-                    new[] { "FAST", "BOX", "PLUS" },
-                    new[] { EmployeeUpgradeType.MovementSpeed, EmployeeUpgradeType.Capacity, EmployeeUpgradeType.AdoptUse });
-            }
-            else if (activeMenu == ManagementMenu.GeneralManager)
-            {
-                DrawPlayerCards(panel, new[] { "Movement\nSpeed", "Capacity", "Income\nIncrease" },
-                    new[] { "FAST", "BOX", "CASH" },
-                    new[] { GeneralManagerUpgradeType.MovementSpeed, GeneralManagerUpgradeType.Capacity, GeneralManagerUpgradeType.IncomeIncrease });
-            }
-            else
-            {
-                DrawRecruitCards(panel);
+                feedbackTimer -= Time.deltaTime;
+                if (feedbackTimer <= 0f && feedbackLabel != null)
+                    feedbackLabel.text = string.Empty;
             }
 
-            if (!string.IsNullOrEmpty(feedback))
-                GUI.Label(new Rect(x + 20f, y + height - 37f, width - 40f, 24f), feedback, bodyStyle);
+            if (activeMenu.HasValue) Refresh();
         }
 
-        private void DrawUpgradeCards(Rect panel, string[] titles, string[] icons, EmployeeUpgradeType[] types)
+        // ---- construction ---------------------------------------------------
+
+        private void EnsureBuilt()
         {
-            for (int i = 0; i < types.Length; i++)
+            if (root != null || GameHUD.Instance == null) return;
+
+            Image scrim = UIFactory.Panel("Management", GameHUD.Instance.ModalLayer, UITheme.Scrim, false);
+            UIFactory.Stretch(scrim.rectTransform);
+            scrim.raycastTarget = true;
+            root = scrim.rectTransform;
+
+            Image panel = UIFactory.Panel("Panel", root, UITheme.Panel);
+            UIFactory.Anchor(panel.rectTransform, UIFactory.Center, UIFactory.Center,
+                Vector2.zero, new Vector2(960f, 900f));
+            UIFactory.AddShadow(panel, new Color(0f, 0f, 0f, 0.28f), new Vector2(0f, -6f));
+
+            Image header = UIFactory.Panel("Header", panel.transform, UITheme.DarkBlueGray);
+            UIFactory.Anchor(header.rectTransform, UIFactory.TopCenter, UIFactory.TopCenter,
+                new Vector2(0f, 0f), new Vector2(960f, 116f));
+
+            titleLabel = UIFactory.Label("Title", header.transform, "", UITheme.FontLarge, UITheme.CreamLight);
+            UIFactory.Stretch(titleLabel.rectTransform, 90f, 0f);
+
+            Button close = UIFactory.Button("Close", header.transform, "✕", UITheme.WarmRed,
+                Color.white, UITheme.FontLarge, CloseAll);
+            UIFactory.Anchor(close.GetComponent<RectTransform>(), UIFactory.TopRight, UIFactory.TopRight,
+                new Vector2(-14f, -14f), new Vector2(88f, 88f));
+
+            cards = new Card[3];
+            for (int i = 0; i < cards.Length; i++)
+                cards[i] = BuildCard(panel.transform, i);
+
+            feedbackLabel = UIFactory.Label("Feedback", panel.transform, "",
+                UITheme.FontSmall, UITheme.Terracotta);
+            UIFactory.Anchor(feedbackLabel.rectTransform, UIFactory.BottomCenter, UIFactory.BottomCenter,
+                new Vector2(0f, 26f), new Vector2(880f, 44f));
+
+            root.gameObject.SetActive(false);
+        }
+
+        private Card BuildCard(Transform parent, int index)
+        {
+            const float width = 280f;
+            const float gap = 22f;
+            float x = (index - 1) * (width + gap);
+
+            Image card = UIFactory.Panel($"Card{index}", parent, UITheme.CreamLight);
+            UIFactory.Anchor(card.rectTransform, UIFactory.Center, UIFactory.Center,
+                new Vector2(x, -22f), new Vector2(width, 600f));
+
+            Image titleBar = UIFactory.Panel("TitleBar", card.transform, UITheme.Teal);
+            UIFactory.Anchor(titleBar.rectTransform, UIFactory.TopCenter, UIFactory.TopCenter,
+                Vector2.zero, new Vector2(width, 120f));
+
+            Card built = new()
             {
-                Rect card = CardRect(panel, i);
-                GUI.Box(card, GUIContent.none, cardStyle);
-                GUI.Box(new Rect(card.x + 4f, card.y + 4f, card.width - 8f, 43f), titles[i], cardTitleStyle);
-                GUI.Label(new Rect(card.x, card.y + 57f, card.width, 34f), icons[i], bodyStyle);
-                int level = hr != null ? hr.GetLevel(types[i]) : 0;
-                GUI.Label(new Rect(card.x + 6f, card.y + 91f, card.width - 12f, 24f), Pips(level), pipStyle);
-                DrawPurchaseButtons(card, hr != null && level < 5, hr != null ? hr.GetCost(types[i]) : 0,
-                    () => hr != null && hr.TryUpgrade(types[i], true),
-                    () => hr != null && hr.TryUpgrade(types[i], false));
-            }
+                Title = UIFactory.Label("Title", titleBar.transform, "", UITheme.FontSmall, Color.white)
+            };
+            UIFactory.Stretch(built.Title.rectTransform, 12f, 6f);
+
+            built.Pips = UIFactory.Label("Pips", card.transform, "", UITheme.FontBody, UITheme.Mustard);
+            UIFactory.Anchor(built.Pips.rectTransform, UIFactory.Center, UIFactory.Center,
+                new Vector2(0f, 40f), new Vector2(width - 20f, 60f));
+
+            int captured = index;
+            built.Free = UIFactory.Button("Free", card.transform, "BEDAVA", UITheme.Green,
+                Color.white, UITheme.FontSmall, () => Purchase(captured, true));
+            UIFactory.Anchor(built.Free.GetComponent<RectTransform>(),
+                UIFactory.BottomCenter, UIFactory.BottomCenter,
+                new Vector2(0f, 108f), new Vector2(width - 36f, 78f));
+
+            built.Paid = UIFactory.Button("Paid", card.transform, "", UITheme.Mustard,
+                UITheme.Ink, UITheme.FontSmall, () => Purchase(captured, false));
+            UIFactory.Anchor(built.Paid.GetComponent<RectTransform>(),
+                UIFactory.BottomCenter, UIFactory.BottomCenter,
+                new Vector2(0f, 22f), new Vector2(width - 36f, 78f));
+            built.PaidLabel = built.Paid.GetComponentInChildren<Text>();
+
+            built.MaxLabel = UIFactory.Label("Max", card.transform, "MAX", UITheme.FontBody, UITheme.InkSoft);
+            UIFactory.Anchor(built.MaxLabel.rectTransform, UIFactory.BottomCenter, UIFactory.BottomCenter,
+                new Vector2(0f, 64f), new Vector2(width - 30f, 70f));
+            built.MaxLabel.gameObject.SetActive(false);
+            return built;
         }
 
-        private void DrawPlayerCards(Rect panel, string[] titles, string[] icons, GeneralManagerUpgradeType[] types)
-        {
-            for (int i = 0; i < types.Length; i++)
-            {
-                Rect card = CardRect(panel, i);
-                GUI.Box(card, GUIContent.none, cardStyle);
-                GUI.Box(new Rect(card.x + 4f, card.y + 4f, card.width - 8f, 43f), titles[i], cardTitleStyle);
-                GUI.Label(new Rect(card.x, card.y + 57f, card.width, 34f), icons[i], bodyStyle);
-                int level = gm != null ? gm.GetLevel(types[i]) : 0;
-                GUI.Label(new Rect(card.x + 6f, card.y + 91f, card.width - 12f, 24f), Pips(level), pipStyle);
-                DrawPurchaseButtons(card, gm != null && level < 5, gm != null ? gm.GetCost(types[i]) : 0,
-                    () => gm != null && gm.TryUpgrade(types[i], true),
-                    () => gm != null && gm.TryUpgrade(types[i], false));
-            }
-        }
+        // ---- content --------------------------------------------------------
 
-        private void DrawRecruitCards(Rect panel)
-        {
-            RecruitRole[] roles = { RecruitRole.Cashier, RecruitRole.Cleaner, RecruitRole.Runner };
-            string[] titles = { "Cashier", "Table\nCleaner", "Counter\nRunner" };
-            string[] icons = { "CASH", "CLEAN", "RUN" };
-            for (int i = 0; i < roles.Length; i++)
-            {
-                Rect card = CardRect(panel, i);
-                GUI.Box(card, GUIContent.none, cardStyle);
-                GUI.Box(new Rect(card.x + 4f, card.y + 4f, card.width - 8f, 43f), titles[i], cardTitleStyle);
-                GUI.Label(new Rect(card.x, card.y + 57f, card.width, 34f), icons[i], bodyStyle);
-                bool hired = recruitment != null && recruitment.IsHired(roles[i]);
-                GUI.Label(new Rect(card.x + 6f, card.y + 91f, card.width - 12f, 24f), hired ? "HIRED" : "AVAILABLE", pipStyle);
-                DrawPurchaseButtons(card, !hired, recruitment != null ? recruitment.GetCost(roles[i]) : 0,
-                    () => recruitment != null && recruitment.TryHire(roles[i], true),
-                    () => recruitment != null && recruitment.TryHire(roles[i], false));
-            }
-        }
+        private static readonly string[] EmployeeTitles = { "Hareket\nHızı", "Kapasite", "Otomasyon" };
+        private static readonly string[] PlayerTitles = { "Hareket\nHızı", "Kapasite", "Gelir\nArtışı" };
+        private static readonly string[] RecruitTitles = { "Kasiyer", "Masa\nTemizlikçisi", "Tezgâh\nKoşucusu" };
 
-        private void DrawPurchaseButtons(Rect card, bool available, int cost, System.Func<bool> freeAction, System.Func<bool> paidAction)
+        private static readonly EmployeeUpgradeType[] EmployeeTypes =
         {
-            Rect freeButton = new(card.x + 9f, card.y + 124f, card.width - 18f, 35f);
-            Rect cashButton = new(card.x + 9f, card.y + 166f, card.width - 18f, 38f);
-            if (!available)
-            {
-                GUI.Label(new Rect(card.x + 5f, card.y + 140f, card.width - 10f, 42f), "MAX", bodyStyle);
-                return;
-            }
-
-            if (GUI.Button(freeButton, "FREE", freeButtonStyle)) Report(freeAction());
-            if (GUI.Button(cashButton, "$ " + cost, cashButtonStyle)) Report(paidAction());
-        }
-
-        private void Report(bool success)
+            EmployeeUpgradeType.MovementSpeed, EmployeeUpgradeType.Capacity, EmployeeUpgradeType.AdoptUse
+        };
+        private static readonly GeneralManagerUpgradeType[] PlayerTypes =
         {
-            feedback = success ? "Upgrade applied" : "Not enough cash";
-            feedbackTimer = 1.8f;
-        }
-
-        private static Rect CardRect(Rect panel, int index)
+            GeneralManagerUpgradeType.MovementSpeed, GeneralManagerUpgradeType.Capacity,
+            GeneralManagerUpgradeType.IncomeIncrease
+        };
+        private static readonly RecruitRole[] Roles =
         {
-            float gap = 10f;
-            float width = (panel.width - 40f - gap * 2f) / 3f;
-            return new Rect(panel.x + 20f + index * (width + gap), panel.y + 73f, width, 228f);
-        }
-
-        private static string Pips(int level)
-        {
-            string value = string.Empty;
-            for (int i = 0; i < 5; i++) value += i < level ? "● " : "○ ";
-            return value;
-        }
-
-        private static string TitleFor(ManagementMenu menu) => menu switch
-        {
-            ManagementMenu.HumanResources => "Upgrade Employees",
-            ManagementMenu.GeneralManager => "Upgrade Yourself",
-            _ => "Recruit Staff"
+            RecruitRole.Cashier, RecruitRole.Cleaner, RecruitRole.Runner
         };
 
-        private void EnsureStyles()
+        private void Refresh()
         {
-            if (panelStyle != null) return;
-            panelStyle = CreateStyle(new Color(1f, 0.95f, 0.78f), 0, TextAnchor.MiddleCenter, Color.black);
-            headerStyle = CreateStyle(new Color(0.14f, 0.43f, 0.77f), 23, TextAnchor.MiddleCenter, Color.white, FontStyle.Bold);
-            cardStyle = CreateStyle(Color.white, 0, TextAnchor.MiddleCenter, Color.black);
-            cardTitleStyle = CreateStyle(new Color(0.12f, 0.48f, 0.83f), 14, TextAnchor.MiddleCenter, Color.white, FontStyle.Bold);
-            bodyStyle = CreateStyle(Color.clear, 13, TextAnchor.MiddleCenter, new Color(0.24f, 0.13f, 0.08f), FontStyle.Bold);
-            pipStyle = CreateStyle(Color.clear, 15, TextAnchor.MiddleCenter, new Color(0.52f, 0.38f, 0.26f));
-            freeButtonStyle = CreateStyle(new Color(0.25f, 0.70f, 0.23f), 15, TextAnchor.MiddleCenter, Color.white, FontStyle.Bold);
-            cashButtonStyle = CreateStyle(new Color(0.95f, 0.72f, 0.16f), 15, TextAnchor.MiddleCenter, new Color(0.25f, 0.15f, 0.06f), FontStyle.Bold);
-            closeStyle = CreateStyle(new Color(0.91f, 0.22f, 0.27f), 20, TextAnchor.MiddleCenter, Color.white, FontStyle.Bold);
+            if (!activeMenu.HasValue || cards == null) return;
+
+            switch (activeMenu.Value)
+            {
+                case ManagementMenu.HumanResources:
+                    titleLabel.text = "ÇALIŞANLARI GELİŞTİR";
+                    for (int i = 0; i < cards.Length; i++)
+                    {
+                        int level = hr != null ? hr.GetLevel(EmployeeTypes[i]) : 0;
+                        ApplyCard(cards[i], EmployeeTitles[i], Pips(level), level < MaxLevel,
+                            hr != null ? hr.GetCost(EmployeeTypes[i]) : 0);
+                    }
+                    break;
+
+                case ManagementMenu.GeneralManager:
+                    titleLabel.text = "KENDİNİ GELİŞTİR";
+                    for (int i = 0; i < cards.Length; i++)
+                    {
+                        int level = gm != null ? gm.GetLevel(PlayerTypes[i]) : 0;
+                        ApplyCard(cards[i], PlayerTitles[i], Pips(level), level < MaxLevel,
+                            gm != null ? gm.GetCost(PlayerTypes[i]) : 0);
+                    }
+                    break;
+
+                default:
+                    titleLabel.text = "PERSONEL AL";
+                    for (int i = 0; i < cards.Length; i++)
+                    {
+                        bool hired = recruitment != null && recruitment.IsHired(Roles[i]);
+                        ApplyCard(cards[i], RecruitTitles[i], hired ? "ÇALIŞIYOR" : "MÜSAİT", !hired,
+                            recruitment != null ? recruitment.GetCost(Roles[i]) : 0);
+                    }
+                    break;
+            }
         }
 
-        private static GUIStyle CreateStyle(Color color, int fontSize, TextAnchor alignment, Color textColor, FontStyle fontStyle = FontStyle.Normal)
+        private static void ApplyCard(Card card, string title, string state, bool available, int cost)
         {
-            Texture2D texture = new(1, 1) { hideFlags = HideFlags.DontSave };
-            texture.SetPixel(0, 0, color);
-            texture.Apply();
-            GUIStyle style = new(GUI.skin.box)
-            {
-                normal = { background = texture, textColor = textColor },
-                alignment = alignment,
-                fontSize = fontSize,
-                fontStyle = fontStyle,
-                wordWrap = true,
-                padding = new RectOffset(4, 4, 3, 3)
-            };
-            return style;
+            card.Title.text = title;
+            card.Pips.text = state;
+            card.Free.gameObject.SetActive(available);
+            card.Paid.gameObject.SetActive(available);
+            card.MaxLabel.gameObject.SetActive(!available);
+            if (available) card.PaidLabel.text = "₺ " + cost;
         }
+
+        private void Purchase(int index, bool free)
+        {
+            if (!activeMenu.HasValue) return;
+
+            bool success = activeMenu.Value switch
+            {
+                ManagementMenu.HumanResources => hr != null && hr.TryUpgrade(EmployeeTypes[index], free),
+                ManagementMenu.GeneralManager => gm != null && gm.TryUpgrade(PlayerTypes[index], free),
+                _ => recruitment != null && recruitment.TryHire(Roles[index], free)
+            };
+
+            feedbackLabel.text = success ? "Geliştirme uygulandı" : "Yeterli para yok";
+            feedbackLabel.color = success ? UITheme.Green : UITheme.WarmRed;
+            feedbackTimer = 1.8f;
+            AudioDirector.Play(success ? GameSfx.Unlock : GameSfx.Error);
+            Refresh();
+        }
+
+        private static readonly string[] PipStrings =
+        {
+            "○ ○ ○ ○ ○",
+            "● ○ ○ ○ ○",
+            "● ● ○ ○ ○",
+            "● ● ● ○ ○",
+            "● ● ● ● ○",
+            "● ● ● ● ●"
+        };
+
+        private static string Pips(int level) => PipStrings[Mathf.Clamp(level, 0, MaxLevel)];
     }
 }

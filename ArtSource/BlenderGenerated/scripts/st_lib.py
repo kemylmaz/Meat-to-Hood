@@ -47,13 +47,26 @@ PALETTE = {
     "MAT_HeatOrange":      ("F08A3C", 0.68, 0.0),
     "MAT_BinGreen":        ("4C6B58", 0.75, 0.0),
     "MAT_Steel":           ("C9CDD2", 0.35, 1.0),
+    # --- city kit (phase 2A) ---
+    "MAT_Asphalt":         ("4E4E56", 0.85, 0.0),
+    "MAT_RoadLine":        ("EFE3C8", 0.70, 0.0),
+    "MAT_Sidewalk":        ("CBBDA8", 0.80, 0.0),
+    "MAT_CurbStone":       ("A2937F", 0.80, 0.0),
+    "MAT_BrickWarm":       ("C4785B", 0.78, 0.0),
+    "MAT_BrickCool":       ("8E9AA6", 0.78, 0.0),
+    "MAT_WindowGlass":     ("9FD3E0", 0.28, 0.0),
+    "MAT_LampPost":        ("3A4148", 0.60, 0.0),
+    "MAT_LampGlow":        ("FFE9A8", 0.40, 0.0),
+    "MAT_CarGlass":        ("7FB6C9", 0.25, 0.0),
+    "MAT_Tire":            ("26262A", 0.85, 0.0),
+    "MAT_Awning":          ("D9564A", 0.72, 0.0),
     # preview-only helpers (never inside an asset collection)
     "PRV_Ground":          ("E9DCC8", 0.90, 0.0),
     "PRV_Arrow":           ("E0217A", 0.60, 0.0),
     "PRV_Label":           ("3A3330", 0.80, 0.0),
 }
 
-EMISSIVE = {"MAT_HeatOrange": 0.55, "PRV_Arrow": 0.35}
+EMISSIVE = {"MAT_HeatOrange": 0.55, "PRV_Arrow": 0.35, "MAT_LampGlow": 1.6}
 
 
 def hex_rgb(h):

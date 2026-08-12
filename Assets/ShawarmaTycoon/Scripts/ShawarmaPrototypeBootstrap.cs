@@ -13,6 +13,7 @@ namespace ShawarmaTycoon
         private Transform playerTransform;
         private MobilePlayerController playerMotor;
         private CarryInventory inventory;
+        private CityLayout cityLayout;
 
         private void Awake()
         {
@@ -35,12 +36,13 @@ namespace ShawarmaTycoon
             economy.Configure(startingCoins);
             root.AddComponent<RushHourSystem>();
             root.AddComponent<ComboSystem>();
+            AudioDirector.Ensure(runtimeRoot);
 
-            BuildFloatingWorld();
+            BuildCity();
             CreatePlayer();
 
             ItemStation meatSource = CreateStation(
-                "ET DEPOSU", new Vector3(-8f, 0.25f, 8.15f), new Vector3(2.5f, 0.9f, 2.0f),
+                "ET DEPOSU", new Vector3(-6f, 0.25f, 6.3f), new Vector3(2.5f, 0.9f, 2.0f),
                 new Color(0.74f, 0.39f, 0.26f), StationMode.Source,
                 ItemType.None, ItemType.RawMeat, 0.5f, 1, 16, 0.65f);
             DecorateMeatSource(meatSource.transform);
@@ -52,7 +54,7 @@ namespace ShawarmaTycoon
                 new Vector3(-0.48f, 0.25f, -1.05f), new Vector3(0.48f, 0.25f, -1.05f), 2.9f);
 
             ItemStation oven = CreateStation(
-                "OCAK", new Vector3(-4f, 0.25f, 8.15f), new Vector3(2.2f, 0.9f, 1.9f),
+                "OCAK", new Vector3(-3f, 0.25f, 6.3f), new Vector3(2.2f, 0.9f, 1.9f),
                 new Color(0.88f, 0.45f, 0.20f), StationMode.Processor,
                 ItemType.RawMeat, ItemType.CookedMeat, 2.2f, 10, 10, 1f);
             DecorateOven(oven.transform);
@@ -64,7 +66,7 @@ namespace ShawarmaTycoon
                 new Vector3(-0.34f, 1.27f, -0.42f), new Vector3(0.34f, 1.27f, -0.42f), 2.55f);
 
             ItemStation cutting = CreateStation(
-                "KESİM", new Vector3(0f, 0.25f, 8.15f), new Vector3(2.2f, 0.9f, 1.9f),
+                "KESİM", new Vector3(0f, 0.25f, 6.3f), new Vector3(2.2f, 0.9f, 1.9f),
                 new Color(0.65f, 0.70f, 0.67f), StationMode.Processor,
                 ItemType.CookedMeat, ItemType.SlicedMeat, 1.15f, 10, 10, 1f);
             DecorateCuttingCounter(cutting.transform);
@@ -76,7 +78,7 @@ namespace ShawarmaTycoon
                 new Vector3(-0.50f, 1.42f, -0.38f), new Vector3(0.50f, 1.42f, -0.38f), 1.9f);
 
             ItemStation wrap = CreateStation(
-                "DÜRÜM", new Vector3(4f, 0.25f, 8.15f), new Vector3(2.2f, 0.9f, 1.9f),
+                "DÜRÜM", new Vector3(3f, 0.25f, 6.3f), new Vector3(2.2f, 0.9f, 1.9f),
                 new Color(0.91f, 0.70f, 0.30f), StationMode.Processor,
                 ItemType.SlicedMeat, ItemType.Wrap, 0.9f, 10, 10, 1f);
             DecorateWrapCounter(wrap.transform);
@@ -88,7 +90,7 @@ namespace ShawarmaTycoon
                 new Vector3(-0.50f, 1.42f, -0.38f), new Vector3(0.50f, 1.42f, -0.38f), 1.9f);
 
             ItemStation service = CreateStation(
-                "SERVİS", new Vector3(8f, 0.25f, 8.15f), new Vector3(2.2f, 0.9f, 1.9f),
+                "SERVİS", new Vector3(6f, 0.25f, 6.3f), new Vector3(2.2f, 0.9f, 1.9f),
                 PrototypeVisuals.Teal, StationMode.Service,
                 ItemType.Wrap, ItemType.None, 0.1f, 1, 14, 1f);
             MeshyVisuals.TryReplaceDirect(
@@ -100,7 +102,7 @@ namespace ShawarmaTycoon
 
             GameObject trashBinObject = new("Çöp Kutusu");
             trashBinObject.transform.SetParent(runtimeRoot, false);
-            trashBinObject.transform.localPosition = new Vector3(-10.2f, 0.25f, -1.1f);
+            trashBinObject.transform.localPosition = new Vector3(-9.4f, 0.25f, 3.2f);
             PrototypeVisuals.CreatePrimitive("Çöp Gövdesi", PrimitiveType.Cube, trashBinObject.transform,
                 new Vector3(0f, 0.52f, 0f), new Vector3(0.82f, 0.96f, 0.70f), new Color(0.34f, 0.52f, 0.43f),
                 colliderEnabled: true);
@@ -230,9 +232,12 @@ namespace ShawarmaTycoon
             UpgradePad upgradePad = upgradeRoot.AddComponent<UpgradePad>();
             upgradePad.Configure(playerTransform, expansion, 60);
 
-            Transform entry = CreateMarker("Müşteri Girişi", new Vector3(10.0f, 0.25f, -8.35f));
-            Transform exit = CreateMarker("Müşteri Çıkışı", new Vector3(11.15f, 0.25f, -8.15f));
-            Transform queueFront = CreateMarker("Kuyruk Başı", new Vector3(8f, 0.25f, 6.35f));
+            // Pedestrians come in from the side street at the front corner; the
+            // main road behind the kitchen is for traffic and the future
+            // drive-through window.
+            Transform entry = CreateMarker("Müşteri Girişi", new Vector3(9.6f, 0.25f, -8.0f));
+            Transform exit = CreateMarker("Müşteri Çıkışı", new Vector3(10.8f, 0.25f, -7.8f));
+            Transform queueFront = CreateMarker("Kuyruk Başı", new Vector3(6f, 0.25f, 4.5f));
 
             GameObject customerRoot = new("Müşteriler");
             customerRoot.transform.SetParent(runtimeRoot, false);
@@ -255,10 +260,9 @@ namespace ShawarmaTycoon
             gmTerminal.Configure(playerTransform, managementHud, ManagementMenu.GeneralManager, "GM UPGRADE");
             recruitTerminal.Configure(playerTransform, managementHud, ManagementMenu.Recruiting, "RECRUIT");
 
-            PrototypeHUD hud = root.AddComponent<PrototypeHUD>();
-            hud.Configure(inventory);
-            root.AddComponent<DailyTasksHUD>();
-            root.AddComponent<TycoonStatusHUD>();
+            UI.GameHUD hud = UI.GameHUD.Ensure(runtimeRoot);
+            hud.Objective.Bind(inventory);
+            playerMotor.SetJoystick(hud.Joystick);
             root.AddComponent<GameSessionPersistence>();
 
             GameObject tutorial = new("Öğretici Ok");
@@ -296,7 +300,7 @@ namespace ShawarmaTycoon
             }
 
             camera.orthographic = true;
-            camera.orthographicSize = 5.4f;
+            camera.orthographicSize = 6.8f;
             camera.nearClipPlane = 0.1f;
             camera.farClipPlane = 100f;
             camera.clearFlags = CameraClearFlags.SolidColor;
@@ -321,44 +325,32 @@ namespace ShawarmaTycoon
             QualitySettings.shadowDistance = 40f;
         }
 
-        private void BuildFloatingWorld()
+        /// <summary>
+        /// The restaurant now sits on a real street corner instead of a floating
+        /// diorama, which is what makes drive-by traffic possible at all.
+        /// </summary>
+        private void BuildCity()
         {
-            GameObject island = new("Başlangıç Adası");
-            island.transform.SetParent(runtimeRoot, false);
-            CreateIslandGeometry(island.transform, new Vector3(24f, 0.5f, 20f));
+            cityLayout = new CityLayout();
+            CityBlock.Build(runtimeRoot, cityLayout);
 
-            Vector3[] cloudPositions =
-            {
-                new(-13f, -2.4f, -9f),
-                new(-11f, -2.8f, 10f),
-                new(12f, -2.6f, 10f),
-                new(13f, -2.3f, -8f)
-            };
+            // Low railings mark the lot edge without hiding the street behind it.
+            CreateBoundaryRail(new Vector3(0f, 0.52f, 8.35f), new Vector3(24f, 0.55f, 0.20f));
+            CreateBoundaryRail(new Vector3(-11.85f, 0.52f, 0f), new Vector3(0.20f, 0.55f, 17f));
 
-            foreach (Vector3 position in cloudPositions)
-            {
-                GameObject cloud = new("Bulut");
-                cloud.transform.SetParent(runtimeRoot, false);
-                cloud.transform.localPosition = position;
-                PrototypeVisuals.CreatePrimitive("Cloud A", PrimitiveType.Sphere, cloud.transform, Vector3.zero,
-                    new Vector3(2.3f, 0.65f, 1.2f), new Color(0.95f, 0.98f, 1f));
-                PrototypeVisuals.CreatePrimitive("Cloud B", PrimitiveType.Sphere, cloud.transform, new Vector3(1.2f, 0.1f, 0f),
-                    new Vector3(1.5f, 0.55f, 1.0f), new Color(0.95f, 0.98f, 1f));
-            }
-
-            CreateBoundaryRail(new Vector3(0f, 0.75f, 9.75f), new Vector3(24f, 1.0f, 0.22f));
-            CreateBoundaryRail(new Vector3(-11.75f, 0.75f, 0f), new Vector3(0.22f, 1.0f, 20f));
+            TrafficSystem traffic = runtimeRoot.gameObject.AddComponent<TrafficSystem>();
+            traffic.Configure(cityLayout);
         }
 
         private void CreateIslandGeometry(Transform parent, Vector3 topScale)
         {
             PrototypeVisuals.CreatePrimitive(
-                "Island Top", PrimitiveType.Cube, parent,
+                "Lot Floor", PrimitiveType.Cube, parent,
                 Vector3.zero, topScale, PrototypeVisuals.IslandTop, colliderEnabled: true);
             PrototypeVisuals.CreatePrimitive(
-                "Island Underside", PrimitiveType.Cube, parent,
-                new Vector3(0f, -1.05f, 0f),
-                new Vector3(topScale.x * 0.90f, 1.65f, topScale.z * 0.90f),
+                "Lot Kerb", PrimitiveType.Cube, parent,
+                new Vector3(0f, 0.14f, 0f),
+                new Vector3(topScale.x + 0.36f, 0.20f, topScale.z + 0.36f),
                 PrototypeVisuals.IslandSide);
 
             CreateFloorGrid(parent, topScale);
@@ -419,12 +411,12 @@ namespace ShawarmaTycoon
             controller.stepOffset = 0.25f;
 
             playerMotor = player.AddComponent<MobilePlayerController>();
-            playerMotor.Configure(4.6f, new Vector2(-11.4f, -9.4f), new Vector2(11.4f, 9.4f));
+            playerMotor.Configure(4.6f, new Vector2(-11.4f, -7.7f), new Vector2(11.4f, 7.7f));
             MobileCameraRig cameraRig = Camera.main != null ? Camera.main.GetComponent<MobileCameraRig>() : null;
             if (cameraRig != null)
             {
                 cameraRig.SetFollowTarget(player.transform);
-                cameraRig.SetFollowBounds(new Vector2(-10.5f, 19f), new Vector2(-9f, 9f));
+                cameraRig.SetFollowBounds(new Vector2(-10.5f, 19f), new Vector2(-7.5f, 7.5f));
             }
 
             inventory = player.AddComponent<CarryInventory>();

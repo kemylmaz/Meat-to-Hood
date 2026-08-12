@@ -136,6 +136,7 @@ namespace ShawarmaTycoon
             CustomerAgent agent = customer.AddComponent<CustomerAgent>();
             agent.Configure(this, exitPoint, 2.4f, 4.5f, 15, vip);
             customers.Add(agent);
+            AudioDirector.Play(GameSfx.CustomerArrive, vip ? 0.9f : 0.45f, vip ? 1.15f : 1f);
             return agent;
         }
 

@@ -19,6 +19,8 @@ namespace ShawarmaTycoon
         public int Streak => streak;
         public int MaximumStreak => maximumStreak;
         public float TimeRemaining => streak > 0 ? Mathf.Max(0f, timeRemaining) : 0f;
+        /// <summary>Full length of the streak window, so HUDs can draw a fill bar.</summary>
+        public float TimeoutSeconds => timeoutSeconds;
         public float Multiplier => MultiplierFor(streak);
         public bool IsActive => streak > 0;
 
@@ -99,6 +101,8 @@ namespace ShawarmaTycoon
         {
             streak += Mathf.Max(1, amount);
             timeRemaining = timeoutSeconds;
+            // Pitch climbs with the streak so a hot run is audible.
+            AudioDirector.Play(GameSfx.ComboUp, 0.8f, 1f + Mathf.Min(streak, 8) * 0.07f);
 
             if (streak > maximumStreak)
             {
