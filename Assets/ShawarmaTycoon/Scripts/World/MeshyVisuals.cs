@@ -11,8 +11,17 @@ namespace ShawarmaTycoon
     /// </summary>
     public static class MeshyVisuals
     {
-        private const string ResourceFolder = "MeshyPrefabs/";
+        private const string Phase1ResourceFolder = "Phase1Prefabs/";
+        private const string LegacyResourceFolder = "MeshyPrefabs/";
         private static readonly Dictionary<string, GameObject> Prefabs = new();
+        private static readonly Dictionary<string, string> Phase1Aliases = new()
+        {
+            { "01_player_character", "01_player_character" },
+            { "02_customer_character", "02_customer_character" },
+            { "06_shawarma_rotisserie", "06_rotisserie_station" },
+            { "15_dining_table_clean", "15_dining_table" },
+            { "17_trash_bin", "17_trash_bin" }
+        };
 
         public static bool IsAvailable(string assetName) => Load(assetName) != null;
 
@@ -31,7 +40,9 @@ namespace ShawarmaTycoon
             GameObject anchor = new(assetName + " Visual");
             anchor.transform.SetParent(parent, false);
             anchor.transform.localPosition = localPosition;
-            anchor.transform.localEulerAngles = localEulerAngles;
+            CozyVisualMetadata metadata = prefab.GetComponent<CozyVisualMetadata>();
+            anchor.transform.localEulerAngles = localEulerAngles +
+                (metadata != null ? metadata.RuntimeEulerOffset : Vector3.zero);
 
             GameObject visual = Object.Instantiate(prefab, anchor.transform, false);
             visual.name = assetName;
@@ -58,7 +69,40 @@ namespace ShawarmaTycoon
                     -bounds.center.z * scale.z);
             }
 
+            // The legacy Meshy customer has no facial geometry. The approved
+            // Blender character already has a complete face and must not get
+            // this compatibility overlay.
+            if (assetName == "02_customer_character" &&
+                (metadata == null || !metadata.HasAuthoredFace))
+                AddCustomerFace(anchor.transform, targetSize);
+
             return anchor;
+        }
+
+        private static void AddCustomerFace(Transform parent, Vector3 targetSize)
+        {
+            GameObject face = new("Customer Face");
+            face.transform.SetParent(parent, false);
+
+            float eyeX = targetSize.x * 0.11f;
+            float eyeY = targetSize.y * 0.895f;
+            float mouthY = targetSize.y * 0.835f;
+            float front = -Mathf.Min(targetSize.x, targetSize.z) * 0.315f;
+            Color featureColor = new(0.18f, 0.10f, 0.08f);
+
+            PrototypeVisuals.CreatePrimitive("Eye Left", PrimitiveType.Sphere, face.transform,
+                new Vector3(-eyeX, eyeY, front), new Vector3(0.055f, 0.075f, 0.025f), featureColor);
+            PrototypeVisuals.CreatePrimitive("Eye Right", PrimitiveType.Sphere, face.transform,
+                new Vector3(eyeX, eyeY, front), new Vector3(0.055f, 0.075f, 0.025f), featureColor);
+            PrototypeVisuals.CreatePrimitive("Mouth", PrimitiveType.Cube, face.transform,
+                new Vector3(0f, mouthY, front - 0.002f), new Vector3(0.13f, 0.025f, 0.018f),
+                new Color(0.48f, 0.16f, 0.14f));
+
+            foreach (Renderer renderer in face.GetComponentsInChildren<Renderer>(true))
+            {
+                renderer.shadowCastingMode = ShadowCastingMode.Off;
+                renderer.receiveShadows = false;
+            }
         }
 
         public static bool TryReplaceDirect(
@@ -98,6 +142,30 @@ namespace ShawarmaTycoon
             }
         }
 
+        public static bool TryFindAnchor(Transform root, string anchorName, out Transform anchor)
+        {
+            anchor = null;
+            if (root == null || string.IsNullOrWhiteSpace(anchorName))
+                return false;
+
+            Stack<Transform> pending = new();
+            pending.Push(root);
+            while (pending.Count > 0)
+            {
+                Transform current = pending.Pop();
+                if (current.name == anchorName)
+                {
+                    anchor = current;
+                    return true;
+                }
+
+                for (int i = current.childCount - 1; i >= 0; i--)
+                    pending.Push(current.GetChild(i));
+            }
+
+            return false;
+        }
+
         private static GameObject Load(string assetName)
         {
             if (string.IsNullOrWhiteSpace(assetName))
@@ -105,7 +173,11 @@ namespace ShawarmaTycoon
             if (Prefabs.TryGetValue(assetName, out GameObject cached))
                 return cached;
 
-            GameObject prefab = Resources.Load<GameObject>(ResourceFolder + assetName);
+            GameObject prefab = null;
+            if (Phase1Aliases.TryGetValue(assetName, out string phase1Name))
+                prefab = Resources.Load<GameObject>(Phase1ResourceFolder + phase1Name);
+            if (prefab == null)
+                prefab = Resources.Load<GameObject>(LegacyResourceFolder + assetName);
             Prefabs[assetName] = prefab;
             return prefab;
         }
@@ -141,10 +213,19 @@ namespace ShawarmaTycoon
                 if (renderer == null)
                     continue;
 
-                Bounds local = renderer.localBounds;
-                Matrix4x4 matrix = root.worldToLocalMatrix * renderer.transform.localToWorldMatrix;
-                Vector3 min = local.min;
-                Vector3 max = local.max;
+                // FBX skinned renderers can expose a tiny bind-pose localBounds
+                // while their evaluated bone bounds are correctly sized in world
+                // space. Using that tiny box would scale authored characters up by
+                // roughly 100x. Static meshes still use their local mesh bounds so
+                // rotated gameplay wrappers do not inflate the fitted size.
+                Bounds source = renderer is SkinnedMeshRenderer
+                    ? renderer.bounds
+                    : renderer.localBounds;
+                Matrix4x4 matrix = renderer is SkinnedMeshRenderer
+                    ? root.worldToLocalMatrix
+                    : root.worldToLocalMatrix * renderer.transform.localToWorldMatrix;
+                Vector3 min = source.min;
+                Vector3 max = source.max;
 
                 for (int x = 0; x < 2; x++)
                 for (int y = 0; y < 2; y++)

@@ -1,0 +1,332 @@
+{
+  "01_player_character": {
+    "meshes": [
+      "01_player_character_LOD0",
+      "01_player_character_LOD1",
+      "01_player_character_LOD2"
+    ],
+    "tris": {
+      "01_player_character_LOD0": 8960,
+      "01_player_character_LOD1": 4480,
+      "01_player_character_LOD2": 1792
+    },
+    "materials": [
+      "MAT_Cream",
+      "MAT_DarkBlueGray",
+      "MAT_DarkNavy",
+      "MAT_HairDarkBrown",
+      "MAT_SkinWarm",
+      "MAT_Terracotta",
+      "MAT_WarmRed"
+    ],
+    "empties": [
+      "01_player_character_ROOT",
+      "CARRY_ANCHOR",
+      "FRONT_DIRECTION",
+      "HEAD_UI_ANCHOR"
+    ],
+    "armatures": [
+      "01_player_character_RIG"
+    ],
+    "bones": 19,
+    "actions": [
+      "01_player_character_RIG|01_player_character_RIG|CarryWalk",
+      "01_player_character_RIG|01_player_character_RIG|Idle",
+      "01_player_character_RIG|01_player_character_RIG|Walk"
+    ],
+    "root_xform": {
+      "loc": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rot_deg": [
+        90.0,
+        -0.0,
+        0.0
+      ],
+      "scale": [
+        0.01,
+        0.01,
+        0.01
+      ]
+    },
+    "lod0_world_bbox": {
+      "min": [
+        -0.307,
+        -0.276,
+        -0.0
+      ],
+      "max": [
+        0.307,
+        0.1764,
+        1.6979
+      ],
+      "dims": [
+        0.6139,
+        0.4524,
+        1.6979
+      ]
+    }
+  },
+  "02_customer_character": {
+    "meshes": [
+      "02_customer_character_LOD0",
+      "02_customer_character_LOD1",
+      "02_customer_character_LOD2"
+    ],
+    "tris": {
+      "02_customer_character_LOD0": 8876,
+      "02_customer_character_LOD1": 4438,
+      "02_customer_character_LOD2": 1774
+    },
+    "materials": [
+      "MAT_Cream",
+      "MAT_DarkBlueGray",
+      "MAT_DarkNavy",
+      "MAT_HairBrown",
+      "MAT_Mustard",
+      "MAT_SkinWarmDeep",
+      "MAT_Teal"
+    ],
+    "empties": [
+      "02_customer_character_ROOT",
+      "CARRY_ANCHOR",
+      "FRONT_DIRECTION",
+      "HEAD_UI_ANCHOR"
+    ],
+    "armatures": [
+      "02_customer_character_RIG"
+    ],
+    "bones": 19,
+    "actions": [
+      "02_customer_character_RIG|02_customer_character_RIG|CarryWalk",
+      "02_customer_character_RIG|02_customer_character_RIG|Idle",
+      "02_customer_character_RIG|02_customer_character_RIG|Walk"
+    ],
+    "root_xform": {
+      "loc": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rot_deg": [
+        90.0,
+        -0.0,
+        0.0
+      ],
+      "scale": [
+        0.01,
+        0.01,
+        0.01
+      ]
+    },
+    "lod0_world_bbox": {
+      "min": [
+        -0.3107,
+        -0.1998,
+        -0.0
+      ],
+      "max": [
+        0.3107,
+        0.2428,
+        1.7
+      ],
+      "dims": [
+        0.6213,
+        0.4426,
+        1.7
+      ]
+    }
+  },
+  "06_rotisserie_station": {
+    "meshes": [
+      "06_rotisserie_station_LOD0",
+      "06_rotisserie_station_LOD1",
+      "06_rotisserie_station_LOD2"
+    ],
+    "tris": {
+      "06_rotisserie_station_LOD0": 13080,
+      "06_rotisserie_station_LOD1": 6540,
+      "06_rotisserie_station_LOD2": 2616
+    },
+    "materials": [
+      "MAT_Cream",
+      "MAT_DarkBlueGray",
+      "MAT_DarkCookedMeat",
+      "MAT_HeatOrange",
+      "MAT_MeatBrown",
+      "MAT_Mustard",
+      "MAT_Steel",
+      "MAT_Terracotta"
+    ],
+    "empties": [
+      "06_rotisserie_station_ROOT",
+      "FRONT_DIRECTION",
+      "INPUT_ANCHOR",
+      "OUTPUT_ANCHOR",
+      "WORKER_ANCHOR"
+    ],
+    "armatures": [],
+    "bones": 0,
+    "actions": [],
+    "root_xform": {
+      "loc": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rot_deg": [
+        90.0,
+        -0.0,
+        0.0
+      ],
+      "scale": [
+        0.01,
+        0.01,
+        0.01
+      ]
+    },
+    "lod0_world_bbox": {
+      "min": [
+        -0.58,
+        -0.424,
+        -0.0
+      ],
+      "max": [
+        0.58,
+        0.42,
+        1.915
+      ],
+      "dims": [
+        1.16,
+        0.844,
+        1.915
+      ]
+    }
+  },
+  "15_dining_table": {
+    "meshes": [
+      "15_dining_table_LOD0",
+      "15_dining_table_LOD1",
+      "15_dining_table_LOD2"
+    ],
+    "tris": {
+      "15_dining_table_LOD0": 4260,
+      "15_dining_table_LOD1": 2130,
+      "15_dining_table_LOD2": 852
+    },
+    "materials": [
+      "MAT_Cream",
+      "MAT_DarkNavy",
+      "MAT_Teal",
+      "MAT_WarmWood",
+      "MAT_WoodLight"
+    ],
+    "empties": [
+      "15_dining_table_ROOT",
+      "CASH_PAD_ANCHOR",
+      "DIRTY_DISH_ANCHOR",
+      "FRONT_DIRECTION",
+      "SEAT_A",
+      "SEAT_B"
+    ],
+    "armatures": [],
+    "bones": 0,
+    "actions": [],
+    "root_xform": {
+      "loc": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rot_deg": [
+        90.0,
+        -0.0,
+        0.0
+      ],
+      "scale": [
+        0.01,
+        0.01,
+        0.01
+      ]
+    },
+    "lod0_world_bbox": {
+      "min": [
+        -0.6,
+        -0.8825,
+        -0.0
+      ],
+      "max": [
+        0.6,
+        0.8825,
+        0.9
+      ],
+      "dims": [
+        1.2,
+        1.765,
+        0.9
+      ]
+    }
+  },
+  "17_trash_bin": {
+    "meshes": [
+      "17_trash_bin_LOD0",
+      "17_trash_bin_LOD1",
+      "17_trash_bin_LOD2"
+    ],
+    "tris": {
+      "17_trash_bin_LOD0": 2424,
+      "17_trash_bin_LOD1": 1212,
+      "17_trash_bin_LOD2": 484
+    },
+    "materials": [
+      "MAT_BinGreen",
+      "MAT_Cream",
+      "MAT_DarkBlueGray",
+      "MAT_DarkNavy"
+    ],
+    "empties": [
+      "17_trash_bin_ROOT",
+      "FRONT_DIRECTION",
+      "INPUT_ANCHOR"
+    ],
+    "armatures": [],
+    "bones": 0,
+    "actions": [],
+    "root_xform": {
+      "loc": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rot_deg": [
+        90.0,
+        -0.0,
+        0.0
+      ],
+      "scale": [
+        0.01,
+        0.01,
+        0.01
+      ]
+    },
+    "lod0_world_bbox": {
+      "min": [
+        -0.2915,
+        -0.2915,
+        -0.0
+      ],
+      "max": [
+        0.2915,
+        0.2915,
+        0.9336
+      ],
+      "dims": [
+        0.583,
+        0.583,
+        0.9336
+      ]
+    }
+  }
+}

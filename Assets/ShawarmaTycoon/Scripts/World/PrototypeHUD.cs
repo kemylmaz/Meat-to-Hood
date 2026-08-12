@@ -18,7 +18,9 @@ namespace ShawarmaTycoon
             EnsureStyles();
 
             int coins = GameEconomy.Instance != null ? GameEconomy.Instance.Coins : 0;
-            GUI.Box(new Rect(Screen.width - 190f, 22f, 165f, 54f), $"₺ {coins}", coinStyle);
+            Rect safe = Screen.safeArea.width > 0f ? Screen.safeArea : new Rect(0f, 0f, Screen.width, Screen.height);
+            float safeTop = Screen.height - safe.yMax;
+            GUI.Box(new Rect(safe.xMax - 177f, safeTop + 18f, 165f, 54f), $"₺ {coins}", coinStyle);
 
         }
 

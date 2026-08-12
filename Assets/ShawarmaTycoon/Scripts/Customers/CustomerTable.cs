@@ -29,7 +29,7 @@ namespace ShawarmaTycoon
             seatPoint = customerSeat;
 
             dirtyIndicator = PrototypeVisuals.CreatePrimitive("Dirty Plate", PrimitiveType.Cylinder, transform,
-                new Vector3(0f, 0.86f, 0f), new Vector3(0.36f, 0.035f, 0.36f), PrototypeVisuals.Red);
+                new Vector3(-0.384f, 0.94f, 0f), new Vector3(0.36f, 0.035f, 0.36f), PrototypeVisuals.Red);
             dirtyIndicator.SetActive(false);
 
             statusLabel = PrototypeVisuals.CreateLabel("Table", transform, new Vector3(0f, 1.25f, 0f), 0.12f);
@@ -80,13 +80,14 @@ namespace ShawarmaTycoon
             occupant = null;
             reserved = false;
             dirty = true;
-            pendingCash += PlayerUpgradeSystem.ApplyIncome(Mathf.Max(0, payout));
-            GameProgress.RecordServed();
+            pendingCash += Mathf.Max(0, payout);
+            GameProgress.RecordServed(customer.IsVip, false);
             if (dirtyIndicator != null) dirtyIndicator.SetActive(true);
             if (cashPad != null) cashPad.SetActive(pendingCash > 0);
             if (cashStack != null) cashStack.SetActive(pendingCash > 0);
             UpdateCashLabel();
             UpdateLabel();
+            FloorSpillSystem.Instance?.TrySpawnForTable(this);
         }
 
         private void Update()
@@ -100,7 +101,7 @@ namespace ShawarmaTycoon
         {
             if (pendingCash <= 0 || cashPad == null || GameEconomy.Instance == null) return;
             if (Vector3.SqrMagnitude(player.position - cashPad.transform.position) > 0.95f * 0.95f) return;
-            CollectCash();
+            CollectCash(false);
         }
 
         private void TryPickUpTrash()
@@ -114,12 +115,13 @@ namespace ShawarmaTycoon
             dirty = false;
             if (dirtyIndicator != null) dirtyIndicator.SetActive(false);
             UpdateLabel();
+            ComboSystem.Instance?.RegisterManualAction();
         }
 
         public bool TryAutoCollectCash()
         {
             if (pendingCash <= 0 || GameEconomy.Instance == null) return false;
-            CollectCash();
+            CollectCash(true);
             return true;
         }
 
@@ -128,17 +130,21 @@ namespace ShawarmaTycoon
             if (!dirty) return false;
             dirty = false;
             GameProgress.RecordTrash(1);
+            ComboSystem.Instance?.RegisterWorkerAction();
             if (dirtyIndicator != null) dirtyIndicator.SetActive(false);
             UpdateLabel();
             return true;
         }
 
-        private void CollectCash()
+        private void CollectCash(bool byWorker)
         {
             if (pendingCash <= 0 || GameEconomy.Instance == null) return;
             int collected = pendingCash;
             pendingCash = 0;
             GameEconomy.Instance.AddCoins(collected);
+            GameProgress.RecordRevenue(collected);
+            if (byWorker) ComboSystem.Instance?.RegisterWorkerAction();
+            else ComboSystem.Instance?.RegisterManualAction();
             Vector3 feedbackPosition = cashPad != null ? cashPad.transform.position + Vector3.up * 0.35f : transform.position + Vector3.up;
             CoinBurst.SpawnGain(feedbackPosition, collected);
             if (cashPad != null) cashPad.SetActive(false);

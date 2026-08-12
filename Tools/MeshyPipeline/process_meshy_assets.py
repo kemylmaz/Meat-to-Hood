@@ -21,18 +21,18 @@ from mathutils import Vector
 
 
 ASSETS = (
-    ("02_customer_character.glb", "01_player_character", (12_000, 6_000, 2_000)),
-    ("21_entrance_door.glb", "02_customer_character", (8_000, 4_000, 1_500)),
-    ("24_modular_wall_corner.glb", "03_cashier_worker", (10_000, 5_000, 1_500)),
-    ("04_meat_storage_rack.glb", "04_meat_storage_rack", (18_000, 8_000, 2_500)),
-    ("06_shawarma_rotisserie.glb", "06_shawarma_rotisserie", (14_000, 6_000, 2_000)),
-    ("08_cutting_station.glb", "08_cutting_station", (10_000, 4_000, 1_500)),
-    ("10_wrap_preparation_station.glb", "10_wrap_preparation_station", (12_000, 5_000, 1_500)),
-    ("12_service_cashier_counter.glb", "12_service_cashier_counter", (8_000, 3_500, 1_000)),
+    ("02_customer_character.glb", "01_player_character", (18_000, 10_000, 4_000)),
+    ("21_entrance_door.glb", "02_customer_character", (16_000, 8_000, 3_000)),
+    ("24_modular_wall_corner.glb", "03_cashier_worker", (16_000, 8_000, 3_000)),
+    ("04_meat_storage_rack.glb", "04_meat_storage_rack", (24_000, 12_000, 4_000)),
+    ("06_shawarma_rotisserie.glb", "06_shawarma_rotisserie", (20_000, 10_000, 3_500)),
+    ("08_cutting_station.glb", "08_cutting_station", (16_000, 8_000, 3_000)),
+    ("10_wrap_preparation_station.glb", "10_wrap_preparation_station", (18_000, 9_000, 3_000)),
+    ("12_service_cashier_counter.glb", "12_service_cashier_counter", (14_000, 7_000, 2_500)),
     ("13_conveyor_straight.glb", "13_conveyor_straight", (3_000, 1_200, 400)),
     ("14_conveyor_corner.glb", "14_conveyor_corner", (4_000, 1_500, 500)),
-    ("15_dining_table_clean.glb", "15_dining_table_clean", (5_000, 2_000, 700)),
-    ("17_trash_bin.glb", "17_trash_bin", (3_000, 1_200, 400)),
+    ("15_dining_table_clean.glb", "15_dining_table_clean", (8_000, 4_000, 1_500)),
+    ("17_trash_bin.glb", "17_trash_bin", (5_000, 2_500, 800)),
     ("18_money_collection_pad.glb", "18_money_collection_pad", (2_500, 1_000, 300)),
     ("19_upgrade_pad.glb", "19_upgrade_pad", (1_500, 600, 200)),
     ("23_modular_wall_straight.glb", "21_entrance_door", (4_000, 1_500, 500)),
@@ -141,7 +141,7 @@ def assign_palette_segments(obj: bpy.types.Object, semantic_name: str) -> None:
             if zn < 0.24:
                 slot = 3
             elif zn > 0.84:
-                slot = 2
+                slot = 2 if nz > 0.30 or xn > 0.62 else 1
             elif zn > 0.62 or (0.36 < zn < 0.63 and xn > 0.58):
                 slot = 1
             else:

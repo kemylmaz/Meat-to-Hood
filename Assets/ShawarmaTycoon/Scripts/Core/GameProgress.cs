@@ -9,12 +9,43 @@ namespace ShawarmaTycoon
         private const string Prefix = "shawarma.tycoon.";
 
         public static int ServedToday => GetDaily("served");
+        public static int RevenueToday => GetDaily("revenue");
         public static int TrashToday => GetDaily("trash");
         public static int UpgradesToday => GetDaily("upgrades");
         public static int WorkerCount => PlayerPrefs.GetInt(Prefix + "workers", 0);
+        public static int BestDailyRevenue => GetInt("records.best_daily_revenue");
+        public static int BestDailyServed => GetInt("records.best_daily_served");
+        public static int BestCombo => GetInt("records.best_combo");
+        public static int VipServedTotal => GetInt("records.vip_served");
+        public static int TakeawayServedTotal => GetInt("records.takeaway_served");
         public static bool DailyRewardClaimed => PlayerPrefs.GetInt(DailyKey("claimed"), 0) == 1;
 
-        public static void RecordServed() => SetDaily("served", ServedToday + 1);
+        public static void RecordServed(bool vip = false, bool takeaway = false)
+        {
+            int served = ServedToday + 1;
+            PlayerPrefs.SetInt(DailyKey("served"), served);
+            SetRecordIfHigher("records.best_daily_served", served);
+            if (vip) PlayerPrefs.SetInt(Prefix + "records.vip_served", VipServedTotal + 1);
+            if (takeaway) PlayerPrefs.SetInt(Prefix + "records.takeaway_served", TakeawayServedTotal + 1);
+            PlayerPrefs.Save();
+        }
+
+        public static void RecordRevenue(int amount)
+        {
+            if (amount <= 0) return;
+            int revenue = RevenueToday + amount;
+            PlayerPrefs.SetInt(DailyKey("revenue"), revenue);
+            SetRecordIfHigher("records.best_daily_revenue", revenue);
+            PlayerPrefs.Save();
+        }
+
+        public static void RecordBestCombo(int combo)
+        {
+            if (combo <= BestCombo) return;
+            PlayerPrefs.SetInt(Prefix + "records.best_combo", combo);
+            PlayerPrefs.Save();
+        }
+
         public static void RecordTrash(int count) => SetDaily("trash", TrashToday + Mathf.Max(0, count));
         public static void RecordUpgrade() => SetDaily("upgrades", UpgradesToday + 1);
 
@@ -56,6 +87,13 @@ namespace ShawarmaTycoon
         {
             PlayerPrefs.SetInt(DailyKey(name), value);
             PlayerPrefs.Save();
+        }
+
+        private static void SetRecordIfHigher(string key, int value)
+        {
+            string fullKey = Prefix + key;
+            if (value > PlayerPrefs.GetInt(fullKey, 0))
+                PlayerPrefs.SetInt(fullKey, value);
         }
 
         private static string DailyKey(string name) => Prefix + "daily." + DateTime.UtcNow.ToString("yyyyMMdd") + "." + name;

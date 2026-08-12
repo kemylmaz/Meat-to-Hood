@@ -19,8 +19,19 @@ namespace ShawarmaTycoon
         private Vector3 queueDirection = Vector3.right;
         private float spawnTimer;
         private int customerIndex;
+        private int nextVipCustomer;
 
         public int ActiveCustomers => customers.Count;
+        public int ActiveVipCustomers
+        {
+            get
+            {
+                int count = 0;
+                for (int i = 0; i < customers.Count; i++)
+                    if (customers[i] != null && customers[i].IsVip) count++;
+                return count;
+            }
+        }
 
         public void Configure(
             ItemStation service,
@@ -41,6 +52,7 @@ namespace ShawarmaTycoon
             tables.Clear();
             tables.AddRange(customerTables);
             spawnTimer = 0.5f;
+            nextVipCustomer = Random.Range(8, 12);
         }
 
         public void RegisterTable(CustomerTable table)
@@ -74,7 +86,7 @@ namespace ShawarmaTycoon
             spawnTimer -= Time.deltaTime;
             if (spawnTimer > 0f) return;
 
-            spawnTimer = spawnInterval;
+            spawnTimer = spawnInterval * RushHourSystem.SpawnIntervalMultiplier;
             int waitingCount = 0;
             for (int i = 0; i < customers.Count; i++)
                 if (customers[i] != null && customers[i].State == CustomerState.Queueing) waitingCount++;
@@ -86,12 +98,14 @@ namespace ShawarmaTycoon
             if (waitingCount >= maxQueueLength || customers.Count >= activeTableCount + maxQueueLength)
                 return;
 
-            SpawnCustomer();
+            SpawnCustomer(false);
         }
 
-        private void SpawnCustomer()
+        public CustomerAgent SpawnVipNow() => SpawnCustomer(true);
+
+        private CustomerAgent SpawnCustomer(bool forceVip)
         {
-            if (entryPoint == null) return;
+            if (entryPoint == null) return null;
 
             Color[] colors =
             {
@@ -101,13 +115,17 @@ namespace ShawarmaTycoon
                 new(0.64f, 0.45f, 0.72f)
             };
 
-            GameObject customer = new($"Musteri {++customerIndex}");
+            int spawnNumber = ++customerIndex;
+            bool vip = forceVip || spawnNumber >= nextVipCustomer;
+            if (vip) nextVipCustomer = spawnNumber + Random.Range(9, 14);
+
+            GameObject customer = new($"Musteri {spawnNumber}");
             customer.transform.SetParent(transform, false);
             customer.transform.position = entryPoint.position;
 
             if (MeshyVisuals.TryAttach(
-                    customer.transform, "02_customer_character", new Vector3(0.9f, 1.68f, 0.9f),
-                    Vector3.zero, new Vector3(0f, 180f, 0f), false) == null)
+                    customer.transform, "02_customer_character", new Vector3(0.75f, 1.70f, 0.85f),
+                    Vector3.zero, Vector3.zero, false) == null)
             {
                 PrototypeVisuals.CreatePrimitive(
                     "Customer Fallback", PrimitiveType.Capsule, customer.transform,
@@ -116,8 +134,9 @@ namespace ShawarmaTycoon
             }
 
             CustomerAgent agent = customer.AddComponent<CustomerAgent>();
-            agent.Configure(this, exitPoint, 2.4f, 4.5f, 15);
+            agent.Configure(this, exitPoint, 2.4f, 4.5f, 15, vip);
             customers.Add(agent);
+            return agent;
         }
 
         private void UpdateQueue()

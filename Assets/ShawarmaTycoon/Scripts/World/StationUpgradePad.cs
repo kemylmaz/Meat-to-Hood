@@ -79,9 +79,10 @@ namespace ShawarmaTycoon
             workerVisual = new GameObject(station != null ? "Isci " + station.name : "Isci");
             workerVisual.transform.SetParent(host, false);
             workerVisual.transform.localPosition = position;
+            workerVisual.transform.localRotation = Quaternion.Euler(0f, 180f, 0f);
             if (MeshyVisuals.TryAttach(
                     workerVisual.transform, "03_cashier_worker", new Vector3(0.9f, 1.68f, 0.9f),
-                    Vector3.zero, new Vector3(0f, 180f, 0f), false) == null)
+                    Vector3.zero, Vector3.zero, false) == null)
             {
                 PrototypeVisuals.CreatePrimitive(
                     "Worker Fallback", PrimitiveType.Capsule, workerVisual.transform,

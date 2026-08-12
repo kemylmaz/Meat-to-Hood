@@ -43,21 +43,21 @@ LODGroup:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 8904345282318352299}
   serializedVersion: 2
-  m_LocalReferencePoint: {x: -0.000026106834, y: 0.84984785, z: -0.0003517866}
-  m_Size: 1.8993638
+  m_LocalReferencePoint: {x: 0, y: 0.84980255, z: 0}
+  m_Size: 1.8994539
   m_FadeMode: 0
   m_AnimateCrossFading: 0
   m_LastLODIsBillboard: 0
   m_LODs:
-  - screenRelativeHeight: 0.16
+  - screenRelativeHeight: 0.11
     fadeTransitionWidth: 0
     renderers:
     - renderer: {fileID: 1704549005193141321}
-  - screenRelativeHeight: 0.07
+  - screenRelativeHeight: 0.045
     fadeTransitionWidth: 0
     renderers:
     - renderer: {fileID: 4057412462955037065}
-  - screenRelativeHeight: 0.018
+  - screenRelativeHeight: 0.01
     fadeTransitionWidth: 0
     renderers:
     - renderer: {fileID: 2739712693648404821}
@@ -204,11 +204,11 @@ PrefabInstance:
     - target: {fileID: -7511558181221131132, guid: e310c4fc24a3234448e5e2d17c33291f, type: 3}
       propertyPath: 'm_Materials.Array.data[2]'
       value: 
-      objectReference: {fileID: 2100000, guid: 95fc713d23003f54e8bb85a95c3e1dfd, type: 2}
+      objectReference: {fileID: 2100000, guid: 39a54d016de4c574f9aefbc4ecb6a782, type: 2}
     - target: {fileID: -7511558181221131132, guid: e310c4fc24a3234448e5e2d17c33291f, type: 3}
       propertyPath: 'm_Materials.Array.data[3]'
       value: 
-      objectReference: {fileID: 2100000, guid: 39a54d016de4c574f9aefbc4ecb6a782, type: 2}
+      objectReference: {fileID: 2100000, guid: 95fc713d23003f54e8bb85a95c3e1dfd, type: 2}
     - target: {fileID: 919132149155446097, guid: e310c4fc24a3234448e5e2d17c33291f, type: 3}
       propertyPath: m_Name
       value: LOD1

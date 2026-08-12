@@ -1,0 +1,548 @@
+[
+  {
+    "name": "01_player_character",
+    "dims_XYZ": [
+      0.6139,
+      0.4524,
+      1.6979
+    ],
+    "bbox_min": [
+      -0.307,
+      -0.276,
+      -0.0
+    ],
+    "bbox_max": [
+      0.307,
+      0.1764,
+      1.6979
+    ],
+    "ground_contact_z": -0.0,
+    "origin_bottom_center": [
+      0.0,
+      -0.0498
+    ],
+    "root_location": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "root_rotation_deg": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "root_scale": [
+      1.0,
+      1.0,
+      1.0
+    ],
+    "front_direction_local": [
+      0.0,
+      -1.0,
+      0.0
+    ],
+    "tris": {
+      "LOD0": 8960,
+      "LOD1": 4480,
+      "LOD2": 1792
+    },
+    "materials": [
+      "MAT_DarkNavy",
+      "MAT_DarkBlueGray",
+      "MAT_Cream",
+      "MAT_Terracotta",
+      "MAT_SkinWarm",
+      "MAT_WarmRed",
+      "MAT_HairDarkBrown"
+    ],
+    "mesh_checks": {
+      "LOD0": {
+        "non_manifold_edges": 0,
+        "duplicate_faces": 0,
+        "zero_area_faces": 0
+      },
+      "LOD1": {
+        "non_manifold_edges": 0,
+        "duplicate_faces": 0,
+        "zero_area_faces": 0
+      },
+      "LOD2": {
+        "non_manifold_edges": 0,
+        "duplicate_faces": 0,
+        "zero_area_faces": 0
+      }
+    },
+    "unapplied_modifiers": {
+      "LOD0": [
+        "ARMATURE"
+      ],
+      "LOD1": [
+        "ARMATURE"
+      ],
+      "LOD2": [
+        "ARMATURE"
+      ]
+    },
+    "anchors": {
+      "01_player_character_ROOT": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "FRONT_DIRECTION": [
+        0.0,
+        -1.0,
+        0.0
+      ],
+      "CARRY_ANCHOR": [
+        0.0,
+        -0.4,
+        1.0
+      ],
+      "HEAD_UI_ANCHOR": [
+        0.0,
+        0.0,
+        1.95
+      ]
+    },
+    "has_rig": true,
+    "actions": [
+      "CarryWalk",
+      "Idle",
+      "Walk"
+    ],
+    "cameras_or_lights_inside": []
+  },
+  {
+    "name": "02_customer_character",
+    "dims_XYZ": [
+      0.6213,
+      0.4426,
+      1.7
+    ],
+    "bbox_min": [
+      -0.3106,
+      -0.1998,
+      -0.0
+    ],
+    "bbox_max": [
+      0.3106,
+      0.2428,
+      1.7
+    ],
+    "ground_contact_z": -0.0,
+    "origin_bottom_center": [
+      0.0,
+      0.0215
+    ],
+    "root_location": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "root_rotation_deg": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "root_scale": [
+      1.0,
+      1.0,
+      1.0
+    ],
+    "front_direction_local": [
+      0.0,
+      -1.0,
+      0.0
+    ],
+    "tris": {
+      "LOD0": 8876,
+      "LOD1": 4438,
+      "LOD2": 1774
+    },
+    "materials": [
+      "MAT_DarkNavy",
+      "MAT_DarkBlueGray",
+      "MAT_Teal",
+      "MAT_Mustard",
+      "MAT_SkinWarmDeep",
+      "MAT_HairBrown",
+      "MAT_Cream"
+    ],
+    "mesh_checks": {
+      "LOD0": {
+        "non_manifold_edges": 0,
+        "duplicate_faces": 0,
+        "zero_area_faces": 0
+      },
+      "LOD1": {
+        "non_manifold_edges": 0,
+        "duplicate_faces": 0,
+        "zero_area_faces": 0
+      },
+      "LOD2": {
+        "non_manifold_edges": 0,
+        "duplicate_faces": 0,
+        "zero_area_faces": 0
+      }
+    },
+    "unapplied_modifiers": {
+      "LOD0": [
+        "ARMATURE"
+      ],
+      "LOD1": [
+        "ARMATURE"
+      ],
+      "LOD2": [
+        "ARMATURE"
+      ]
+    },
+    "anchors": {
+      "02_customer_character_ROOT": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "FRONT_DIRECTION.001": [
+        0.0,
+        -1.0,
+        0.0
+      ],
+      "CARRY_ANCHOR.001": [
+        0.0,
+        -0.41,
+        1.0
+      ],
+      "HEAD_UI_ANCHOR.001": [
+        0.0,
+        0.0,
+        1.95
+      ]
+    },
+    "has_rig": true,
+    "actions": [
+      "CarryWalk",
+      "Idle",
+      "Walk"
+    ],
+    "cameras_or_lights_inside": []
+  },
+  {
+    "name": "06_rotisserie_station",
+    "dims_XYZ": [
+      1.16,
+      0.844,
+      1.915
+    ],
+    "bbox_min": [
+      -0.58,
+      -0.424,
+      0.0
+    ],
+    "bbox_max": [
+      0.58,
+      0.42,
+      1.915
+    ],
+    "ground_contact_z": 0.0,
+    "origin_bottom_center": [
+      0.0,
+      -0.002
+    ],
+    "root_location": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "root_rotation_deg": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "root_scale": [
+      1.0,
+      1.0,
+      1.0
+    ],
+    "front_direction_local": [
+      0.0,
+      -1.0,
+      0.0
+    ],
+    "tris": {
+      "LOD0": 13080,
+      "LOD1": 6540,
+      "LOD2": 2616
+    },
+    "materials": [
+      "MAT_DarkBlueGray",
+      "MAT_Cream",
+      "MAT_Terracotta",
+      "MAT_Mustard",
+      "MAT_HeatOrange",
+      "MAT_Steel",
+      "MAT_DarkCookedMeat",
+      "MAT_MeatBrown"
+    ],
+    "mesh_checks": {
+      "LOD0": {
+        "non_manifold_edges": 0,
+        "duplicate_faces": 0,
+        "zero_area_faces": 0
+      },
+      "LOD1": {
+        "non_manifold_edges": 0,
+        "duplicate_faces": 0,
+        "zero_area_faces": 0
+      },
+      "LOD2": {
+        "non_manifold_edges": 0,
+        "duplicate_faces": 0,
+        "zero_area_faces": 0
+      }
+    },
+    "unapplied_modifiers": {
+      "LOD0": [],
+      "LOD1": [],
+      "LOD2": []
+    },
+    "anchors": {
+      "06_rotisserie_station_ROOT": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "FRONT_DIRECTION.002": [
+        0.0,
+        -1.0,
+        0.0
+      ],
+      "INPUT_ANCHOR": [
+        0.0,
+        -0.055,
+        1.9
+      ],
+      "OUTPUT_ANCHOR": [
+        0.0,
+        -0.3,
+        1.06
+      ],
+      "WORKER_ANCHOR": [
+        0.0,
+        -0.82,
+        0.0
+      ]
+    },
+    "has_rig": false,
+    "actions": [],
+    "cameras_or_lights_inside": []
+  },
+  {
+    "name": "15_dining_table",
+    "dims_XYZ": [
+      1.2,
+      1.765,
+      0.9
+    ],
+    "bbox_min": [
+      -0.6,
+      -0.8825,
+      0.0
+    ],
+    "bbox_max": [
+      0.6,
+      0.8825,
+      0.9
+    ],
+    "ground_contact_z": 0.0,
+    "origin_bottom_center": [
+      0.0,
+      0.0
+    ],
+    "root_location": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "root_rotation_deg": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "root_scale": [
+      1.0,
+      1.0,
+      1.0
+    ],
+    "front_direction_local": [
+      0.0,
+      -1.0,
+      0.0
+    ],
+    "tris": {
+      "LOD0": 4260,
+      "LOD1": 2130,
+      "LOD2": 852
+    },
+    "materials": [
+      "MAT_WarmWood",
+      "MAT_WoodLight",
+      "MAT_Teal",
+      "MAT_Cream",
+      "MAT_DarkNavy"
+    ],
+    "mesh_checks": {
+      "LOD0": {
+        "non_manifold_edges": 0,
+        "duplicate_faces": 0,
+        "zero_area_faces": 0
+      },
+      "LOD1": {
+        "non_manifold_edges": 0,
+        "duplicate_faces": 0,
+        "zero_area_faces": 0
+      },
+      "LOD2": {
+        "non_manifold_edges": 0,
+        "duplicate_faces": 0,
+        "zero_area_faces": 0
+      }
+    },
+    "unapplied_modifiers": {
+      "LOD0": [],
+      "LOD1": [],
+      "LOD2": []
+    },
+    "anchors": {
+      "15_dining_table_ROOT": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "FRONT_DIRECTION.003": [
+        0.0,
+        -1.0,
+        0.0
+      ],
+      "SEAT_A": [
+        0.0,
+        -0.66,
+        0.5
+      ],
+      "SEAT_B": [
+        0.0,
+        0.66,
+        0.5
+      ],
+      "CASH_PAD_ANCHOR": [
+        0.4,
+        0.0,
+        0.755
+      ],
+      "DIRTY_DISH_ANCHOR": [
+        -0.32,
+        0.0,
+        0.755
+      ]
+    },
+    "has_rig": false,
+    "actions": [],
+    "cameras_or_lights_inside": []
+  },
+  {
+    "name": "17_trash_bin",
+    "dims_XYZ": [
+      0.583,
+      0.583,
+      0.9336
+    ],
+    "bbox_min": [
+      -0.2915,
+      -0.2915,
+      0.0
+    ],
+    "bbox_max": [
+      0.2915,
+      0.2915,
+      0.9336
+    ],
+    "ground_contact_z": 0.0,
+    "origin_bottom_center": [
+      0.0,
+      0.0
+    ],
+    "root_location": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "root_rotation_deg": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "root_scale": [
+      1.0,
+      1.0,
+      1.0
+    ],
+    "front_direction_local": [
+      0.0,
+      -1.0,
+      0.0
+    ],
+    "tris": {
+      "LOD0": 2424,
+      "LOD1": 1212,
+      "LOD2": 484
+    },
+    "materials": [
+      "MAT_BinGreen",
+      "MAT_DarkNavy",
+      "MAT_DarkBlueGray",
+      "MAT_Cream"
+    ],
+    "mesh_checks": {
+      "LOD0": {
+        "non_manifold_edges": 0,
+        "duplicate_faces": 0,
+        "zero_area_faces": 0
+      },
+      "LOD1": {
+        "non_manifold_edges": 0,
+        "duplicate_faces": 0,
+        "zero_area_faces": 0
+      },
+      "LOD2": {
+        "non_manifold_edges": 0,
+        "duplicate_faces": 0,
+        "zero_area_faces": 0
+      }
+    },
+    "unapplied_modifiers": {
+      "LOD0": [],
+      "LOD1": [],
+      "LOD2": []
+    },
+    "anchors": {
+      "17_trash_bin_ROOT": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "FRONT_DIRECTION.004": [
+        0.0,
+        -1.0,
+        0.0
+      ],
+      "INPUT_ANCHOR.001": [
+        0.0,
+        -0.12,
+        0.75
+      ]
+    },
+    "has_rig": false,
+    "actions": [],
+    "cameras_or_lights_inside": []
+  }
+]

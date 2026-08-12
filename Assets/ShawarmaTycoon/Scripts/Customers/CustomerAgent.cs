@@ -25,10 +25,14 @@ namespace ShawarmaTycoon
         private float queueTimer;
         private GameObject angryFace;
         private int finalPayout;
+        private bool isVip;
+        private bool isAngry;
 
         public CustomerState State { get; private set; } = CustomerState.Queueing;
+        public bool IsVip => isVip;
+        public bool IsAngry => isAngry;
 
-        public void Configure(CustomerManager owner, Transform exitTransform, float speed, float eatingSeconds, int payout)
+        public void Configure(CustomerManager owner, Transform exitTransform, float speed, float eatingSeconds, int payout, bool vip = false)
         {
             manager = owner;
             exitPoint = exitTransform;
@@ -36,7 +40,10 @@ namespace ShawarmaTycoon
             eatingDuration = Mathf.Max(0.1f, eatingSeconds);
             mealPayout = Mathf.Max(1, payout);
             finalPayout = mealPayout;
+            isVip = vip;
+            isAngry = false;
             State = CustomerState.Queueing;
+            if (isVip) CreateVipVisual();
         }
 
         public void SetQueueTarget(Vector3 target)
@@ -47,7 +54,12 @@ namespace ShawarmaTycoon
         public void Serve(CustomerTable assignedTable)
         {
             table = assignedTable;
-            finalPayout = queueTimer >= angryAfterSeconds ? Mathf.Max(1, Mathf.RoundToInt(mealPayout * 0.6f)) : mealPayout;
+            bool fast = !isAngry && queueTimer < angryAfterSeconds;
+            ComboSystem.Instance?.RegisterDineIn(fast, isVip);
+            float serviceMultiplier = isVip
+                ? (fast ? 3f : 1f)
+                : (fast ? 1f : 0.6f);
+            finalPayout = RewardCalculator.Calculate(mealPayout, serviceMultiplier);
             State = CustomerState.WalkingToTable;
         }
 
@@ -58,7 +70,11 @@ namespace ShawarmaTycoon
                 case CustomerState.Queueing:
                     MoveTowards(queueTarget);
                     queueTimer += Time.deltaTime;
-                    if (queueTimer >= angryAfterSeconds) SetAngryFace(true);
+                    if (!isAngry && queueTimer >= angryAfterSeconds)
+                    {
+                        isAngry = true;
+                        SetAngryFace(true);
+                    }
                     break;
 
                 case CustomerState.WalkingToTable:
@@ -105,9 +121,27 @@ namespace ShawarmaTycoon
             transform.position = Vector3.MoveTowards(transform.position, target, moveSpeed * Time.deltaTime);
             transform.rotation = Quaternion.Slerp(
                 transform.rotation,
-                Quaternion.LookRotation(direction, Vector3.up),
+                Quaternion.LookRotation(-direction, Vector3.up),
                 12f * Time.deltaTime);
             return false;
+        }
+
+        private void CreateVipVisual()
+        {
+            GameObject crown = new("VIP Crown");
+            crown.transform.SetParent(transform, false);
+            Color gold = new(1f, 0.72f, 0.12f);
+            PrototypeVisuals.CreatePrimitive("Crown Base", PrimitiveType.Cube, crown.transform,
+                new Vector3(0f, 1.82f, 0f), new Vector3(0.46f, 0.10f, 0.30f), gold);
+            PrototypeVisuals.CreatePrimitive("Crown Left", PrimitiveType.Sphere, crown.transform,
+                new Vector3(-0.16f, 1.96f, 0f), new Vector3(0.13f, 0.22f, 0.13f), gold);
+            PrototypeVisuals.CreatePrimitive("Crown Center", PrimitiveType.Sphere, crown.transform,
+                new Vector3(0f, 2.02f, 0f), new Vector3(0.13f, 0.28f, 0.13f), gold);
+            PrototypeVisuals.CreatePrimitive("Crown Right", PrimitiveType.Sphere, crown.transform,
+                new Vector3(0.16f, 1.96f, 0f), new Vector3(0.13f, 0.22f, 0.13f), gold);
+            TextMesh vipLabel = PrototypeVisuals.CreateLabel("VIP", crown.transform, new Vector3(0f, 2.34f, 0f), 0.13f);
+            vipLabel.color = new Color(0.82f, 0.42f, 0.04f);
+            vipLabel.fontStyle = FontStyle.Bold;
         }
 
         private void SetAngryFace(bool visible)
@@ -116,7 +150,9 @@ namespace ShawarmaTycoon
             {
                 angryFace = new GameObject("Kızgın Emoji");
                 angryFace.transform.SetParent(transform, false);
-                angryFace.transform.localPosition = new Vector3(0f, 2.0f, 0f);
+                angryFace.transform.localPosition = isVip
+                    ? new Vector3(0.62f, 2.15f, 0f)
+                    : new Vector3(0f, 2.0f, 0f);
                 PrototypeVisuals.CreatePrimitive("Yüz", PrimitiveType.Sphere, angryFace.transform,
                     Vector3.zero, new Vector3(0.42f, 0.42f, 0.15f), PrototypeVisuals.Red);
                 PrototypeVisuals.CreatePrimitive("Kaş Sol", PrimitiveType.Cube, angryFace.transform,

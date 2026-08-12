@@ -14,6 +14,8 @@ namespace ShawarmaTycoon
         private CustomerManager customers;
         private ItemStation wrapStation;
         private ItemStation serviceStation;
+        private TakeawaySystem takeaway;
+        private FloorSpillSystem floorSpills;
         private Transform visualParent;
         private float cashierTimer;
         private float cleanerTimer;
@@ -21,12 +23,22 @@ namespace ShawarmaTycoon
         private bool cashier;
         private bool cleaner;
         private bool runner;
+        private bool cashierTakeawayTurn;
+        private bool cleanerSpillTurn;
 
-        public void Configure(CustomerManager customerManager, ItemStation wrap, ItemStation service, Transform workerVisualParent)
+        public void Configure(
+            CustomerManager customerManager,
+            ItemStation wrap,
+            ItemStation service,
+            TakeawaySystem takeawayCounter,
+            FloorSpillSystem spillSystem,
+            Transform workerVisualParent)
         {
             customers = customerManager;
             wrapStation = wrap;
             serviceStation = service;
+            takeaway = takeawayCounter;
+            floorSpills = spillSystem;
             visualParent = workerVisualParent;
             cashier = GameProgress.GetInt("recruit.cashier", 0) == 1;
             cleaner = GameProgress.GetInt("recruit.cleaner", 0) == 1;
@@ -87,7 +99,15 @@ namespace ShawarmaTycoon
                 cashierTimer -= Time.deltaTime;
                 if (cashierTimer <= 0f)
                 {
-                    customers.TryCollectTableCashByWorker();
+                    bool handled = cashierTakeawayTurn
+                        ? takeaway != null && takeaway.TryAutoCollectCash()
+                        : customers.TryCollectTableCashByWorker();
+                    if (!handled)
+                    {
+                        if (cashierTakeawayTurn) customers.TryCollectTableCashByWorker();
+                        else if (takeaway != null) takeaway.TryAutoCollectCash();
+                    }
+                    cashierTakeawayTurn = !cashierTakeawayTurn;
                     cashierTimer = cashierInterval * assist;
                 }
             }
@@ -97,7 +117,15 @@ namespace ShawarmaTycoon
                 cleanerTimer -= Time.deltaTime;
                 if (cleanerTimer <= 0f)
                 {
-                    customers.TryCleanTableByWorker();
+                    bool handled = cleanerSpillTurn
+                        ? floorSpills != null && floorSpills.TryCleanByWorker()
+                        : customers.TryCleanTableByWorker();
+                    if (!handled)
+                    {
+                        if (cleanerSpillTurn) customers.TryCleanTableByWorker();
+                        else if (floorSpills != null) floorSpills.TryCleanByWorker();
+                    }
+                    cleanerSpillTurn = !cleanerSpillTurn;
                     cleanerTimer = cleanerInterval * assist;
                 }
             }
@@ -107,8 +135,13 @@ namespace ShawarmaTycoon
                 runnerTimer -= Time.deltaTime;
                 if (runnerTimer <= 0f)
                 {
-                    if (wrapStation.TryTakeOutputForConveyor(out ItemType item) && !serviceStation.TryReceiveFromConveyor(item))
-                        wrapStation.ReturnOutputFromConveyor(item);
+                    bool sendToTakeaway = takeaway != null && takeaway.NeedsWrap && serviceStation.OutputCount >= 2;
+                    if (wrapStation.TryTakeOutputForConveyor(out ItemType item))
+                    {
+                        bool delivered = sendToTakeaway && takeaway.TryReceiveWrap(item, true);
+                        if (!delivered) delivered = serviceStation.TryReceiveFromConveyor(item);
+                        if (!delivered) wrapStation.ReturnOutputFromConveyor(item);
+                    }
                     runnerTimer = runnerInterval * assist;
                 }
             }
@@ -134,12 +167,12 @@ namespace ShawarmaTycoon
             GameObject worker = new("Recruit " + role);
             worker.transform.SetParent(visualParent, false);
             worker.transform.localPosition = position;
-            worker.transform.localRotation = role == RecruitRole.Cashier
+            worker.transform.localRotation = role == RecruitRole.Runner
                 ? Quaternion.Euler(0f, 180f, 0f)
                 : Quaternion.identity;
             if (MeshyVisuals.TryAttach(
                     worker.transform, "03_cashier_worker", new Vector3(0.9f, 1.68f, 0.9f),
-                    Vector3.zero, new Vector3(0f, 180f, 0f), false) == null)
+                    Vector3.zero, Vector3.zero, false) == null)
             {
                 PrototypeVisuals.CreatePrimitive(
                     "Worker Fallback", PrimitiveType.Capsule, worker.transform,

@@ -19,12 +19,14 @@ namespace ShawarmaTycoon
         private Vector2 minBounds = new(-8.4f, -6.4f);
         private Vector2 maxBounds = new(8.4f, 6.4f);
         private float baseMoveSpeed;
+        private Vector3 safePosition;
 
         public Vector2 JoystickValue => joystickValue;
 
         private void Awake()
         {
             characterController = GetComponent<CharacterController>();
+            safePosition = transform.position;
         }
 
         public void Configure(float speed, Vector2 minimumBounds, Vector2 maximumBounds)
@@ -75,11 +77,25 @@ namespace ShawarmaTycoon
 
             characterController.Move(constrainedHorizontal + Vector3.up * (verticalVelocity * Time.deltaTime));
 
+            if (characterController.isGrounded)
+                safePosition = transform.position;
+            else if (transform.position.y < -2f)
+                RecoverFromFall();
+
             if (direction.sqrMagnitude > 0.01f)
             {
-                Quaternion targetRotation = Quaternion.LookRotation(direction, Vector3.up);
+                // Meshy character models face their local -Z axis.
+                Quaternion targetRotation = Quaternion.LookRotation(-direction, Vector3.up);
                 transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, rotationSpeed * Time.deltaTime);
             }
+        }
+
+        private void RecoverFromFall()
+        {
+            characterController.enabled = false;
+            transform.position = new Vector3(safePosition.x, 0.26f, safePosition.z);
+            characterController.enabled = true;
+            verticalVelocity = -1f;
         }
 
         private void ReadPointerInput()

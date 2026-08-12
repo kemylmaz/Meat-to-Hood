@@ -414,11 +414,11 @@ namespace ShawarmaTycoon.EditorTools
         {
             return profile switch
             {
-                AssetProfile.Character => new[] { 0.18f, 0.08f, 0.02f },
-                AssetProfile.Station => new[] { 0.16f, 0.07f, 0.018f },
+                AssetProfile.Character => new[] { 0.10f, 0.04f, 0.01f },
+                AssetProfile.Station => new[] { 0.11f, 0.045f, 0.01f },
                 AssetProfile.Architecture => new[] { 0.12f, 0.05f, 0.012f },
                 AssetProfile.Island => new[] { 0.18f, 0.08f, 0.02f },
-                _ => new[] { 0.14f, 0.06f, 0.015f }
+                _ => new[] { 0.09f, 0.035f, 0.008f }
             };
         }
 

@@ -1,0 +1,501 @@
+{
+  "blender_version": "5.1.1",
+  "source_directory": "C:\\Users\\kemyl\\Documents\\Codex\\2026-08-08\\https-www-instagram-com-p-dauy6uqgo0k\\outputs\\ShawarmaMeshyModels\\ready_glb",
+  "output_directory": "C:\\Users\\kemyl\\shawarmatycoon\\Assets\\ShawarmaTycoon\\Art\\Meshy\\Optimized",
+  "assets": [
+    {
+      "semantic_name": "01_player_character",
+      "source_file": "02_customer_character.glb",
+      "source_triangles": 208718,
+      "lods": [
+        {
+          "lod": 0,
+          "budget": 18000,
+          "triangles": 18000,
+          "file": "C:\\Users\\kemyl\\shawarmatycoon\\Assets\\ShawarmaTycoon\\Art\\Meshy\\Optimized\\LOD0\\01_player_character_LOD0.fbx"
+        },
+        {
+          "lod": 1,
+          "budget": 10000,
+          "triangles": 10000,
+          "file": "C:\\Users\\kemyl\\shawarmatycoon\\Assets\\ShawarmaTycoon\\Art\\Meshy\\Optimized\\LOD1\\01_player_character_LOD1.fbx"
+        },
+        {
+          "lod": 2,
+          "budget": 4000,
+          "triangles": 4000,
+          "file": "C:\\Users\\kemyl\\shawarmatycoon\\Assets\\ShawarmaTycoon\\Art\\Meshy\\Optimized\\LOD2\\01_player_character_LOD2.fbx"
+        }
+      ],
+      "seconds": 16.493
+    },
+    {
+      "semantic_name": "02_customer_character",
+      "source_file": "21_entrance_door.glb",
+      "source_triangles": 180134,
+      "lods": [
+        {
+          "lod": 0,
+          "budget": 16000,
+          "triangles": 16000,
+          "file": "C:\\Users\\kemyl\\shawarmatycoon\\Assets\\ShawarmaTycoon\\Art\\Meshy\\Optimized\\LOD0\\02_customer_character_LOD0.fbx"
+        },
+        {
+          "lod": 1,
+          "budget": 8000,
+          "triangles": 8000,
+          "file": "C:\\Users\\kemyl\\shawarmatycoon\\Assets\\ShawarmaTycoon\\Art\\Meshy\\Optimized\\LOD1\\02_customer_character_LOD1.fbx"
+        },
+        {
+          "lod": 2,
+          "budget": 3000,
+          "triangles": 3000,
+          "file": "C:\\Users\\kemyl\\shawarmatycoon\\Assets\\ShawarmaTycoon\\Art\\Meshy\\Optimized\\LOD2\\02_customer_character_LOD2.fbx"
+        }
+      ],
+      "seconds": 12.874
+    },
+    {
+      "semantic_name": "03_cashier_worker",
+      "source_file": "24_modular_wall_corner.glb",
+      "source_triangles": 207120,
+      "lods": [
+        {
+          "lod": 0,
+          "budget": 16000,
+          "triangles": 16000,
+          "file": "C:\\Users\\kemyl\\shawarmatycoon\\Assets\\ShawarmaTycoon\\Art\\Meshy\\Optimized\\LOD0\\03_cashier_worker_LOD0.fbx"
+        },
+        {
+          "lod": 1,
+          "budget": 8000,
+          "triangles": 8000,
+          "file": "C:\\Users\\kemyl\\shawarmatycoon\\Assets\\ShawarmaTycoon\\Art\\Meshy\\Optimized\\LOD1\\03_cashier_worker_LOD1.fbx"
+        },
+        {
+          "lod": 2,
+          "budget": 3000,
+          "triangles": 3000,
+          "file": "C:\\Users\\kemyl\\shawarmatycoon\\Assets\\ShawarmaTycoon\\Art\\Meshy\\Optimized\\LOD2\\03_cashier_worker_LOD2.fbx"
+        }
+      ],
+      "seconds": 15.359
+    },
+    {
+      "semantic_name": "04_meat_storage_rack",
+      "source_file": "04_meat_storage_rack.glb",
+      "source_triangles": 628344,
+      "lods": [
+        {
+          "lod": 0,
+          "budget": 24000,
+          "triangles": 24000,
+          "file": "C:\\Users\\kemyl\\shawarmatycoon\\Assets\\ShawarmaTycoon\\Art\\Meshy\\Optimized\\LOD0\\04_meat_storage_rack_LOD0.fbx"
+        },
+        {
+          "lod": 1,
+          "budget": 12000,
+          "triangles": 12000,
+          "file": "C:\\Users\\kemyl\\shawarmatycoon\\Assets\\ShawarmaTycoon\\Art\\Meshy\\Optimized\\LOD1\\04_meat_storage_rack_LOD1.fbx"
+        },
+        {
+          "lod": 2,
+          "budget": 4000,
+          "triangles": 4000,
+          "file": "C:\\Users\\kemyl\\shawarmatycoon\\Assets\\ShawarmaTycoon\\Art\\Meshy\\Optimized\\LOD2\\04_meat_storage_rack_LOD2.fbx"
+        }
+      ],
+      "seconds": 71.066
+    },
+    {
+      "semantic_name": "06_shawarma_rotisserie",
+      "source_file": "06_shawarma_rotisserie.glb",
+      "source_triangles": 319088,
+      "lods": [
+        {
+          "lod": 0,
+          "budget": 20000,
+          "triangles": 20000,
+          "file": "C:\\Users\\kemyl\\shawarmatycoon\\Assets\\ShawarmaTycoon\\Art\\Meshy\\Optimized\\LOD0\\06_shawarma_rotisserie_LOD0.fbx"
+        },
+        {
+          "lod": 1,
+          "budget": 10000,
+          "triangles": 10000,
+          "file": "C:\\Users\\kemyl\\shawarmatycoon\\Assets\\ShawarmaTycoon\\Art\\Meshy\\Optimized\\LOD1\\06_shawarma_rotisserie_LOD1.fbx"
+        },
+        {
+          "lod": 2,
+          "budget": 3500,
+          "triangles": 3500,
+          "file": "C:\\Users\\kemyl\\shawarmatycoon\\Assets\\ShawarmaTycoon\\Art\\Meshy\\Optimized\\LOD2\\06_shawarma_rotisserie_LOD2.fbx"
+        }
+      ],
+      "seconds": 25.423
+    },
+    {
+      "semantic_name": "08_cutting_station",
+      "source_file": "08_cutting_station.glb",
+      "source_triangles": 327440,
+      "lods": [
+        {
+          "lod": 0,
+          "budget": 16000,
+          "triangles": 16000,
+          "file": "C:\\Users\\kemyl\\shawarmatycoon\\Assets\\ShawarmaTycoon\\Art\\Meshy\\Optimized\\LOD0\\08_cutting_station_LOD0.fbx"
+        },
+        {
+          "lod": 1,
+          "budget": 8000,
+          "triangles": 8000,
+          "file": "C:\\Users\\kemyl\\shawarmatycoon\\Assets\\ShawarmaTycoon\\Art\\Meshy\\Optimized\\LOD1\\08_cutting_station_LOD1.fbx"
+        },
+        {
+          "lod": 2,
+          "budget": 3000,
+          "triangles": 3000,
+          "file": "C:\\Users\\kemyl\\shawarmatycoon\\Assets\\ShawarmaTycoon\\Art\\Meshy\\Optimized\\LOD2\\08_cutting_station_LOD2.fbx"
+        }
+      ],
+      "seconds": 26.958
+    },
+    {
+      "semantic_name": "10_wrap_preparation_station",
+      "source_file": "10_wrap_preparation_station.glb",
+      "source_triangles": 365886,
+      "lods": [
+        {
+          "lod": 0,
+          "budget": 18000,
+          "triangles": 18000,
+          "file": "C:\\Users\\kemyl\\shawarmatycoon\\Assets\\ShawarmaTycoon\\Art\\Meshy\\Optimized\\LOD0\\10_wrap_preparation_station_LOD0.fbx"
+        },
+        {
+          "lod": 1,
+          "budget": 9000,
+          "triangles": 9000,
+          "file": "C:\\Users\\kemyl\\shawarmatycoon\\Assets\\ShawarmaTycoon\\Art\\Meshy\\Optimized\\LOD1\\10_wrap_preparation_station_LOD1.fbx"
+        },
+        {
+          "lod": 2,
+          "budget": 3000,
+          "triangles": 3000,
+          "file": "C:\\Users\\kemyl\\shawarmatycoon\\Assets\\ShawarmaTycoon\\Art\\Meshy\\Optimized\\LOD2\\10_wrap_preparation_station_LOD2.fbx"
+        }
+      ],
+      "seconds": 30.196
+    },
+    {
+      "semantic_name": "12_service_cashier_counter",
+      "source_file": "12_service_cashier_counter.glb",
+      "source_triangles": 142906,
+      "lods": [
+        {
+          "lod": 0,
+          "budget": 14000,
+          "triangles": 14000,
+          "file": "C:\\Users\\kemyl\\shawarmatycoon\\Assets\\ShawarmaTycoon\\Art\\Meshy\\Optimized\\LOD0\\12_service_cashier_counter_LOD0.fbx"
+        },
+        {
+          "lod": 1,
+          "budget": 7000,
+          "triangles": 7000,
+          "file": "C:\\Users\\kemyl\\shawarmatycoon\\Assets\\ShawarmaTycoon\\Art\\Meshy\\Optimized\\LOD1\\12_service_cashier_counter_LOD1.fbx"
+        },
+        {
+          "lod": 2,
+          "budget": 2500,
+          "triangles": 2500,
+          "file": "C:\\Users\\kemyl\\shawarmatycoon\\Assets\\ShawarmaTycoon\\Art\\Meshy\\Optimized\\LOD2\\12_service_cashier_counter_LOD2.fbx"
+        }
+      ],
+      "seconds": 8.852
+    },
+    {
+      "semantic_name": "13_conveyor_straight",
+      "source_file": "13_conveyor_straight.glb",
+      "source_triangles": 181142,
+      "lods": [
+        {
+          "lod": 0,
+          "budget": 3000,
+          "triangles": 3000,
+          "file": "C:\\Users\\kemyl\\shawarmatycoon\\Assets\\ShawarmaTycoon\\Art\\Meshy\\Optimized\\LOD0\\13_conveyor_straight_LOD0.fbx"
+        },
+        {
+          "lod": 1,
+          "budget": 1200,
+          "triangles": 1200,
+          "file": "C:\\Users\\kemyl\\shawarmatycoon\\Assets\\ShawarmaTycoon\\Art\\Meshy\\Optimized\\LOD1\\13_conveyor_straight_LOD1.fbx"
+        },
+        {
+          "lod": 2,
+          "budget": 400,
+          "triangles": 400,
+          "file": "C:\\Users\\kemyl\\shawarmatycoon\\Assets\\ShawarmaTycoon\\Art\\Meshy\\Optimized\\LOD2\\13_conveyor_straight_LOD2.fbx"
+        }
+      ],
+      "seconds": 11.299
+    },
+    {
+      "semantic_name": "14_conveyor_corner",
+      "source_file": "14_conveyor_corner.glb",
+      "source_triangles": 255008,
+      "lods": [
+        {
+          "lod": 0,
+          "budget": 4000,
+          "triangles": 3998,
+          "file": "C:\\Users\\kemyl\\shawarmatycoon\\Assets\\ShawarmaTycoon\\Art\\Meshy\\Optimized\\LOD0\\14_conveyor_corner_LOD0.fbx"
+        },
+        {
+          "lod": 1,
+          "budget": 1500,
+          "triangles": 1500,
+          "file": "C:\\Users\\kemyl\\shawarmatycoon\\Assets\\ShawarmaTycoon\\Art\\Meshy\\Optimized\\LOD1\\14_conveyor_corner_LOD1.fbx"
+        },
+        {
+          "lod": 2,
+          "budget": 500,
+          "triangles": 498,
+          "file": "C:\\Users\\kemyl\\shawarmatycoon\\Assets\\ShawarmaTycoon\\Art\\Meshy\\Optimized\\LOD2\\14_conveyor_corner_LOD2.fbx"
+        }
+      ],
+      "seconds": 18.082
+    },
+    {
+      "semantic_name": "15_dining_table_clean",
+      "source_file": "15_dining_table_clean.glb",
+      "source_triangles": 140662,
+      "lods": [
+        {
+          "lod": 0,
+          "budget": 8000,
+          "triangles": 8000,
+          "file": "C:\\Users\\kemyl\\shawarmatycoon\\Assets\\ShawarmaTycoon\\Art\\Meshy\\Optimized\\LOD0\\15_dining_table_clean_LOD0.fbx"
+        },
+        {
+          "lod": 1,
+          "budget": 4000,
+          "triangles": 4000,
+          "file": "C:\\Users\\kemyl\\shawarmatycoon\\Assets\\ShawarmaTycoon\\Art\\Meshy\\Optimized\\LOD1\\15_dining_table_clean_LOD1.fbx"
+        },
+        {
+          "lod": 2,
+          "budget": 1500,
+          "triangles": 1500,
+          "file": "C:\\Users\\kemyl\\shawarmatycoon\\Assets\\ShawarmaTycoon\\Art\\Meshy\\Optimized\\LOD2\\15_dining_table_clean_LOD2.fbx"
+        }
+      ],
+      "seconds": 8.005
+    },
+    {
+      "semantic_name": "17_trash_bin",
+      "source_file": "17_trash_bin.glb",
+      "source_triangles": 279848,
+      "lods": [
+        {
+          "lod": 0,
+          "budget": 5000,
+          "triangles": 5000,
+          "file": "C:\\Users\\kemyl\\shawarmatycoon\\Assets\\ShawarmaTycoon\\Art\\Meshy\\Optimized\\LOD0\\17_trash_bin_LOD0.fbx"
+        },
+        {
+          "lod": 1,
+          "budget": 2500,
+          "triangles": 2500,
+          "file": "C:\\Users\\kemyl\\shawarmatycoon\\Assets\\ShawarmaTycoon\\Art\\Meshy\\Optimized\\LOD1\\17_trash_bin_LOD1.fbx"
+        },
+        {
+          "lod": 2,
+          "budget": 800,
+          "triangles": 800,
+          "file": "C:\\Users\\kemyl\\shawarmatycoon\\Assets\\ShawarmaTycoon\\Art\\Meshy\\Optimized\\LOD2\\17_trash_bin_LOD2.fbx"
+        }
+      ],
+      "seconds": 20.479
+    },
+    {
+      "semantic_name": "18_money_collection_pad",
+      "source_file": "18_money_collection_pad.glb",
+      "source_triangles": 422900,
+      "lods": [
+        {
+          "lod": 0,
+          "budget": 2500,
+          "triangles": 2500,
+          "file": "C:\\Users\\kemyl\\shawarmatycoon\\Assets\\ShawarmaTycoon\\Art\\Meshy\\Optimized\\LOD0\\18_money_collection_pad_LOD0.fbx"
+        },
+        {
+          "lod": 1,
+          "budget": 1000,
+          "triangles": 1000,
+          "file": "C:\\Users\\kemyl\\shawarmatycoon\\Assets\\ShawarmaTycoon\\Art\\Meshy\\Optimized\\LOD1\\18_money_collection_pad_LOD1.fbx"
+        },
+        {
+          "lod": 2,
+          "budget": 300,
+          "triangles": 455,
+          "file": "C:\\Users\\kemyl\\shawarmatycoon\\Assets\\ShawarmaTycoon\\Art\\Meshy\\Optimized\\LOD2\\18_money_collection_pad_LOD2.fbx"
+        }
+      ],
+      "seconds": 37.497
+    },
+    {
+      "semantic_name": "19_upgrade_pad",
+      "source_file": "19_upgrade_pad.glb",
+      "source_triangles": 158244,
+      "lods": [
+        {
+          "lod": 0,
+          "budget": 1500,
+          "triangles": 1500,
+          "file": "C:\\Users\\kemyl\\shawarmatycoon\\Assets\\ShawarmaTycoon\\Art\\Meshy\\Optimized\\LOD0\\19_upgrade_pad_LOD0.fbx"
+        },
+        {
+          "lod": 1,
+          "budget": 600,
+          "triangles": 600,
+          "file": "C:\\Users\\kemyl\\shawarmatycoon\\Assets\\ShawarmaTycoon\\Art\\Meshy\\Optimized\\LOD1\\19_upgrade_pad_LOD1.fbx"
+        },
+        {
+          "lod": 2,
+          "budget": 200,
+          "triangles": 200,
+          "file": "C:\\Users\\kemyl\\shawarmatycoon\\Assets\\ShawarmaTycoon\\Art\\Meshy\\Optimized\\LOD2\\19_upgrade_pad_LOD2.fbx"
+        }
+      ],
+      "seconds": 9.966
+    },
+    {
+      "semantic_name": "21_entrance_door",
+      "source_file": "23_modular_wall_straight.glb",
+      "source_triangles": 252172,
+      "lods": [
+        {
+          "lod": 0,
+          "budget": 4000,
+          "triangles": 4000,
+          "file": "C:\\Users\\kemyl\\shawarmatycoon\\Assets\\ShawarmaTycoon\\Art\\Meshy\\Optimized\\LOD0\\21_entrance_door_LOD0.fbx"
+        },
+        {
+          "lod": 1,
+          "budget": 1500,
+          "triangles": 1500,
+          "file": "C:\\Users\\kemyl\\shawarmatycoon\\Assets\\ShawarmaTycoon\\Art\\Meshy\\Optimized\\LOD1\\21_entrance_door_LOD1.fbx"
+        },
+        {
+          "lod": 2,
+          "budget": 500,
+          "triangles": 500,
+          "file": "C:\\Users\\kemyl\\shawarmatycoon\\Assets\\ShawarmaTycoon\\Art\\Meshy\\Optimized\\LOD2\\21_entrance_door_LOD2.fbx"
+        }
+      ],
+      "seconds": 17.719
+    },
+    {
+      "semantic_name": "22_modular_floor_tile",
+      "source_file": "03_cashier_worker.glb",
+      "source_triangles": 260198,
+      "lods": [
+        {
+          "lod": 0,
+          "budget": 800,
+          "triangles": 800,
+          "file": "C:\\Users\\kemyl\\shawarmatycoon\\Assets\\ShawarmaTycoon\\Art\\Meshy\\Optimized\\LOD0\\22_modular_floor_tile_LOD0.fbx"
+        },
+        {
+          "lod": 1,
+          "budget": 300,
+          "triangles": 300,
+          "file": "C:\\Users\\kemyl\\shawarmatycoon\\Assets\\ShawarmaTycoon\\Art\\Meshy\\Optimized\\LOD1\\22_modular_floor_tile_LOD1.fbx"
+        },
+        {
+          "lod": 2,
+          "budget": 100,
+          "triangles": 188,
+          "file": "C:\\Users\\kemyl\\shawarmatycoon\\Assets\\ShawarmaTycoon\\Art\\Meshy\\Optimized\\LOD2\\22_modular_floor_tile_LOD2.fbx"
+        }
+      ],
+      "seconds": 19.39
+    },
+    {
+      "semantic_name": "23_modular_wall_straight",
+      "source_file": "34_floating_diorama_island.glb",
+      "source_triangles": 71850,
+      "lods": [
+        {
+          "lod": 0,
+          "budget": 800,
+          "triangles": 800,
+          "file": "C:\\Users\\kemyl\\shawarmatycoon\\Assets\\ShawarmaTycoon\\Art\\Meshy\\Optimized\\LOD0\\23_modular_wall_straight_LOD0.fbx"
+        },
+        {
+          "lod": 1,
+          "budget": 300,
+          "triangles": 300,
+          "file": "C:\\Users\\kemyl\\shawarmatycoon\\Assets\\ShawarmaTycoon\\Art\\Meshy\\Optimized\\LOD1\\23_modular_wall_straight_LOD1.fbx"
+        },
+        {
+          "lod": 2,
+          "budget": 100,
+          "triangles": 100,
+          "file": "C:\\Users\\kemyl\\shawarmatycoon\\Assets\\ShawarmaTycoon\\Art\\Meshy\\Optimized\\LOD2\\23_modular_wall_straight_LOD2.fbx"
+        }
+      ],
+      "seconds": 3.008
+    },
+    {
+      "semantic_name": "24_modular_wall_corner",
+      "source_file": "22_modular_floor_tile.glb",
+      "source_triangles": 138308,
+      "lods": [
+        {
+          "lod": 0,
+          "budget": 1200,
+          "triangles": 1200,
+          "file": "C:\\Users\\kemyl\\shawarmatycoon\\Assets\\ShawarmaTycoon\\Art\\Meshy\\Optimized\\LOD0\\24_modular_wall_corner_LOD0.fbx"
+        },
+        {
+          "lod": 1,
+          "budget": 500,
+          "triangles": 500,
+          "file": "C:\\Users\\kemyl\\shawarmatycoon\\Assets\\ShawarmaTycoon\\Art\\Meshy\\Optimized\\LOD1\\24_modular_wall_corner_LOD1.fbx"
+        },
+        {
+          "lod": 2,
+          "budget": 150,
+          "triangles": 150,
+          "file": "C:\\Users\\kemyl\\shawarmatycoon\\Assets\\ShawarmaTycoon\\Art\\Meshy\\Optimized\\LOD2\\24_modular_wall_corner_LOD2.fbx"
+        }
+      ],
+      "seconds": 7.012
+    },
+    {
+      "semantic_name": "34_floating_diorama_island",
+      "source_file": "01_player_character.glb",
+      "source_triangles": 288304,
+      "lods": [
+        {
+          "lod": 0,
+          "budget": 12000,
+          "triangles": 12000,
+          "file": "C:\\Users\\kemyl\\shawarmatycoon\\Assets\\ShawarmaTycoon\\Art\\Meshy\\Optimized\\LOD0\\34_floating_diorama_island_LOD0.fbx"
+        },
+        {
+          "lod": 1,
+          "budget": 5000,
+          "triangles": 5000,
+          "file": "C:\\Users\\kemyl\\shawarmatycoon\\Assets\\ShawarmaTycoon\\Art\\Meshy\\Optimized\\LOD1\\34_floating_diorama_island_LOD1.fbx"
+        },
+        {
+          "lod": 2,
+          "budget": 1500,
+          "triangles": 1500,
+          "file": "C:\\Users\\kemyl\\shawarmatycoon\\Assets\\ShawarmaTycoon\\Art\\Meshy\\Optimized\\LOD2\\34_floating_diorama_island_LOD2.fbx"
+        }
+      ],
+      "seconds": 18.879
+    }
+  ]
+}

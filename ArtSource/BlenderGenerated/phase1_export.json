@@ -1,0 +1,31 @@
+{
+  "01_player_character": {
+    "fbx": "C:/Users/kemyl/shawarmatycoon/ArtSource/BlenderGenerated/ReviewFBX/01_player_character.fbx",
+    "bytes": 897724,
+    "bake_space_transform": true,
+    "alt_fbx": "C:/Users/kemyl/shawarmatycoon/ArtSource/BlenderGenerated/ReviewFBX/_alt_no_bake_transform/01_player_character.fbx",
+    "alt_bytes": 899372
+  },
+  "02_customer_character": {
+    "fbx": "C:/Users/kemyl/shawarmatycoon/ArtSource/BlenderGenerated/ReviewFBX/02_customer_character.fbx",
+    "bytes": 888492,
+    "bake_space_transform": true,
+    "alt_fbx": "C:/Users/kemyl/shawarmatycoon/ArtSource/BlenderGenerated/ReviewFBX/_alt_no_bake_transform/02_customer_character.fbx",
+    "alt_bytes": 889868
+  },
+  "06_rotisserie_station": {
+    "fbx": "C:/Users/kemyl/shawarmatycoon/ArtSource/BlenderGenerated/ReviewFBX/06_rotisserie_station.fbx",
+    "bytes": 484476,
+    "bake_space_transform": true
+  },
+  "15_dining_table": {
+    "fbx": "C:/Users/kemyl/shawarmatycoon/ArtSource/BlenderGenerated/ReviewFBX/15_dining_table.fbx",
+    "bytes": 178636,
+    "bake_space_transform": true
+  },
+  "17_trash_bin": {
+    "fbx": "C:/Users/kemyl/shawarmatycoon/ArtSource/BlenderGenerated/ReviewFBX/17_trash_bin.fbx",
+    "bytes": 110412,
+    "bake_space_transform": true
+  }
+}

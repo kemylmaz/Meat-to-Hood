@@ -52,6 +52,17 @@ namespace ShawarmaTycoon
             RefreshVisuals();
         }
 
+        public void SetStackAnchor(Transform anchor)
+        {
+            if (anchor == null || stackRoot == null)
+                return;
+
+            stackRoot.SetParent(anchor, false);
+            stackRoot.localPosition = Vector3.zero;
+            stackRoot.localRotation = Quaternion.identity;
+            stackRoot.localScale = Vector3.one;
+        }
+
         public bool CanAccept(ItemType type)
         {
             return type != ItemType.None && Count < capacity && (Count == 0 || HeldType == type);
