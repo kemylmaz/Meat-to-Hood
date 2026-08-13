@@ -30,7 +30,7 @@ namespace ShawarmaTycoon
             saveKey = "player." + type;
             level = GameProgress.GetInt(saveKey, 0);
             ApplyLevel();
-            label = PrototypeVisuals.CreateLabel("", transform, Vector3.up * 0.38f, 0.12f);
+            label = PrototypeVisuals.CreateLabel("", transform, Vector3.up * 0.62f, 0.072f);
             label.gameObject.SetActive(false);
             RefreshLabel();
         }

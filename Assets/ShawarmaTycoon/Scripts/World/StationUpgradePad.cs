@@ -31,7 +31,9 @@ namespace ShawarmaTycoon
             saveKey = "station." + gameObject.name;
             level = GameProgress.GetInt(saveKey, 0);
             ApplyLevel(false);
-            label = PrototypeVisuals.CreateLabel("", transform, Vector3.up * 0.35f, 0.115f);
+            // Small and lifted clear: these pads sit in rows, and at the old size the
+            // captions of neighbouring pads overlapped into an unreadable pile.
+            label = PrototypeVisuals.CreateLabel("", transform, Vector3.up * 0.62f, 0.072f);
             RefreshLabel();
             label.gameObject.SetActive(false);
         }

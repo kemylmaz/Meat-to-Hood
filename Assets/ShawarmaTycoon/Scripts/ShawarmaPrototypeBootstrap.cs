@@ -146,49 +146,38 @@ namespace ShawarmaTycoon
             ConveyorLink cutBelt = CreateConveyor("Kesim Bandı", cutting, wrap);
             ConveyorLink wrapBelt = CreateConveyor("Dürüm Bandı", wrap, service);
 
-            GameObject managementRoot = new("Yönetim Ofisleri");
+            // One management room replaces the three unlockable office wings.
+            // Those wings, and the upgrade pads that used to sit behind them,
+            // were both created inactive and never switched on, so every pad in
+            // here was unreachable in the shipped build.
+            GameObject managementRoot = new("Yönetim Odası");
             managementRoot.transform.SetParent(runtimeRoot, false);
-            CreateManagementArea(managementRoot.transform, "HR", new Vector3(-6.4f, 0.25f, -3.3f), new Color(0.35f, 0.55f, 0.88f));
-            CreateManagementArea(managementRoot.transform, "GM", new Vector3(-6.4f, 0.25f, -5.1f), new Color(0.75f, 0.43f, 0.70f));
-            CreateManagementPad(managementRoot.transform, "Ocak İşçisi", new Vector3(-5.1f, 0.28f, -3.3f), StationUpgradeType.Worker, 35, oven, null);
-            CreateManagementPad(managementRoot.transform, "Kesim İşçisi", new Vector3(-3.7f, 0.28f, -3.3f), StationUpgradeType.Worker, 55, cutting, null);
-            CreateManagementPad(managementRoot.transform, "Dürüm İşçisi", new Vector3(-2.3f, 0.28f, -3.3f), StationUpgradeType.Worker, 75, wrap, null);
-            CreateManagementPad(managementRoot.transform, "Et Bandı", new Vector3(-5.1f, 0.28f, -5.1f), StationUpgradeType.Conveyor, 45, null, rawBelt);
-            CreateManagementPad(managementRoot.transform, "Ocak Bandı", new Vector3(-3.7f, 0.28f, -5.1f), StationUpgradeType.Conveyor, 65, null, ovenBelt);
-            CreateManagementPad(managementRoot.transform, "Kesim Bandı", new Vector3(-2.3f, 0.28f, -5.1f), StationUpgradeType.Conveyor, 85, null, cutBelt);
-            CreateManagementPad(managementRoot.transform, "Dürüm Bandı", new Vector3(-0.9f, 0.28f, -5.1f), StationUpgradeType.Conveyor, 105, null, wrapBelt);
-            CreatePlayerUpgradePad(managementRoot.transform, "Hız Geliştirmesi", new Vector3(0.1f, 0.28f, -3.3f), PlayerUpgradeType.MoveSpeed, 55);
-            CreatePlayerUpgradePad(managementRoot.transform, "Kapasite Geliştirmesi", new Vector3(1.5f, 0.28f, -3.3f), PlayerUpgradeType.CarryCapacity, 65);
-            managementRoot.SetActive(false);
 
-            GameObject officePad = new("Ofis Açma Alanı");
-            officePad.transform.SetParent(runtimeRoot, false);
-            officePad.transform.localPosition = new Vector3(-5.2f, 0.28f, -4.2f);
-            PrototypeVisuals.CreatePrimitive("Ofis Upgrade Pad", PrimitiveType.Cylinder, officePad.transform, Vector3.zero,
-                new Vector3(0.75f, 0.06f, 0.75f), new Color(0.55f, 0.38f, 0.88f));
-            ManagementRoomUnlockPad officeUnlock = officePad.AddComponent<ManagementRoomUnlockPad>();
-            officeUnlock.Configure(playerTransform, managementRoot, 120);
-            officePad.SetActive(false);
-            managementRoot.SetActive(false);
+            ManagementOfficeTerminal hrTerminal = CreateManagerDesk(
+                managementRoot.transform, "HR Masası", "25_hr_manager_desk",
+                new Vector3(-6.6f, 0.25f, -4.2f));
+            ManagementOfficeTerminal recruitTerminal = CreateManagerDesk(
+                managementRoot.transform, "İşe Alım Masası", "26_recruitment_desk",
+                new Vector3(-3.4f, 0.25f, -4.2f));
+            ManagementOfficeTerminal gmTerminal = CreateManagerDesk(
+                managementRoot.transform, "GM Masası", "27_general_manager_desk",
+                new Vector3(-0.2f, 0.25f, -4.2f));
 
-            GameObject hrWing = new("HR Wing");
-            hrWing.transform.SetParent(runtimeRoot, false);
-            ManagementOfficeTerminal hrTerminal = CreateOfficeRoom(hrWing.transform, "HR Manager Office", new Vector3(-6.15f, 0.25f, -4.4f),
-                new Color(0.28f, 0.56f, 0.91f));
-            ManagementOfficeTerminal recruitTerminal = CreateOfficeRoom(hrWing.transform, "Recruit Office", new Vector3(-2.75f, 0.25f, -4.4f),
-                new Color(0.32f, 0.70f, 0.64f));
+            // Upgrade pads in front of the desks. Each pad floats a world-space
+            // label, so the two rows are staggered and spaced well apart -
+            // packed tighter the captions overlap into an unreadable pile.
+            CreateManagementPad(managementRoot.transform, "Ocak İşçisi", new Vector3(-6.8f, 0.28f, -6.0f), StationUpgradeType.Worker, 35, oven, null);
+            CreateManagementPad(managementRoot.transform, "Kesim İşçisi", new Vector3(-5.1f, 0.28f, -6.0f), StationUpgradeType.Worker, 55, cutting, null);
+            CreateManagementPad(managementRoot.transform, "Dürüm İşçisi", new Vector3(-3.4f, 0.28f, -6.0f), StationUpgradeType.Worker, 75, wrap, null);
+            CreatePlayerUpgradePad(managementRoot.transform, "Hız Geliştirmesi", new Vector3(-1.7f, 0.28f, -6.0f), PlayerUpgradeType.MoveSpeed, 55);
+            CreatePlayerUpgradePad(managementRoot.transform, "Kapasite Geliştirmesi", new Vector3(0.0f, 0.28f, -6.0f), PlayerUpgradeType.CarryCapacity, 65);
+            CreateManagementPad(managementRoot.transform, "Et Bandı", new Vector3(-5.95f, 0.28f, -7.7f), StationUpgradeType.Conveyor, 45, null, rawBelt);
+            CreateManagementPad(managementRoot.transform, "Ocak Bandı", new Vector3(-4.25f, 0.28f, -7.7f), StationUpgradeType.Conveyor, 65, null, ovenBelt);
+            CreateManagementPad(managementRoot.transform, "Kesim Bandı", new Vector3(-2.55f, 0.28f, -7.7f), StationUpgradeType.Conveyor, 85, null, cutBelt);
+            CreateManagementPad(managementRoot.transform, "Dürüm Bandı", new Vector3(-0.85f, 0.28f, -7.7f), StationUpgradeType.Conveyor, 105, null, wrapBelt);
 
-            GameObject gmWing = new("GM Office");
-            gmWing.transform.SetParent(runtimeRoot, false);
-            ManagementOfficeTerminal gmTerminal = CreateOfficeRoom(gmWing.transform, "General Manager Office", new Vector3(0.65f, 0.25f, -4.4f),
-                new Color(0.76f, 0.45f, 0.72f));
-            hrWing.SetActive(false);
-            gmWing.SetActive(false);
-
-            CreateOfficeUnlockPad("Unlock HR and Recruit", new Vector3(-6.15f, 0.28f, -6.10f), new Color(0.28f, 0.56f, 0.91f),
-                playerTransform, hrWing, 120, "office.hr", "HR + RECRUIT\n$120");
-            CreateOfficeUnlockPad("Unlock GM", new Vector3(0.65f, 0.28f, -6.10f), new Color(0.76f, 0.45f, 0.72f),
-                playerTransform, gmWing, 200, "office.gm", "GM OFFICE\n$200");
+            CreatePlanter(managementRoot.transform, new Vector3(1.5f, 0.25f, -4.4f));
+            CreatePlanter(managementRoot.transform, new Vector3(-8.4f, 0.25f, -4.4f));
 
 
             // Dining room sits symmetrically in the open middle of the lot, clear
@@ -483,16 +472,43 @@ namespace ShawarmaTycoon
             return link;
         }
 
-        private void CreateManagementArea(Transform parent, string title, Vector3 position, Color color)
+        /// <summary>
+        /// One authored manager desk. The model already carries its own corner
+        /// walls, so the room is just three of these in a row - no separate
+        /// wall shell needed.
+        /// </summary>
+        private ManagementOfficeTerminal CreateManagerDesk(
+            Transform parent, string title, string assetId, Vector3 position)
         {
             GameObject desk = new(title);
             desk.transform.SetParent(parent, false);
             desk.transform.localPosition = position;
-            PrototypeVisuals.CreatePrimitive("Manager Desk", PrimitiveType.Cube, desk.transform, new Vector3(0f, 0.48f, 0f),
-                new Vector3(1.5f, 0.9f, 0.8f), color);
-            PrototypeVisuals.CreatePrimitive("Manager", PrimitiveType.Capsule, desk.transform, new Vector3(0f, 1.15f, 0.25f),
-                new Vector3(0.42f, 0.56f, 0.42f), PrototypeVisuals.Cream);
-            PrototypeVisuals.CreateLabel(title, desk.transform, new Vector3(0f, 1.95f, 0f), 0.14f);
+
+            if (MeshyVisuals.TryAttach(desk.transform, assetId,
+                    new Vector3(2.75f, 1.92f, 2.07f), Vector3.zero, Vector3.zero) == null)
+            {
+                PrototypeVisuals.CreatePrimitive("Desk Fallback", PrimitiveType.Cube,
+                    desk.transform, new Vector3(0f, 0.45f, 0.2f),
+                    new Vector3(1.7f, 0.85f, 0.7f), PrototypeVisuals.Cream);
+            }
+
+            // Trigger volume sits where the player walks up to the desk.
+            GameObject terminal = new("Terminal");
+            terminal.transform.SetParent(desk.transform, false);
+            terminal.transform.localPosition = new Vector3(0f, 0f, -1.15f);
+            return terminal.AddComponent<ManagementOfficeTerminal>();
+        }
+
+        private void CreatePlanter(Transform parent, Vector3 position)
+        {
+            GameObject planter = new("Saksı");
+            planter.transform.SetParent(parent, false);
+            planter.transform.localPosition = position;
+            if (MeshyVisuals.TryAttach(planter.transform, "33_decorative_plant",
+                    new Vector3(1.0f, 1.2f, 1.0f), Vector3.zero, Vector3.zero) == null)
+                PrototypeVisuals.CreatePrimitive("Planter Fallback", PrimitiveType.Cylinder,
+                    planter.transform, new Vector3(0f, 0.3f, 0f),
+                    new Vector3(0.5f, 0.3f, 0.5f), new Color(0.78f, 0.45f, 0.32f));
         }
 
         private void CreateManagementPad(Transform parent, string name, Vector3 position, StationUpgradeType type, int cost, ItemStation station, ConveyorLink conveyor)
@@ -566,53 +582,6 @@ namespace ShawarmaTycoon
             PrototypeVisuals.CreatePrimitive("Greens", PrimitiveType.Sphere, station,
                 new Vector3(-0.35f, 1.16f, 0f), new Vector3(0.20f, 0.12f, 0.20f),
                 new Color(0.30f, 0.70f, 0.30f));
-        }
-
-        private ManagementOfficeTerminal CreateOfficeRoom(Transform parent, string roomName, Vector3 position, Color accent)
-        {
-            GameObject room = new(roomName);
-            room.transform.SetParent(parent, false);
-            room.transform.localPosition = position;
-
-            Color floor = new Color(0.94f, 0.80f, 0.61f);
-            Color wall = new Color(0.98f, 0.91f, 0.76f);
-            PrototypeVisuals.CreatePrimitive("Office Floor", PrimitiveType.Cube, room.transform, Vector3.zero,
-                new Vector3(2.95f, 0.08f, 2.70f), floor);
-            PrototypeVisuals.CreatePrimitive("Back Wall", PrimitiveType.Cube, room.transform, new Vector3(0f, 0.92f, 1.28f),
-                new Vector3(2.95f, 1.82f, 0.12f), wall);
-            PrototypeVisuals.CreatePrimitive("Left Wall", PrimitiveType.Cube, room.transform, new Vector3(-1.42f, 0.92f, 0f),
-                new Vector3(0.12f, 1.82f, 2.70f), wall);
-            PrototypeVisuals.CreatePrimitive("Right Wall", PrimitiveType.Cube, room.transform, new Vector3(1.42f, 0.92f, 0f),
-                new Vector3(0.12f, 1.82f, 2.70f), wall);
-            PrototypeVisuals.CreatePrimitive("Door Beam", PrimitiveType.Cube, room.transform, new Vector3(0f, 1.55f, -1.22f),
-                new Vector3(1.35f, 0.16f, 0.16f), accent);
-            PrototypeVisuals.CreatePrimitive("Door Left", PrimitiveType.Cube, room.transform, new Vector3(-0.67f, 0.76f, -1.22f),
-                new Vector3(0.14f, 1.55f, 0.16f), accent);
-            PrototypeVisuals.CreatePrimitive("Door Right", PrimitiveType.Cube, room.transform, new Vector3(0.67f, 0.76f, -1.22f),
-                new Vector3(0.14f, 1.55f, 0.16f), accent);
-
-            GameObject desk = new("Manager Desk");
-            desk.transform.SetParent(room.transform, false);
-            desk.transform.localPosition = new Vector3(0f, 0f, 0.46f);
-            PrototypeVisuals.CreatePrimitive("Desk", PrimitiveType.Cube, desk.transform, new Vector3(0f, 0.46f, 0f),
-                new Vector3(1.55f, 0.82f, 0.62f), accent);
-            PrototypeVisuals.CreatePrimitive("Manager", PrimitiveType.Capsule, desk.transform, new Vector3(0f, 1.10f, 0.32f),
-                new Vector3(0.42f, 0.58f, 0.42f), PrototypeVisuals.Cream);
-            PrototypeVisuals.CreatePrimitive("Manager Hat", PrimitiveType.Sphere, desk.transform, new Vector3(0f, 1.78f, 0.32f),
-                new Vector3(0.48f, 0.14f, 0.48f), accent);
-
-            return desk.AddComponent<ManagementOfficeTerminal>();
-        }
-
-        private void CreateOfficeUnlockPad(string padName, Vector3 position, Color color, Transform player, GameObject roomRoot, int cost, string saveKey, string title)
-        {
-            GameObject pad = new(padName);
-            pad.transform.SetParent(runtimeRoot, false);
-            pad.transform.localPosition = position;
-            PrototypeVisuals.CreatePrimitive("Office Unlock Pad", PrimitiveType.Cylinder, pad.transform, Vector3.zero,
-                new Vector3(0.80f, 0.06f, 0.80f), color);
-            ManagementRoomUnlockPad unlock = pad.AddComponent<ManagementRoomUnlockPad>();
-            unlock.Configure(player, roomRoot, cost, saveKey, title);
         }
 
         private void CreateCustomerEntrance(Vector3 position)

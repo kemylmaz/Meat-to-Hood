@@ -64,6 +64,18 @@ namespace ShawarmaTycoon
             PlayerPrefs.Save();
         }
 
+        /// <summary>
+        /// Wipes every saved value: coins, records, daily counters, unlocks and
+        /// hired staff. Keys are generated (per worker, per calendar day) so they
+        /// cannot be enumerated - and this project stores nothing else in
+        /// PlayerPrefs, so clearing the lot is the only complete reset.
+        /// </summary>
+        public static void ResetAll()
+        {
+            PlayerPrefs.DeleteAll();
+            PlayerPrefs.Save();
+        }
+
         public static int GetInt(string key, int fallback = 0) => PlayerPrefs.GetInt(Prefix + key, fallback);
         public static void SetInt(string key, int value)
         {
