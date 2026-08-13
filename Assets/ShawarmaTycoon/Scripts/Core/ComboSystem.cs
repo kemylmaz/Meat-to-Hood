@@ -8,7 +8,13 @@ namespace ShawarmaTycoon
     {
         public static ComboSystem Instance { get; private set; }
 
-        [SerializeField, Min(0.1f)] private float timeoutSeconds = 8f;
+        /// <summary>
+        /// How long a streak survives between actions. A well run starting shop
+        /// serves one customer about every 13 s, so at 8 s the streak lapsed
+        /// between every pair of them - the multiplier was unreachable until late
+        /// upgrades, and the whole system sat dead through the early game.
+        /// </summary>
+        [SerializeField, Min(0.1f)] private float timeoutSeconds = 16f;
         [SerializeField, Min(1)] private int mediumMultiplierThreshold = 3;
         [SerializeField, Min(2)] private int maximumMultiplierThreshold = 6;
 

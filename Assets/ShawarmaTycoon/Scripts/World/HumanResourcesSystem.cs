@@ -50,11 +50,14 @@ namespace ShawarmaTycoon
 
         public int GetCost(EmployeeUpgradeType type)
         {
+            // Automation was the cheapest thing on the board at 150, below a
+            // single belt, while speeding up every belt and every assistant at
+            // once. It is the strongest upgrade here and is priced like it.
             int baseCost = type switch
             {
                 EmployeeUpgradeType.MovementSpeed => 500,
                 EmployeeUpgradeType.Capacity => 300,
-                _ => 150
+                _ => 450
             };
             return Mathf.RoundToInt(baseCost * Mathf.Pow(1.55f, GetLevel(type)));
         }

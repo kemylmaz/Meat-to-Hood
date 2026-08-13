@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -9,6 +10,7 @@ namespace ShawarmaTycoon.UI
     /// </summary>
     public sealed class ObjectiveBanner : MonoBehaviour
     {
+        private readonly List<CustomerTable> tables = new();
         private CarryInventory inventory;
         private Text label;
         private CanvasGroup group;
@@ -34,6 +36,18 @@ namespace ShawarmaTycoon.UI
         }
 
         public void Bind(CarryInventory playerInventory) => inventory = playerInventory;
+
+        /// <summary>
+        /// Tables the banner watches so it can call out a full dining room. A
+        /// table stays dirty until someone clears it, so an unattended shop
+        /// silently stops seating anyone and the income goes to zero with nothing
+        /// on screen explaining why.
+        /// </summary>
+        public void BindTables(IEnumerable<CustomerTable> diningTables)
+        {
+            tables.Clear();
+            if (diningTables != null) tables.AddRange(diningTables);
+        }
 
         /// <summary>Show a one-off message (unlock hints, warnings) for a moment.</summary>
         public void Flash(string message, float seconds = 2.5f)
@@ -65,6 +79,12 @@ namespace ShawarmaTycoon.UI
 
         private string ObjectiveText()
         {
+            // A dining room with nowhere to seat anyone outranks the carry hint:
+            // however much stock is on the counter, nobody can be served until a
+            // table is cleared.
+            if (NoSeatsLeft())
+                return "Boş masa yok - kirli masaları temizle";
+
             if (inventory == null || inventory.Count == 0)
                 return "Et deposundan çiğ et al";
 
@@ -74,8 +94,22 @@ namespace ShawarmaTycoon.UI
                 ItemType.CookedMeat => "Pişen etleri kesim tezgâhına götür",
                 ItemType.SlicedMeat => "Kesilmiş etleri dürüm tezgâhına götür",
                 ItemType.Wrap => "Dürümleri servis tezgâhına bırak",
+                ItemType.Trash => "Çöpü çöp kutusuna at",
                 _ => string.Empty
             };
+        }
+
+        /// <summary>True when at least one table is dirty and none are free.</summary>
+        private bool NoSeatsLeft()
+        {
+            bool anyDirty = false;
+            for (int i = 0; i < tables.Count; i++)
+            {
+                if (tables[i] == null || !tables[i].gameObject.activeInHierarchy) continue;
+                if (tables[i].IsAvailable) return false;
+                if (tables[i].IsDirty) anyDirty = true;
+            }
+            return anyDirty;
         }
     }
 }

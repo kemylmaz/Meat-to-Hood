@@ -149,7 +149,7 @@ namespace ShawarmaTycoon
                 false, "Takeaway Upgrade Pad");
             ManagementRoomUnlockPad takeawayUnlock = takeawayUnlockObject.AddComponent<ManagementRoomUnlockPad>();
             takeawayUnlock.Configure(
-                playerTransform, takeawayRoot, 180, "takeaway.unlocked", "TAKEAWAY");
+                playerTransform, takeawayRoot, 280, "takeaway.unlocked", "TAKEAWAY");
 
             meatSource.SetWorldLabelVisible(false);
             oven.SetWorldLabelVisible(false);
@@ -183,15 +183,19 @@ namespace ShawarmaTycoon
             // Upgrade pads in front of the desks. Each pad floats a world-space
             // label, so the two rows are staggered and spaced well apart -
             // packed tighter the captions overlap into an unreadable pile.
-            CreateManagementPad(managementRoot.transform, "Ocak İşçisi", new Vector3(-6.8f, 0.28f, -6.0f), StationUpgradeType.Worker, 35, oven, null);
-            CreateManagementPad(managementRoot.transform, "Kesim İşçisi", new Vector3(-5.1f, 0.28f, -6.0f), StationUpgradeType.Worker, 55, cutting, null);
-            CreateManagementPad(managementRoot.transform, "Dürüm İşçisi", new Vector3(-3.4f, 0.28f, -6.0f), StationUpgradeType.Worker, 75, wrap, null);
+            // Measured: a well run starting shop takes about 70 coins a minute,
+            // rising to roughly 120 once the line is staffed. This board used to
+            // total 525 - the whole early game was bought out in three minutes.
+            // At the figures below it runs about a quarter of an hour.
+            CreateManagementPad(managementRoot.transform, "Ocak İşçisi", new Vector3(-6.8f, 0.28f, -6.0f), StationUpgradeType.Worker, 90, oven, null);
+            CreateManagementPad(managementRoot.transform, "Kesim İşçisi", new Vector3(-5.1f, 0.28f, -6.0f), StationUpgradeType.Worker, 150, cutting, null);
+            CreateManagementPad(managementRoot.transform, "Dürüm İşçisi", new Vector3(-3.4f, 0.28f, -6.0f), StationUpgradeType.Worker, 210, wrap, null);
             CreatePlayerUpgradePad(managementRoot.transform, "Hız Geliştirmesi", new Vector3(-1.7f, 0.28f, -6.0f), PlayerUpgradeType.MoveSpeed, 55);
             CreatePlayerUpgradePad(managementRoot.transform, "Kapasite Geliştirmesi", new Vector3(0.0f, 0.28f, -6.0f), PlayerUpgradeType.CarryCapacity, 65);
-            CreateManagementPad(managementRoot.transform, "Et Bandı", new Vector3(-5.95f, 0.28f, -7.7f), StationUpgradeType.Conveyor, 45, null, rawBelt);
-            CreateManagementPad(managementRoot.transform, "Ocak Bandı", new Vector3(-4.25f, 0.28f, -7.7f), StationUpgradeType.Conveyor, 65, null, ovenBelt);
-            CreateManagementPad(managementRoot.transform, "Kesim Bandı", new Vector3(-2.55f, 0.28f, -7.7f), StationUpgradeType.Conveyor, 85, null, cutBelt);
-            CreateManagementPad(managementRoot.transform, "Dürüm Bandı", new Vector3(-0.85f, 0.28f, -7.7f), StationUpgradeType.Conveyor, 105, null, wrapBelt);
+            CreateManagementPad(managementRoot.transform, "Et Bandı", new Vector3(-5.95f, 0.28f, -7.7f), StationUpgradeType.Conveyor, 120, null, rawBelt);
+            CreateManagementPad(managementRoot.transform, "Ocak Bandı", new Vector3(-4.25f, 0.28f, -7.7f), StationUpgradeType.Conveyor, 180, null, ovenBelt);
+            CreateManagementPad(managementRoot.transform, "Kesim Bandı", new Vector3(-2.55f, 0.28f, -7.7f), StationUpgradeType.Conveyor, 240, null, cutBelt);
+            CreateManagementPad(managementRoot.transform, "Dürüm Bandı", new Vector3(-0.85f, 0.28f, -7.7f), StationUpgradeType.Conveyor, 320, null, wrapBelt);
 
             CreatePlanter(managementRoot.transform, new Vector3(1.5f, 0.25f, -4.4f));
             CreatePlanter(managementRoot.transform, new Vector3(-8.4f, 0.25f, -4.4f));
@@ -251,7 +255,7 @@ namespace ShawarmaTycoon
                 new Vector3(1.30f, 0.40f, 1.30f), Vector3.down * 0.03f, Vector3.zero,
                 false, "Upgrade Pad");
             UpgradePad upgradePad = upgradeRoot.AddComponent<UpgradePad>();
-            upgradePad.Configure(playerTransform, expansion, 60);
+            upgradePad.Configure(playerTransform, expansion, 140);
 
             // Pedestrians come in from the side street at the front corner; the
             // main road behind the kitchen is for traffic and the future
@@ -283,6 +287,7 @@ namespace ShawarmaTycoon
 
             UI.GameHUD hud = UI.GameHUD.Ensure(runtimeRoot);
             hud.Objective.Bind(inventory);
+            hud.Objective.BindTables(tables);
             playerMotor.SetJoystick(hud.Joystick);
             root.AddComponent<GameSessionPersistence>();
 
@@ -517,7 +522,12 @@ namespace ShawarmaTycoon
             }
 
             inventory = player.AddComponent<CarryInventory>();
-            inventory.Configure(12);
+            // Small enough that the natural batch flows through the line quickly.
+            // At 12 the source filled the player up in a second and a half, and
+            // since a processor only runs while you stand at it, that meant 26 s
+            // parked at the oven and the best part of a minute before the first
+            // wrap reached the counter. The capacity upgrade grows this.
+            inventory.Configure(6);
             if (MeshyVisuals.TryReplaceDirect(
                     player.transform, "01_player_character", new Vector3(0.75f, 1.70f, 0.85f),
                     Vector3.zero, Vector3.zero, false, "Body", "Apron") &&

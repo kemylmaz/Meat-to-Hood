@@ -15,7 +15,14 @@ namespace ShawarmaTycoon
         [SerializeField, Min(0.1f)] private float moveSpeed = 2.4f;
         [SerializeField, Min(0.1f)] private float eatingDuration = 4.5f;
         [SerializeField, Min(1)] private int mealPayout = 15;
-        [SerializeField, Min(1f)] private float angryAfterSeconds = 8f;
+        /// <summary>
+        /// The line between a happy customer and a grudging one: full price and a
+        /// combo step under it, 0.6x and a broken combo over. It has to be
+        /// reachable from the back of a full queue - at 8 s it was not, so every
+        /// customer past the first paid the penalty rate and the combo could
+        /// never get off the ground in a busy shop.
+        /// </summary>
+        [SerializeField, Min(1f)] private float angryAfterSeconds = 15f;
         [SerializeField, Min(2f)] private float patienceSeconds = 20f;
 
         private CustomerManager manager;

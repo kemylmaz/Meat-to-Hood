@@ -55,11 +55,16 @@ namespace ShawarmaTycoon
             _ => runner
         };
 
+        /// <summary>
+        /// Priced above the station board: each of these removes a whole repeated
+        /// chore, so they should be something you save up for rather than pick up
+        /// in passing on the first day.
+        /// </summary>
         public int GetCost(RecruitRole role) => role switch
         {
-            RecruitRole.Cashier => 160,
-            RecruitRole.Cleaner => 130,
-            _ => 180
+            RecruitRole.Cashier => 350,
+            RecruitRole.Cleaner => 300,
+            _ => 400
         };
 
         public bool TryHire(RecruitRole role, bool free)

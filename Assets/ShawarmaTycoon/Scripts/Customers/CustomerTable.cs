@@ -131,10 +131,17 @@ namespace ShawarmaTycoon
             TryPickUpTrash();
         }
 
+        /// <summary>
+        /// Cash is picked up by approaching the table, not by stepping exactly on
+        /// its pad. The pad sits barely a metre from the table, so the tighter
+        /// radius turned one visit into two: clear the plates, then shuffle across
+        /// and stand on the money.
+        /// </summary>
         private void CollectCashIfNearby()
         {
             if (pendingCash <= 0 || cashPad == null || GameEconomy.Instance == null) return;
-            if (Vector3.SqrMagnitude(player.position - cashPad.transform.position) > 0.95f * 0.95f) return;
+            if (Vector3.SqrMagnitude(player.position - transform.position) >
+                trashPickupRadius * trashPickupRadius) return;
             CollectCash(false);
         }
 
