@@ -49,12 +49,42 @@ def _override():
                 scene=bpy.context.scene, view_layer=bpy.context.view_layer)
 
 
-def build_rig(obj_name):
-    """Create (once) the shared humanoid armature datablock and an object for it."""
-    arm = bpy.data.armatures.get(RIG_NAME)
+CHIBI_RIG_NAME = "ST_ChibiRig"
+
+# Same bone names and hierarchy as BONES, retargeted to the 3.3-heads-tall
+# proportions of the soft cozy set. Actions transfer because they are stored as
+# bone-local rotations.
+CHIBI_BONES = [
+    ("Hips",       (0.00, 0, 0.58),    (0.00, 0, 0.70),    None),
+    ("Spine",      (0.00, 0, 0.70),    (0.00, 0, 0.82),    "Hips"),
+    ("Chest",      (0.00, 0, 0.82),    (0.00, 0, 0.96),    "Spine"),
+    ("Neck",       (0.00, 0, 0.96),    (0.00, 0, 1.02),    "Chest"),
+    ("Head",       (0.00, 0, 1.02),    (0.00, 0, 1.50),    "Neck"),
+    ("Shoulder.L", (0.055, 0, 0.950),  (0.150, 0, 0.960),  "Chest"),
+    ("UpperArm.L", (0.150, 0, 0.960),  (0.205, 0, 0.700),  "Shoulder.L"),
+    ("LowerArm.L", (0.205, 0, 0.700),  (0.212, 0, 0.600),  "UpperArm.L"),
+    ("Hand.L",     (0.212, 0, 0.600),  (0.214, 0, 0.540),  "LowerArm.L"),
+    ("Shoulder.R", (-0.055, 0, 0.950), (-0.150, 0, 0.960), "Chest"),
+    ("UpperArm.R", (-0.150, 0, 0.960), (-0.205, 0, 0.700), "Shoulder.R"),
+    ("LowerArm.R", (-0.205, 0, 0.700), (-0.212, 0, 0.600), "UpperArm.R"),
+    ("Hand.R",     (-0.212, 0, 0.600), (-0.214, 0, 0.540), "LowerArm.R"),
+    ("UpperLeg.L", (0.102, 0, 0.580),  (0.104, 0, 0.330),  "Hips"),
+    ("LowerLeg.L", (0.104, 0, 0.330),  (0.105, 0, 0.110),  "UpperLeg.L"),
+    ("Foot.L",     (0.105, 0, 0.110),  (0.105, -0.14, 0.04), "LowerLeg.L"),
+    ("UpperLeg.R", (-0.102, 0, 0.580), (-0.104, 0, 0.330), "Hips"),
+    ("LowerLeg.R", (-0.104, 0, 0.330), (-0.105, 0, 0.110), "UpperLeg.R"),
+    ("Foot.R",     (-0.105, 0, 0.110), (-0.105, -0.14, 0.04), "LowerLeg.R"),
+]
+
+
+def build_rig(obj_name, rig_data_name=None, bones=None):
+    """Create (once per datablock) a humanoid armature and an object for it."""
+    rig_data_name = rig_data_name or RIG_NAME
+    bones = bones or BONES
+    arm = bpy.data.armatures.get(rig_data_name)
     fresh = arm is None
     if fresh:
-        arm = bpy.data.armatures.new(RIG_NAME)
+        arm = bpy.data.armatures.new(rig_data_name)
     ob = bpy.data.objects.new(obj_name, arm)
     bpy.context.scene.collection.objects.link(ob)
     if fresh:
@@ -64,7 +94,7 @@ def build_rig(obj_name):
             ob.select_set(True)
             bpy.ops.object.mode_set(mode='EDIT')
             eb = arm.edit_bones
-            for name, head, tail, parent in BONES:
+            for name, head, tail, parent in bones:
                 b = eb.new(name)
                 b.head = head
                 b.tail = tail

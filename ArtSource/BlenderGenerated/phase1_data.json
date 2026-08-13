@@ -1231,5 +1231,689 @@
     "has_rig": false,
     "actions": [],
     "cameras_or_lights_inside": []
+  },
+  {
+    "name": "50_customer_vest_green",
+    "dims_XYZ": [
+      0.5532,
+      0.5278,
+      1.5716
+    ],
+    "bbox_min": [
+      -0.2766,
+      -0.2538,
+      0.0
+    ],
+    "bbox_max": [
+      0.2766,
+      0.274,
+      1.5716
+    ],
+    "ground_contact_z": 0.0,
+    "origin_bottom_center": [
+      0.0,
+      0.0101
+    ],
+    "root_location": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "root_rotation_deg": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "root_scale": [
+      1.0,
+      1.0,
+      1.0
+    ],
+    "front_direction_local": [
+      0.0,
+      -1.0,
+      0.0
+    ],
+    "tris": {
+      "LOD0": 8408,
+      "LOD1": 4204,
+      "LOD2": 1680
+    },
+    "materials": [
+      "MAT_ShoeBrown",
+      "MAT_TrouserCharcoal",
+      "MAT_ShirtIvory",
+      "MAT_VestOlive",
+      "MAT_TieGold",
+      "MAT_SkinSoft",
+      "MAT_HairSoft",
+      "MAT_FaceInk"
+    ],
+    "mesh_checks": {
+      "LOD0": {
+        "non_manifold_edges": 0,
+        "duplicate_faces": 0,
+        "zero_area_faces": 0
+      },
+      "LOD1": {
+        "non_manifold_edges": 0,
+        "duplicate_faces": 0,
+        "zero_area_faces": 0
+      },
+      "LOD2": {
+        "non_manifold_edges": 0,
+        "duplicate_faces": 0,
+        "zero_area_faces": 0
+      }
+    },
+    "unapplied_modifiers": {
+      "LOD0": [
+        "ARMATURE"
+      ],
+      "LOD1": [
+        "ARMATURE"
+      ],
+      "LOD2": [
+        "ARMATURE"
+      ]
+    },
+    "anchors": {
+      "50_customer_vest_green_ROOT": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "FRONT_DIRECTION.012": [
+        0.0,
+        -1.0,
+        0.0
+      ],
+      "CARRY_ANCHOR.002": [
+        0.0,
+        -0.38,
+        0.86
+      ],
+      "HEAD_UI_ANCHOR.002": [
+        0.0,
+        0.0,
+        1.95
+      ]
+    },
+    "has_rig": true,
+    "actions": [
+      "CarryWalk",
+      "Idle",
+      "Walk"
+    ],
+    "cameras_or_lights_inside": []
+  },
+  {
+    "name": "51_customer_vest_navy",
+    "dims_XYZ": [
+      0.5532,
+      0.5278,
+      1.5716
+    ],
+    "bbox_min": [
+      -0.2766,
+      -0.2538,
+      0.0
+    ],
+    "bbox_max": [
+      0.2766,
+      0.274,
+      1.5716
+    ],
+    "ground_contact_z": 0.0,
+    "origin_bottom_center": [
+      0.0,
+      0.0101
+    ],
+    "root_location": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "root_rotation_deg": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "root_scale": [
+      1.0,
+      1.0,
+      1.0
+    ],
+    "front_direction_local": [
+      0.0,
+      -1.0,
+      0.0
+    ],
+    "tris": {
+      "LOD0": 8220,
+      "LOD1": 4110,
+      "LOD2": 1644
+    },
+    "materials": [
+      "MAT_ShoeBrown",
+      "MAT_TrouserKhaki",
+      "MAT_ShirtSky",
+      "MAT_VestNavy",
+      "MAT_SkinSoft",
+      "MAT_HairSoft",
+      "MAT_FaceInk"
+    ],
+    "mesh_checks": {
+      "LOD0": {
+        "non_manifold_edges": 0,
+        "duplicate_faces": 0,
+        "zero_area_faces": 0
+      },
+      "LOD1": {
+        "non_manifold_edges": 0,
+        "duplicate_faces": 0,
+        "zero_area_faces": 0
+      },
+      "LOD2": {
+        "non_manifold_edges": 0,
+        "duplicate_faces": 0,
+        "zero_area_faces": 0
+      }
+    },
+    "unapplied_modifiers": {
+      "LOD0": [
+        "ARMATURE"
+      ],
+      "LOD1": [
+        "ARMATURE"
+      ],
+      "LOD2": [
+        "ARMATURE"
+      ]
+    },
+    "anchors": {
+      "51_customer_vest_navy_ROOT": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "FRONT_DIRECTION.013": [
+        0.0,
+        -1.0,
+        0.0
+      ],
+      "CARRY_ANCHOR.003": [
+        0.0,
+        -0.38,
+        0.86
+      ],
+      "HEAD_UI_ANCHOR.003": [
+        0.0,
+        0.0,
+        1.95
+      ]
+    },
+    "has_rig": true,
+    "actions": [
+      "CarryWalk",
+      "Idle",
+      "Walk"
+    ],
+    "cameras_or_lights_inside": []
+  },
+  {
+    "name": "52_customer_sweater",
+    "dims_XYZ": [
+      0.5532,
+      0.5278,
+      1.5716
+    ],
+    "bbox_min": [
+      -0.2766,
+      -0.2538,
+      0.0
+    ],
+    "bbox_max": [
+      0.2766,
+      0.274,
+      1.5716
+    ],
+    "ground_contact_z": 0.0,
+    "origin_bottom_center": [
+      0.0,
+      0.0101
+    ],
+    "root_location": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "root_rotation_deg": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "root_scale": [
+      1.0,
+      1.0,
+      1.0
+    ],
+    "front_direction_local": [
+      0.0,
+      -1.0,
+      0.0
+    ],
+    "tris": {
+      "LOD0": 7604,
+      "LOD1": 3802,
+      "LOD2": 1520
+    },
+    "materials": [
+      "MAT_ShoeBrown",
+      "MAT_TrouserKhaki",
+      "MAT_SweaterTeal",
+      "MAT_SkinSoft",
+      "MAT_HairSoft",
+      "MAT_FaceInk"
+    ],
+    "mesh_checks": {
+      "LOD0": {
+        "non_manifold_edges": 0,
+        "duplicate_faces": 0,
+        "zero_area_faces": 0
+      },
+      "LOD1": {
+        "non_manifold_edges": 0,
+        "duplicate_faces": 0,
+        "zero_area_faces": 0
+      },
+      "LOD2": {
+        "non_manifold_edges": 0,
+        "duplicate_faces": 0,
+        "zero_area_faces": 0
+      }
+    },
+    "unapplied_modifiers": {
+      "LOD0": [
+        "ARMATURE"
+      ],
+      "LOD1": [
+        "ARMATURE"
+      ],
+      "LOD2": [
+        "ARMATURE"
+      ]
+    },
+    "anchors": {
+      "52_customer_sweater_ROOT": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "FRONT_DIRECTION.014": [
+        0.0,
+        -1.0,
+        0.0
+      ],
+      "CARRY_ANCHOR.004": [
+        0.0,
+        -0.38,
+        0.86
+      ],
+      "HEAD_UI_ANCHOR.004": [
+        0.0,
+        0.0,
+        1.95
+      ]
+    },
+    "has_rig": true,
+    "actions": [
+      "CarryWalk",
+      "Idle",
+      "Walk"
+    ],
+    "cameras_or_lights_inside": []
+  },
+  {
+    "name": "53_worker_teal",
+    "dims_XYZ": [
+      0.6016,
+      0.6584,
+      1.6174
+    ],
+    "bbox_min": [
+      -0.3008,
+      -0.3844,
+      0.0
+    ],
+    "bbox_max": [
+      0.3008,
+      0.274,
+      1.6174
+    ],
+    "ground_contact_z": 0.0,
+    "origin_bottom_center": [
+      0.0,
+      -0.0552
+    ],
+    "root_location": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "root_rotation_deg": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "root_scale": [
+      1.0,
+      1.0,
+      1.0
+    ],
+    "front_direction_local": [
+      0.0,
+      -1.0,
+      0.0
+    ],
+    "tris": {
+      "LOD0": 9620,
+      "LOD1": 4810,
+      "LOD2": 1924
+    },
+    "materials": [
+      "MAT_ShoeCharcoal",
+      "MAT_TrouserCharcoal",
+      "MAT_ShirtIvory",
+      "MAT_UniformTeal",
+      "MAT_SkinSoft",
+      "MAT_HairSoft",
+      "MAT_FaceInk"
+    ],
+    "mesh_checks": {
+      "LOD0": {
+        "non_manifold_edges": 0,
+        "duplicate_faces": 0,
+        "zero_area_faces": 0
+      },
+      "LOD1": {
+        "non_manifold_edges": 0,
+        "duplicate_faces": 0,
+        "zero_area_faces": 0
+      },
+      "LOD2": {
+        "non_manifold_edges": 0,
+        "duplicate_faces": 0,
+        "zero_area_faces": 0
+      }
+    },
+    "unapplied_modifiers": {
+      "LOD0": [
+        "ARMATURE"
+      ],
+      "LOD1": [
+        "ARMATURE"
+      ],
+      "LOD2": [
+        "ARMATURE"
+      ]
+    },
+    "anchors": {
+      "53_worker_teal_ROOT": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "FRONT_DIRECTION.015": [
+        0.0,
+        -1.0,
+        0.0
+      ],
+      "CARRY_ANCHOR.005": [
+        0.0,
+        -0.38,
+        0.86
+      ],
+      "HEAD_UI_ANCHOR.005": [
+        0.0,
+        0.0,
+        1.95
+      ]
+    },
+    "has_rig": true,
+    "actions": [
+      "CarryWalk",
+      "Idle",
+      "Walk"
+    ],
+    "cameras_or_lights_inside": []
+  },
+  {
+    "name": "54_worker_red",
+    "dims_XYZ": [
+      0.6016,
+      0.6584,
+      1.6174
+    ],
+    "bbox_min": [
+      -0.3008,
+      -0.3844,
+      0.0
+    ],
+    "bbox_max": [
+      0.3008,
+      0.274,
+      1.6174
+    ],
+    "ground_contact_z": 0.0,
+    "origin_bottom_center": [
+      0.0,
+      -0.0552
+    ],
+    "root_location": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "root_rotation_deg": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "root_scale": [
+      1.0,
+      1.0,
+      1.0
+    ],
+    "front_direction_local": [
+      0.0,
+      -1.0,
+      0.0
+    ],
+    "tris": {
+      "LOD0": 9808,
+      "LOD1": 4904,
+      "LOD2": 1960
+    },
+    "materials": [
+      "MAT_ShoeCharcoal",
+      "MAT_TrouserCharcoal",
+      "MAT_ShirtIvory",
+      "MAT_UniformRed",
+      "MAT_SkinSoft",
+      "MAT_HairSoft",
+      "MAT_FaceInk"
+    ],
+    "mesh_checks": {
+      "LOD0": {
+        "non_manifold_edges": 0,
+        "duplicate_faces": 0,
+        "zero_area_faces": 0
+      },
+      "LOD1": {
+        "non_manifold_edges": 0,
+        "duplicate_faces": 0,
+        "zero_area_faces": 0
+      },
+      "LOD2": {
+        "non_manifold_edges": 0,
+        "duplicate_faces": 0,
+        "zero_area_faces": 0
+      }
+    },
+    "unapplied_modifiers": {
+      "LOD0": [
+        "ARMATURE"
+      ],
+      "LOD1": [
+        "ARMATURE"
+      ],
+      "LOD2": [
+        "ARMATURE"
+      ]
+    },
+    "anchors": {
+      "54_worker_red_ROOT": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "FRONT_DIRECTION.016": [
+        0.0,
+        -1.0,
+        0.0
+      ],
+      "CARRY_ANCHOR.006": [
+        0.0,
+        -0.38,
+        0.86
+      ],
+      "HEAD_UI_ANCHOR.006": [
+        0.0,
+        0.0,
+        1.95
+      ]
+    },
+    "has_rig": true,
+    "actions": [
+      "CarryWalk",
+      "Idle",
+      "Walk"
+    ],
+    "cameras_or_lights_inside": []
+  },
+  {
+    "name": "55_worker_red_backcap",
+    "dims_XYZ": [
+      0.6016,
+      0.6388,
+      1.6174
+    ],
+    "bbox_min": [
+      -0.3008,
+      -0.2544,
+      0.0
+    ],
+    "bbox_max": [
+      0.3008,
+      0.3844,
+      1.6174
+    ],
+    "ground_contact_z": 0.0,
+    "origin_bottom_center": [
+      0.0,
+      0.065
+    ],
+    "root_location": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "root_rotation_deg": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "root_scale": [
+      1.0,
+      1.0,
+      1.0
+    ],
+    "front_direction_local": [
+      0.0,
+      -1.0,
+      0.0
+    ],
+    "tris": {
+      "LOD0": 9808,
+      "LOD1": 4904,
+      "LOD2": 1960
+    },
+    "materials": [
+      "MAT_ShoeCharcoal",
+      "MAT_TrouserCharcoal",
+      "MAT_ShirtIvory",
+      "MAT_UniformRed",
+      "MAT_SkinSoft",
+      "MAT_HairSoft",
+      "MAT_FaceInk"
+    ],
+    "mesh_checks": {
+      "LOD0": {
+        "non_manifold_edges": 0,
+        "duplicate_faces": 0,
+        "zero_area_faces": 0
+      },
+      "LOD1": {
+        "non_manifold_edges": 0,
+        "duplicate_faces": 0,
+        "zero_area_faces": 0
+      },
+      "LOD2": {
+        "non_manifold_edges": 0,
+        "duplicate_faces": 0,
+        "zero_area_faces": 0
+      }
+    },
+    "unapplied_modifiers": {
+      "LOD0": [
+        "ARMATURE"
+      ],
+      "LOD1": [
+        "ARMATURE"
+      ],
+      "LOD2": [
+        "ARMATURE"
+      ]
+    },
+    "anchors": {
+      "55_worker_red_backcap_ROOT": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "FRONT_DIRECTION.017": [
+        0.0,
+        -1.0,
+        0.0
+      ],
+      "CARRY_ANCHOR.007": [
+        0.0,
+        -0.38,
+        0.86
+      ],
+      "HEAD_UI_ANCHOR.007": [
+        0.0,
+        0.0,
+        1.95
+      ]
+    },
+    "has_rig": true,
+    "actions": [
+      "CarryWalk",
+      "Idle",
+      "Walk"
+    ],
+    "cameras_or_lights_inside": []
   }
 ]

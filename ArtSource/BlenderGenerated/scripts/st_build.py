@@ -13,6 +13,7 @@ from st_lib import (get_mat, new_collection, move_to_collection, bbox_of,
                     tri_count, build_all_materials, box, lathe, D2R)
 import st_chars
 import st_props
+import st_cozy2
 import st_city
 
 ROOT_DIR = os.path.normpath(
@@ -26,8 +27,9 @@ DATA_JSON = ROOT_DIR + "/phase1_data.json"
 PHASE1_ORDER = ["01_player_character", "02_customer_character",
                 "06_rotisserie_station", "15_dining_table", "17_trash_bin"]
 CITY_ORDER = [name for name, _ in st_city.CITY_BUILDERS]
-ASSET_ORDER = PHASE1_ORDER + CITY_ORDER
-CHARACTERS = {"01_player_character", "02_customer_character"}
+COZY2_ORDER = [name for name, _ in st_cozy2.COZY2_CHARACTERS]
+ASSET_ORDER = PHASE1_ORDER + CITY_ORDER + COZY2_ORDER
+CHARACTERS = {"01_player_character", "02_customer_character"} | set(COZY2_ORDER)
 
 VIEWS = {
     "front": (0.0, -1.0, 0.0),
@@ -251,6 +253,37 @@ def save_blend():
     bpy.ops.wm.save_as_mainfile(filepath=BLEND_PATH)
 
 
+def attach_shared_actions(rig):
+    """Stash Idle/Walk/CarryWalk onto another rig.
+
+    The clips are stored as bone-local rotations, so they retarget to any rig
+    that uses the same bone names - including the shorter chibi skeleton. Slot
+    identifiers are keyed to the rig that first authored them, so a second rig
+    never auto-resolves one; bind it explicitly or the FBX exporter silently
+    drops the clip.
+    """
+    if rig.animation_data is None:
+        rig.animation_data_create()
+    ad = rig.animation_data
+    for act_name in ("Idle", "Walk", "CarryWalk"):
+        act = bpy.data.actions.get(act_name)
+        if act is None:
+            continue
+        tr = ad.nla_tracks.new()
+        tr.name = act_name
+        strip = tr.strips.new(act_name, 1, act)
+        if hasattr(strip, "action_slot") and act.slots:
+            strip.action_slot = act.slots[0]
+        tr.mute = True
+
+    idle = bpy.data.actions.get("Idle")
+    if idle is None:
+        return
+    ad.action = idle
+    if hasattr(ad, "action_slot") and idle.slots:
+        ad.action_slot = idle.slots[0]
+
+
 def build_all():
     wipe_scene()
     setup_preview_rig()
@@ -261,7 +294,7 @@ def build_all():
         ("06_rotisserie_station", st_props.build_rotisserie),
         ("15_dining_table", st_props.build_dining_table),
         ("17_trash_bin", st_props.build_trash_bin),
-    ] + list(st_city.CITY_BUILDERS)
+    ] + list(st_city.CITY_BUILDERS) + list(st_cozy2.COZY2_CHARACTERS)
     first_rig = None
     for name, fn in builders:
         a = fn()
@@ -269,24 +302,7 @@ def build_all():
             first_rig = a.rig
             st_chars.build_actions(a.rig, fps=bpy.context.scene.render.fps)
         elif name in CHARACTERS:
-            # reuse the very same actions on the second character
-            if a.rig.animation_data is None:
-                a.rig.animation_data_create()
-            ad = a.rig.animation_data
-            for act_name in ("Idle", "Walk", "CarryWalk"):
-                act = bpy.data.actions[act_name]
-                tr = ad.nla_tracks.new()
-                tr.name = act_name
-                st = tr.strips.new(act_name, 1, act)
-                if hasattr(st, "action_slot") and act.slots:
-                    st.action_slot = act.slots[0]
-                tr.mute = True
-            # slot identifiers are keyed to the first rig's name, so the second
-            # rig never auto-resolves one - bind it explicitly or the FBX
-            # exporter silently drops the clip.
-            ad.action = bpy.data.actions["Idle"]
-            if hasattr(ad, "action_slot") and bpy.data.actions["Idle"].slots:
-                ad.action_slot = bpy.data.actions["Idle"].slots[0]
+            attach_shared_actions(a.rig)
         log.append(qc_asset(name))
         save_blend()
     with open(DATA_JSON, "w", encoding="utf-8") as f:
