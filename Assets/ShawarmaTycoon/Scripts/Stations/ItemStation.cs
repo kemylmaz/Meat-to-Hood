@@ -32,6 +32,7 @@ namespace ShawarmaTycoon
         private float transferTimer;
         private bool workerAssigned;
         private int workerLevel;
+        private GameObject workerVisual;
 
         public StationMode Mode => mode;
         public ItemType InputType => inputType;
@@ -231,8 +232,46 @@ namespace ShawarmaTycoon
         {
             workerLevel = Mathf.Max(0, level);
             workerAssigned = workerLevel > 0;
+            RefreshWorkerVisual();
             UpdateLabel();
             UpdateMaxIndicator();
+        }
+
+        /// <summary>
+        /// A hired worker used to show up as nothing but an emoji in the station
+        /// label, so a fully staffed kitchen looked exactly like an empty one.
+        /// Now they stand at the station: behind the counter on the +Z side,
+        /// turned to face the serving side the player works from.
+        /// </summary>
+        private void RefreshWorkerVisual()
+        {
+            if (workerAssigned == (workerVisual != null)) return;
+
+            if (!workerAssigned)
+            {
+                // Unparent first: Destroy only takes effect at the end of the
+                // frame, so a re-hire in the same frame would otherwise find the
+                // outgoing figure still standing at the station.
+                workerVisual.transform.SetParent(null, false);
+                Destroy(workerVisual);
+                workerVisual = null;
+                return;
+            }
+
+            workerVisual = new GameObject("İşçi");
+            workerVisual.transform.SetParent(transform, false);
+            workerVisual.transform.localPosition = new Vector3(0f, 0f, 1.25f);
+            workerVisual.transform.localRotation = Quaternion.Euler(0f, 180f, 0f);
+
+            if (MeshyVisuals.TryAttach(
+                    workerVisual.transform, "55_worker_red_backcap",
+                    new Vector3(0.9f, 1.68f, 0.9f), Vector3.zero, Vector3.zero, false) != null)
+                return;
+
+            // No model: the label emoji stays the only cue rather than parking a
+            // bare capsule behind every counter.
+            Destroy(workerVisual);
+            workerVisual = null;
         }
 
         private void UpdateMaxIndicator()
