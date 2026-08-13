@@ -76,6 +76,8 @@ namespace ShawarmaTycoon
                 "Counter", "Work Top", "Cutting Board", "Knife");
             cutting.SetVisualLayout(
                 new Vector3(-0.50f, 1.42f, -0.38f), new Vector3(0.50f, 1.42f, -0.38f), 1.9f);
+            cutting.SetOutputBatchVisual("75_meat_tray_stack", 4,
+                new Vector3(0.46f, 0.34f, 0.36f), 0.35f);
 
             ItemStation wrap = CreateStation(
                 "DÜRÜM", new Vector3(3f, 0.25f, 6.3f), new Vector3(2.2f, 0.9f, 1.9f),
@@ -88,6 +90,8 @@ namespace ShawarmaTycoon
                 "Counter", "Work Top", "Lavash", "Greens");
             wrap.SetVisualLayout(
                 new Vector3(-0.50f, 1.42f, -0.38f), new Vector3(0.50f, 1.42f, -0.38f), 1.9f);
+            wrap.SetOutputBatchVisual("74_wrap_tray_stack", 4,
+                new Vector3(0.46f, 0.44f, 0.36f), 0.45f);
 
             ItemStation service = CreateStation(
                 "SERVİS", new Vector3(6f, 0.25f, 6.3f), new Vector3(2.2f, 0.9f, 1.9f),
@@ -649,10 +653,23 @@ namespace ShawarmaTycoon
 
             CustomerTable table = tableObject.AddComponent<CustomerTable>();
             table.Configure(playerTransform, seat.transform);
-            MeshyVisuals.TryReplaceDirect(
-                tableObject.transform, "15_dining_table_clean", new Vector3(1.44f, 1.08f, 2.12f),
+
+            Vector3 tableSize = new(1.44f, 1.08f, 2.12f);
+            bool swapped = MeshyVisuals.TryReplaceDirect(
+                tableObject.transform, "15_dining_table_clean", tableSize,
                 Vector3.zero, Vector3.zero, false,
                 "Table Top", "Table Leg", "Customer Chair", "Guest Chair");
+            if (swapped)
+            {
+                // Both states are authored, so the table swaps whole models
+                // rather than dressing the clean one with loose props.
+                Transform clean = tableObject.transform.Find("15_dining_table_clean Visual");
+                GameObject dirty = MeshyVisuals.TryAttach(
+                    tableObject.transform, "16_dirty_table_props", tableSize,
+                    Vector3.zero, Vector3.zero);
+                if (clean != null && dirty != null)
+                    table.SetTableVariants(clean.gameObject, dirty);
+            }
             return table;
         }
 

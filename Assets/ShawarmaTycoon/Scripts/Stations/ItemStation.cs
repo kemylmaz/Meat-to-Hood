@@ -52,6 +52,26 @@ namespace ShawarmaTycoon
             if (statusLabel != null) statusLabel.gameObject.SetActive(visible);
         }
 
+        private string outputBatchAsset;
+        private int outputBatchSize = 4;
+        private Vector3 outputBatchTargetSize = Vector3.one * 0.4f;
+        private float outputBatchHeight = 0.4f;
+
+        /// <summary>
+        /// Shows the output pile as authored full trays: one model per
+        /// <paramref name="itemsPerBatch"/> units, with any remainder still drawn
+        /// as loose portions so the exact count stays readable.
+        /// </summary>
+        public void SetOutputBatchVisual(
+            string assetId, int itemsPerBatch, Vector3 targetSize, float stackHeight)
+        {
+            outputBatchAsset = assetId;
+            outputBatchSize = Mathf.Max(1, itemsPerBatch);
+            outputBatchTargetSize = targetSize;
+            outputBatchHeight = Mathf.Max(0.05f, stackHeight);
+            RefreshVisuals();
+        }
+
         public void SetVisualLayout(Vector3 inputLocalPosition, Vector3 outputLocalPosition, float maxLabelHeight)
         {
             if (inputRoot != null) inputRoot.localPosition = inputLocalPosition;
@@ -284,8 +304,27 @@ namespace ShawarmaTycoon
             ItemType visibleOutputType = mode == StationMode.Service ? inputType : outputType;
             if (visibleOutputType != ItemType.None && outputRoot != null)
             {
-                for (int i = 0; i < shownOutput; i++)
-                    outputVisuals.Add(PrototypeVisuals.CreateItemVisual(visibleOutputType, outputRoot, Vector3.up * (i * 0.12f), 0.85f));
+                int loose = shownOutput;
+                float y = 0f;
+
+                if (!string.IsNullOrEmpty(outputBatchAsset))
+                {
+                    int batches = loose / outputBatchSize;
+                    for (int b = 0; b < batches; b++)
+                    {
+                        GameObject tray = MeshyVisuals.TryAttach(
+                            outputRoot, outputBatchAsset, outputBatchTargetSize,
+                            Vector3.up * y, Vector3.zero);
+                        if (tray == null) break;      // model missing: fall back to portions
+                        outputVisuals.Add(tray);
+                        y += outputBatchHeight;
+                        loose -= outputBatchSize;
+                    }
+                }
+
+                for (int i = 0; i < loose; i++)
+                    outputVisuals.Add(PrototypeVisuals.CreateItemVisual(
+                        visibleOutputType, outputRoot, Vector3.up * (y + i * 0.12f), 0.85f));
             }
             UpdateLabel();
         }

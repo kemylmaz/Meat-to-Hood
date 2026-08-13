@@ -9,6 +9,8 @@ namespace ShawarmaTycoon
         private Transform player;
         private Transform seatPoint;
         private CustomerAgent occupant;
+        private GameObject cleanVisual;
+        private GameObject dirtyVisual;
         private GameObject dirtyIndicator;
         private GameObject cashPad;
         private GameObject cashStack;
@@ -64,6 +66,31 @@ namespace ShawarmaTycoon
             cashPad.SetActive(false);
         }
 
+        /// <summary>
+        /// Hands over the two authored table states. When both exist the table
+        /// swaps between them instead of dropping a red plate on the clean one.
+        /// </summary>
+        public void SetTableVariants(GameObject clean, GameObject dirty)
+        {
+            cleanVisual = clean;
+            dirtyVisual = dirty;
+            RefreshDirtyVisual();
+        }
+
+        private void RefreshDirtyVisual()
+        {
+            bool swaps = cleanVisual != null && dirtyVisual != null;
+            if (swaps)
+            {
+                cleanVisual.SetActive(!dirty);
+                dirtyVisual.SetActive(dirty);
+            }
+
+            // The loose plate marker is only needed when there is no dirty model.
+            if (dirtyIndicator != null)
+                dirtyIndicator.SetActive(dirty && !swaps);
+        }
+
         public bool TryReserve(CustomerAgent customer)
         {
             if (!IsAvailable || customer == null) return false;
@@ -89,7 +116,7 @@ namespace ShawarmaTycoon
             dirty = true;
             pendingCash += Mathf.Max(0, payout);
             GameProgress.RecordServed(customer.IsVip, false);
-            if (dirtyIndicator != null) dirtyIndicator.SetActive(true);
+            RefreshDirtyVisual();
             if (cashPad != null) cashPad.SetActive(pendingCash > 0);
             if (cashStack != null) cashStack.SetActive(pendingCash > 0);
             UpdateCashLabel();
@@ -120,7 +147,7 @@ namespace ShawarmaTycoon
             if (inventory == null || !inventory.TryAdd(ItemType.Trash)) return;
 
             dirty = false;
-            if (dirtyIndicator != null) dirtyIndicator.SetActive(false);
+            RefreshDirtyVisual();
             UpdateLabel();
             AudioDirector.Play(GameSfx.Pickup);
             ComboSystem.Instance?.RegisterManualAction();
@@ -139,7 +166,7 @@ namespace ShawarmaTycoon
             dirty = false;
             GameProgress.RecordTrash(1);
             ComboSystem.Instance?.RegisterWorkerAction();
-            if (dirtyIndicator != null) dirtyIndicator.SetActive(false);
+            RefreshDirtyVisual();
             UpdateLabel();
             return true;
         }
