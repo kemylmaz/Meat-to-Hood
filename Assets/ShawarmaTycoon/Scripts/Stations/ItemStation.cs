@@ -57,6 +57,12 @@ namespace ShawarmaTycoon
             ? outputCount < EffectiveOutputCapacity
             : CanReceiveInput;
 
+        /// <summary>
+        /// Finished goods are piled up with nowhere to go, so the station has
+        /// stopped. Standing here will not restart it - the pile has to be moved.
+        /// </summary>
+        public bool OutputIsFull => outputCount >= EffectiveOutputCapacity;
+
         public void SetWorldLabelVisible(bool visible)
         {
             if (statusLabel != null) statusLabel.gameObject.SetActive(visible);

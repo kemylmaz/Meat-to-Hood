@@ -92,26 +92,43 @@ namespace ShawarmaTycoon.UI
 
         private string ObjectiveText()
         {
+            bool holdingStock = inventory != null && inventory.Count > 0
+                && inventory.HeldType != ItemType.Trash;
+            ItemStation destination = holdingStock ? DestinationFor(inventory.HeldType) : null;
+            bool destinationFull = destination != null && !destination.CanAcceptDelivery;
+
             // A dining room with nowhere to seat anyone outranks the carry hint:
             // however much stock is on the counter, nobody can be served until a
             // table is cleared.
             if (NoSeatsLeft())
             {
-                // The player can only carry one kind of thing, so hands full of
-                // stock cannot pick up a dirty plate. The way out is the bin, and
-                // nothing in the game said so.
-                bool handsFull = inventory != null && inventory.Count > 0
-                    && inventory.HeldType != ItemType.Trash;
-                return handsFull
-                    ? "Boş masa yok - elindekini çöpe at, masaları temizle"
-                    : "Boş masa yok - kirli masaları temizle";
+                if (!holdingStock) return "Boş masa yok - kirli masaları temizle";
+
+                // One kind of thing at a time, so a dirty plate cannot be picked
+                // up until the stock is put down. Usually it can go on its own
+                // counter; the bin is only the answer when that is full too.
+                return destinationFull
+                    ? "Her yer dolu - elindekini çöpe at, masaları temizle"
+                    : "Önce elindekini bırak, sonra masaları temizle";
             }
 
             if (inventory == null || inventory.Count == 0)
                 return "Et deposundan çiğ et al";
 
-            if (inventory.HeldType != ItemType.Trash && DestinationIsFull(inventory.HeldType))
-                return "Tezgâh dolu - önündeki işi bitir ya da elindekini çöpe at";
+            if (destinationFull)
+            {
+                if (destination.Mode == StationMode.Service)
+                    return "Servis tezgâhı dolu - müşteriler alana kadar bekle";
+
+                // Input full but the finished goods still have room: the station
+                // keeps working while the player stands at it, so waiting clears
+                // it. Both full and it has stopped, and waiting achieves nothing -
+                // the pile has to be carried on, which means putting down the load
+                // that is in the way first.
+                return destination.OutputIsFull
+                    ? "Tezgâhın çıkışı dolu - elindekini çöpe at, biten ürünleri taşı"
+                    : "Tezgâh dolu - başında durup işlemesini bekle";
+            }
 
             return inventory.HeldType switch
             {
@@ -124,16 +141,15 @@ namespace ShawarmaTycoon.UI
             };
         }
 
-        /// <summary>True when the station that consumes <paramref name="held"/> has no room for it.</summary>
-        private bool DestinationIsFull(ItemType held)
+        /// <summary>The station that consumes <paramref name="held"/>, if any.</summary>
+        private ItemStation DestinationFor(ItemType held)
         {
             for (int i = 0; i < stations.Count; i++)
             {
                 ItemStation station = stations[i];
-                if (station == null || station.InputType != held) continue;
-                return !station.CanAcceptDelivery;
+                if (station != null && station.InputType == held) return station;
             }
-            return false;
+            return null;
         }
 
         /// <summary>True when at least one table is dirty and none are free.</summary>
