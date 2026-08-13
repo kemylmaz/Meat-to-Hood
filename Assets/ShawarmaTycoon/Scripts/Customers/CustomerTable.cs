@@ -53,6 +53,13 @@ namespace ShawarmaTycoon
                     new Vector3(i % 2 == 0 ? -0.03f : 0.03f, i * 0.025f, 0f), new Vector3(0.56f, 0.025f, 0.32f),
                     i % 2 == 0 ? new Color(0.25f, 0.88f, 0.33f) : new Color(0.14f, 0.68f, 0.24f));
             }
+            // The authored pad already includes its banded cash, so it replaces
+            // both the pad surface and the loose bills.
+            MeshyVisuals.TryReplaceDirect(cashPad.transform, "18_money_collection_pad",
+                new Vector3(0.86f, 0.42f, 0.86f), Vector3.zero, Vector3.zero, false,
+                "Cash Pad Surface");
+            foreach (Transform bill in cashStack.transform)
+                bill.gameObject.SetActive(!MeshyVisuals.IsAvailable("18_money_collection_pad"));
             cashStack.SetActive(false);
             cashPad.SetActive(false);
         }

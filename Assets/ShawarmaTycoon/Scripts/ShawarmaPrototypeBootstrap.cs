@@ -131,6 +131,9 @@ namespace ShawarmaTycoon
             PrototypeVisuals.CreatePrimitive(
                 "Takeaway Upgrade Pad", PrimitiveType.Cylinder, takeawayUnlockObject.transform,
                 Vector3.zero, new Vector3(0.82f, 0.06f, 0.82f), new Color(0.95f, 0.58f, 0.20f));
+            MeshyVisuals.TryReplaceDirect(takeawayUnlockObject.transform, "19_upgrade_pad",
+                new Vector3(1.10f, 0.34f, 1.10f), Vector3.down * 0.03f, Vector3.zero,
+                false, "Takeaway Upgrade Pad");
             ManagementRoomUnlockPad takeawayUnlock = takeawayUnlockObject.AddComponent<ManagementRoomUnlockPad>();
             takeawayUnlock.Configure(
                 playerTransform, takeawayRoot, 180, "takeaway.unlocked", "TAKEAWAY");
@@ -222,6 +225,9 @@ namespace ShawarmaTycoon
             PrototypeVisuals.CreatePrimitive(
                 "Upgrade Pad", PrimitiveType.Cylinder, upgradeRoot.transform,
                 Vector3.zero, new Vector3(1.05f, 0.05f, 1.05f), PrototypeVisuals.Green);
+            MeshyVisuals.TryReplaceDirect(upgradeRoot.transform, "19_upgrade_pad",
+                new Vector3(1.30f, 0.40f, 1.30f), Vector3.down * 0.03f, Vector3.zero,
+                false, "Upgrade Pad");
             UpgradePad upgradePad = upgradeRoot.AddComponent<UpgradePad>();
             upgradePad.Configure(playerTransform, expansion, 60);
 
@@ -460,13 +466,25 @@ namespace ShawarmaTycoon
         {
             Vector3 start = from.transform.position;
             Vector3 end = to.transform.position;
-            Vector3 midpoint = (start + end) * 0.5f + Vector3.back * 0.68f + Vector3.up * 0.78f;
+            float length = Mathf.Max(0.7f, Vector3.Distance(start, end) - 1.5f);
+
+            // The authored belt is a floor standing unit with its own legs, so
+            // it sits on the lot rather than floating at counter height.
             GameObject belt = new(beltName);
             belt.transform.SetParent(runtimeRoot, false);
-            belt.transform.position = midpoint;
-            float length = Vector3.Distance(start, end) - 1.5f;
-            PrototypeVisuals.CreatePrimitive("Bant", PrimitiveType.Cube, belt.transform, Vector3.zero,
-                new Vector3(Mathf.Max(0.7f, length), 0.14f, 0.56f), new Color(0.35f, 0.32f, 0.30f));
+            // Station roots already sit on the lot surface, so the belt shares
+            // their height and the model stands on the floor rather than
+            // hovering at counter level.
+            belt.transform.position = (start + end) * 0.5f + Vector3.back * 0.78f;
+
+            PrototypeVisuals.CreatePrimitive("Bant", PrimitiveType.Cube, belt.transform,
+                Vector3.up * 0.78f, new Vector3(length, 0.14f, 0.56f),
+                new Color(0.35f, 0.32f, 0.30f));
+            MeshyVisuals.TryReplaceDirect(
+                belt.transform, "13_conveyor_straight",
+                new Vector3(length + 0.55f, 0.86f, 0.95f), Vector3.zero, Vector3.zero,
+                false, "Bant");
+
             ConveyorLink link = belt.AddComponent<ConveyorLink>();
             link.Configure(from, to);
             return link;
@@ -518,6 +536,9 @@ namespace ShawarmaTycoon
             pad.transform.localPosition = position;
             PrototypeVisuals.CreatePrimitive("Satın Alma Alanı", PrimitiveType.Cylinder, pad.transform, Vector3.zero,
                 new Vector3(0.55f, 0.05f, 0.55f), type == StationUpgradeType.Worker ? new Color(0.38f, 0.72f, 0.95f) : new Color(0.75f, 0.48f, 0.85f));
+            MeshyVisuals.TryReplaceDirect(pad.transform, "19_upgrade_pad",
+                new Vector3(0.95f, 0.30f, 0.95f), Vector3.down * 0.03f, Vector3.zero,
+                false, "Satın Alma Alanı");
             StationUpgradePad upgrade = pad.AddComponent<StationUpgradePad>();
             upgrade.Configure(playerTransform, type, cost, station, conveyor);
         }
@@ -529,6 +550,9 @@ namespace ShawarmaTycoon
             pad.transform.localPosition = position;
             PrototypeVisuals.CreatePrimitive("Oyuncu Upgrade", PrimitiveType.Cylinder, pad.transform, Vector3.zero,
                 new Vector3(0.55f, 0.05f, 0.55f), new Color(0.28f, 0.68f, 0.92f));
+            MeshyVisuals.TryReplaceDirect(pad.transform, "19_upgrade_pad",
+                new Vector3(0.95f, 0.30f, 0.95f), Vector3.down * 0.03f, Vector3.zero,
+                false, "Oyuncu Upgrade");
             PlayerUpgradePad upgrade = pad.AddComponent<PlayerUpgradePad>();
             upgrade.Configure(playerTransform, playerMotor, inventory, type, cost);
         }
@@ -596,8 +620,11 @@ namespace ShawarmaTycoon
                 new Vector3(0.22f, 1.65f, 0.25f), frame);
             PrototypeVisuals.CreatePrimitive("Entrance Right", PrimitiveType.Cube, gate.transform, new Vector3(0.90f, 0.82f, 0f),
                 new Vector3(0.22f, 1.65f, 0.25f), frame);
-            TextMesh sign = PrototypeVisuals.CreateLabel("ENTRANCE", gate.transform, new Vector3(0f, 2.55f, 0f), 0.11f);
+            TextMesh sign = PrototypeVisuals.CreateLabel("ENTRANCE", gate.transform, new Vector3(0f, 3.15f, 0f), 0.11f);
             sign.color = new Color(0.95f, 0.22f, 0.16f);
+            MeshyVisuals.TryReplaceDirect(gate.transform, "21_entrance_door",
+                new Vector3(3.05f, 2.90f, 0.95f), Vector3.zero, Vector3.zero, false,
+                "Entrance Top", "Entrance Left", "Entrance Right");
         }
 
         private CustomerTable CreateTable(Transform parent, string tableName, Vector3 localPosition)
@@ -664,6 +691,9 @@ namespace ShawarmaTycoon
                 new Vector3(0.62f, 0.48f, 0.20f), new Color(0.98f, 0.84f, 0.32f));
             PrototypeVisuals.CreatePrimitive("Lock Loop", PrimitiveType.Cylinder, plot.transform, new Vector3(0f, 0.75f, 0f),
                 new Vector3(0.34f, 0.24f, 0.16f), new Color(0.98f, 0.84f, 0.32f));
+            MeshyVisuals.TryReplaceDirect(plot.transform, "20_locked_expansion_pad",
+                new Vector3(1.75f, 0.98f, 1.75f), Vector3.up * 0.05f, Vector3.zero,
+                false, "Unlock Pad", "Lock Body", "Lock Loop");
             return plot;
         }
 
