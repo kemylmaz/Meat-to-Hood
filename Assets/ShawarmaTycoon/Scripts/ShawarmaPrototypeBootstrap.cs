@@ -159,6 +159,7 @@ namespace ShawarmaTycoon
             // here was unreachable in the shipped build.
             GameObject managementRoot = new("Yönetim Odası");
             managementRoot.transform.SetParent(runtimeRoot, false);
+            BuildOfficeFloor(managementRoot.transform);
 
             ManagementOfficeTerminal hrTerminal = CreateManagerDesk(
                 managementRoot.transform, "HR Masası", "25_hr_manager_desk",
@@ -346,11 +347,86 @@ namespace ShawarmaTycoon
             CityBlock.Build(runtimeRoot, cityLayout);
 
             // Low railings mark the lot edge without hiding the street behind it.
-            CreateBoundaryRail(new Vector3(0f, 0.52f, 8.35f), new Vector3(24f, 0.55f, 0.20f));
-            CreateBoundaryRail(new Vector3(-11.85f, 0.52f, 0f), new Vector3(0.20f, 0.55f, 17f));
+            GameObject backRail = CreateBoundaryRail(
+                new Vector3(0f, 0.52f, WallBackZ), new Vector3(24f, 0.55f, 0.20f));
+            GameObject sideRail = CreateBoundaryRail(
+                new Vector3(WallSideX, 0.52f, 0f), new Vector3(0.20f, 0.55f, 17f));
+
+            if (BuildLotWalls())
+            {
+                // The authored wall stands in for the railing. The primitive stays
+                // alive as an invisible blocker so the player still cannot walk
+                // off the lot - the model's own colliders are switched off.
+                backRail.GetComponent<Renderer>().enabled = false;
+                sideRail.GetComponent<Renderer>().enabled = false;
+            }
 
             TrafficSystem traffic = runtimeRoot.gameObject.AddComponent<TrafficSystem>();
             traffic.Configure(cityLayout);
+        }
+
+        /// <summary>Lot edges the perimeter wall runs along.</summary>
+        private const float WallBackZ = 8.35f;
+        private const float WallSideX = -11.85f;
+
+        /// <summary>
+        /// Wall module pitch. The model measures 3.09 across because its skirting
+        /// overhangs the body on both sides; the bodies themselves are 3.00, so
+        /// tiling on bounds width would open a 9 cm crack between every pair.
+        /// </summary>
+        private const float WallPitch = 3.00f;
+
+        /// <summary>How far each corner run sits in from the corner piece origin.</summary>
+        private const float WallArm = 1.33f;
+
+        /// <summary>Wall base, level with the lot surface.</summary>
+        private const float WallBaseY = 0.24f;
+
+        /// <summary>
+        /// Cream perimeter wall along the two lot edges that face away from the
+        /// camera. The near edges are deliberately left open: the rig sits at
+        /// +X / -Z, so a wall there would stand between the camera and the
+        /// management pads instead of behind them.
+        /// </summary>
+        private bool BuildLotWalls()
+        {
+            if (!CityKit.Has("76_wall_corner") || !CityKit.Has("77_wall_straight"))
+                return false;
+
+            GameObject walls = new("Arsa Duvarı");
+            walls.transform.SetParent(runtimeRoot, false);
+
+            // The corner model carries its two runs on +X and +Z, so a quarter
+            // turn anti-clockwise lands them on the lot's -X and +Z edges.
+            CityKit.Spawn("76_wall_corner", walls.transform,
+                new Vector3(WallSideX + WallArm, WallBaseY, WallBackZ - WallArm), -90f);
+
+            // Both runs start one module in, where the corner's own arms end.
+            TileWall(walls.transform, WallSideX + WallPitch, 12f, true, WallBackZ);
+            TileWall(walls.transform, WallBackZ - WallPitch, -8.5f, false, WallSideX);
+            return true;
+        }
+
+        /// <summary>
+        /// Repeats the straight wall between two points on one axis.
+        /// <see cref="CityKit.Tile"/> spaces pieces by their bounds width, which
+        /// for this model is the skirting, not the body - hence the explicit pitch.
+        /// </summary>
+        private static void TileWall(
+            Transform parent, float from, float to, bool alongX, float fixedCoordinate)
+        {
+            int count = Mathf.Max(1, Mathf.RoundToInt(Mathf.Abs(to - from) / WallPitch));
+            float step = (to > from ? WallPitch : -WallPitch);
+            float first = (from + to) * 0.5f - step * (count - 1) * 0.5f;
+
+            for (int i = 0; i < count; i++)
+            {
+                float p = first + step * i;
+                Vector3 position = alongX
+                    ? new Vector3(p, WallBaseY, fixedCoordinate)
+                    : new Vector3(fixedCoordinate, WallBaseY, p);
+                CityKit.Spawn("77_wall_straight", parent, position, alongX ? 0f : 90f);
+            }
         }
 
         private void CreateIslandGeometry(Transform parent, Vector3 topScale)
@@ -391,12 +467,13 @@ namespace ShawarmaTycoon
             }
         }
 
-        private void CreateBoundaryRail(Vector3 position, Vector3 scale)
+        private GameObject CreateBoundaryRail(Vector3 position, Vector3 scale)
         {
             GameObject rail = PrototypeVisuals.CreatePrimitive(
                 "Island Rail", PrimitiveType.Cube, runtimeRoot,
                 position, scale, new Color(0.62f, 0.34f, 0.24f), colliderEnabled: true);
             rail.isStatic = true;
+            return rail;
         }
 
         private void CreatePlayer()
@@ -527,6 +604,36 @@ namespace ShawarmaTycoon
             terminal.transform.SetParent(desk.transform, false);
             terminal.transform.localPosition = new Vector3(0f, 0f, -1.15f);
             return terminal.AddComponent<ManagementOfficeTerminal>();
+        }
+
+        /// <summary>
+        /// Tiled floor marking out the management room. The desks already carry
+        /// their own back walls, so the room only needed a surface to stand on to
+        /// read as a room rather than a strip of open lot.
+        ///
+        /// The model is laid so its terracotta tiles clear the lot by a bare
+        /// centimetre - enough to avoid z-fighting, little enough that the desks
+        /// and pads standing at the lot surface do not look sunk - with the cream
+        /// base band buried inside the lot slab.
+        /// </summary>
+        private void BuildOfficeFloor(Transform parent)
+        {
+            if (!CityKit.Has("78_floor_tiled")) return;
+
+            // Tiles are laid on the 3.00 tile field, not the 3.28 base slab.
+            // Spacing on the slab would leave a 28 cm tan channel along every
+            // module join; on the field the grout stays even right across it,
+            // and the overlapping slabs are buried out of sight anyway.
+            const float pitch = 3.00f;
+            Vector3 center = new(-3.45f, 0.012f, -5.2f);
+
+            // Four by two covers the desk row, both pad rows and the planters
+            // without spilling over the lot's south edge at z = -8.5.
+            for (int i = 0; i < 4; i++)
+                for (int j = 0; j < 2; j++)
+                    CityKit.Spawn("78_floor_tiled", parent, new Vector3(
+                        center.x + pitch * (i - 1.5f), center.y,
+                        center.z + pitch * (j - 0.5f)));
         }
 
         private void CreatePlanter(Transform parent, Vector3 position)
