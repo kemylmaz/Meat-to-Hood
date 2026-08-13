@@ -11,6 +11,7 @@ namespace ShawarmaTycoon.UI
     public sealed class ObjectiveBanner : MonoBehaviour
     {
         private readonly List<CustomerTable> tables = new();
+        private readonly List<ItemStation> stations = new();
         private CarryInventory inventory;
         private Text label;
         private CanvasGroup group;
@@ -49,6 +50,18 @@ namespace ShawarmaTycoon.UI
             if (diningTables != null) tables.AddRange(diningTables);
         }
 
+        /// <summary>
+        /// Stations the banner watches so it can stop telling the player to do
+        /// something that will not work. A backed up station cannot take what you
+        /// are holding, and you cannot put it down anywhere except the bin, so
+        /// "take it to the wrap counter" was advice that led nowhere.
+        /// </summary>
+        public void BindStations(IEnumerable<ItemStation> lineStations)
+        {
+            stations.Clear();
+            if (lineStations != null) stations.AddRange(lineStations);
+        }
+
         /// <summary>Show a one-off message (unlock hints, warnings) for a moment.</summary>
         public void Flash(string message, float seconds = 2.5f)
         {
@@ -83,10 +96,22 @@ namespace ShawarmaTycoon.UI
             // however much stock is on the counter, nobody can be served until a
             // table is cleared.
             if (NoSeatsLeft())
-                return "Boş masa yok - kirli masaları temizle";
+            {
+                // The player can only carry one kind of thing, so hands full of
+                // stock cannot pick up a dirty plate. The way out is the bin, and
+                // nothing in the game said so.
+                bool handsFull = inventory != null && inventory.Count > 0
+                    && inventory.HeldType != ItemType.Trash;
+                return handsFull
+                    ? "Boş masa yok - elindekini çöpe at, masaları temizle"
+                    : "Boş masa yok - kirli masaları temizle";
+            }
 
             if (inventory == null || inventory.Count == 0)
                 return "Et deposundan çiğ et al";
+
+            if (inventory.HeldType != ItemType.Trash && DestinationIsFull(inventory.HeldType))
+                return "Tezgâh dolu - önündeki işi bitir ya da elindekini çöpe at";
 
             return inventory.HeldType switch
             {
@@ -97,6 +122,18 @@ namespace ShawarmaTycoon.UI
                 ItemType.Trash => "Çöpü çöp kutusuna at",
                 _ => string.Empty
             };
+        }
+
+        /// <summary>True when the station that consumes <paramref name="held"/> has no room for it.</summary>
+        private bool DestinationIsFull(ItemType held)
+        {
+            for (int i = 0; i < stations.Count; i++)
+            {
+                ItemStation station = stations[i];
+                if (station == null || station.InputType != held) continue;
+                return !station.CanAcceptDelivery;
+            }
+            return false;
         }
 
         /// <summary>True when at least one table is dirty and none are free.</summary>

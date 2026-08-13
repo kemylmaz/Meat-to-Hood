@@ -48,6 +48,15 @@ namespace ShawarmaTycoon
         public bool CanReceiveInput => inputCount < EffectiveInputCapacity;
         public bool HasOutput => outputCount > 0;
 
+        /// <summary>
+        /// Whether a hand delivery of <see cref="InputType"/> would be taken. The
+        /// service counter is the end of the line and holds what it is given as
+        /// output, so its own limit is the one that matters there.
+        /// </summary>
+        public bool CanAcceptDelivery => mode == StationMode.Service
+            ? outputCount < EffectiveOutputCapacity
+            : CanReceiveInput;
+
         public void SetWorldLabelVisible(bool visible)
         {
             if (statusLabel != null) statusLabel.gameObject.SetActive(visible);

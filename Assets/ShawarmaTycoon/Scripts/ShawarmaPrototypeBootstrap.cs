@@ -288,6 +288,7 @@ namespace ShawarmaTycoon
             UI.GameHUD hud = UI.GameHUD.Ensure(runtimeRoot);
             hud.Objective.Bind(inventory);
             hud.Objective.BindTables(tables);
+            hud.Objective.BindStations(new[] { oven, cutting, wrap, service });
             playerMotor.SetJoystick(hud.Joystick);
             root.AddComponent<GameSessionPersistence>();
 
