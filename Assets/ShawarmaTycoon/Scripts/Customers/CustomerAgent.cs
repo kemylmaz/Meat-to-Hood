@@ -28,6 +28,7 @@ namespace ShawarmaTycoon
         private int finalPayout;
         private bool isVip;
         private bool isAngry;
+        private bool reachedQueue;
 
         public CustomerState State { get; private set; } = CustomerState.Queueing;
         public bool IsVip => isVip;
@@ -47,6 +48,7 @@ namespace ShawarmaTycoon
             patienceSeconds = Mathf.Max(angryAfterSeconds + 1f, patience);
             isVip = vip;
             isAngry = false;
+            reachedQueue = false;
             LeftUnserved = false;
             State = CustomerState.Queueing;
             if (isVip) CreateVipVisual();
@@ -74,8 +76,11 @@ namespace ShawarmaTycoon
             switch (State)
             {
                 case CustomerState.Queueing:
-                    MoveTowards(queueTarget);
-                    queueTimer += Time.deltaTime;
+                    // Patience measures queueing, not the walk in from the street.
+                    // Counting from the spawn point burned a quarter of it on the
+                    // 13 m approach, before the customer had waited for anything.
+                    if (MoveTowards(queueTarget)) reachedQueue = true;
+                    if (reachedQueue) queueTimer += Time.deltaTime;
                     if (!isAngry && queueTimer >= angryAfterSeconds)
                     {
                         isAngry = true;

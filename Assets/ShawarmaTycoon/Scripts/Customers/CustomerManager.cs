@@ -6,10 +6,19 @@ namespace ShawarmaTycoon
     public sealed class CustomerManager : MonoBehaviour
     {
         [SerializeField, Min(0.2f)] private float spawnInterval = 3f;
-        [SerializeField, Min(1)] private int maxQueueLength = 4;
+
+        /// <summary>
+        /// Queue length and patience have to agree, or the back of the line is
+        /// unservable by construction. Measured service rate is roughly 7.5 s per
+        /// customer, so at the old 4 deep the last arrival needed 30 s and had
+        /// 20 - they timed out every single time, however well the shop was run.
+        /// Three deep needs about 22 s, which a well run shop makes and a badly
+        /// run one does not.
+        /// </summary>
+        [SerializeField, Min(1)] private int maxQueueLength = 3;
+        [SerializeField, Min(2f)] private float customerPatience = 28f;
+
         [SerializeField, Min(0.5f)] private float queueSpacing = 1.05f;
-        /// <summary>Seconds in the queue before a customer gives up and walks out.</summary>
-        [SerializeField, Min(2f)] private float customerPatience = 20f;
 
         private readonly List<CustomerTable> tables = new();
         private readonly List<CustomerAgent> customers = new();
