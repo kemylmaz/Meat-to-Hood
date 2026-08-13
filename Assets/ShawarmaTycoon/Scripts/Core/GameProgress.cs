@@ -11,6 +11,7 @@ namespace ShawarmaTycoon
         public static int ServedToday => GetDaily("served");
         public static int RevenueToday => GetDaily("revenue");
         public static int TrashToday => GetDaily("trash");
+        public static int LostToday => GetDaily("lost");
         public static int UpgradesToday => GetDaily("upgrades");
         public static int WorkerCount => PlayerPrefs.GetInt(Prefix + "workers", 0);
         public static int BestDailyRevenue => GetInt("records.best_daily_revenue");
@@ -47,6 +48,10 @@ namespace ShawarmaTycoon
         }
 
         public static void RecordTrash(int count) => SetDaily("trash", TrashToday + Mathf.Max(0, count));
+
+        /// <summary>A customer who ran out of patience and left without buying.</summary>
+        public static void RecordLostCustomer() => SetDaily("lost", LostToday + 1);
+
         public static void RecordUpgrade() => SetDaily("upgrades", UpgradesToday + 1);
 
         public static void RegisterWorker(string uniqueName)

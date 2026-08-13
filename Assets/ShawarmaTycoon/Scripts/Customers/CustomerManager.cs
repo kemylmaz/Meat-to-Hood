@@ -8,6 +8,8 @@ namespace ShawarmaTycoon
         [SerializeField, Min(0.2f)] private float spawnInterval = 3f;
         [SerializeField, Min(1)] private int maxQueueLength = 4;
         [SerializeField, Min(0.5f)] private float queueSpacing = 1.05f;
+        /// <summary>Seconds in the queue before a customer gives up and walks out.</summary>
+        [SerializeField, Min(2f)] private float customerPatience = 20f;
 
         private readonly List<CustomerTable> tables = new();
         private readonly List<CustomerAgent> customers = new();
@@ -138,7 +140,9 @@ namespace ShawarmaTycoon
             }
 
             CustomerAgent agent = customer.AddComponent<CustomerAgent>();
-            agent.Configure(this, exitPoint, 2.4f, 4.5f, 15, vip);
+            // VIPs are worth the most and are the least willing to wait.
+            agent.Configure(this, exitPoint, 2.4f, 4.5f, 15,
+                vip ? customerPatience * 0.75f : customerPatience, vip);
             customers.Add(agent);
             AudioDirector.Play(GameSfx.CustomerArrive, vip ? 0.9f : 0.45f, vip ? 1.15f : 1f);
             return agent;

@@ -16,6 +16,7 @@ namespace ShawarmaTycoon
         [SerializeField, Min(0.1f)] private float eatingDuration = 4.5f;
         [SerializeField, Min(1)] private int mealPayout = 15;
         [SerializeField, Min(1f)] private float angryAfterSeconds = 8f;
+        [SerializeField, Min(2f)] private float patienceSeconds = 20f;
 
         private CustomerManager manager;
         private CustomerTable table;
@@ -31,8 +32,11 @@ namespace ShawarmaTycoon
         public CustomerState State { get; private set; } = CustomerState.Queueing;
         public bool IsVip => isVip;
         public bool IsAngry => isAngry;
+        public bool LeftUnserved { get; private set; }
 
-        public void Configure(CustomerManager owner, Transform exitTransform, float speed, float eatingSeconds, int payout, bool vip = false)
+        public void Configure(
+            CustomerManager owner, Transform exitTransform, float speed, float eatingSeconds,
+            int payout, float patience, bool vip = false)
         {
             manager = owner;
             exitPoint = exitTransform;
@@ -40,8 +44,10 @@ namespace ShawarmaTycoon
             eatingDuration = Mathf.Max(0.1f, eatingSeconds);
             mealPayout = Mathf.Max(1, payout);
             finalPayout = mealPayout;
+            patienceSeconds = Mathf.Max(angryAfterSeconds + 1f, patience);
             isVip = vip;
             isAngry = false;
+            LeftUnserved = false;
             State = CustomerState.Queueing;
             if (isVip) CreateVipVisual();
         }
@@ -75,6 +81,7 @@ namespace ShawarmaTycoon
                         isAngry = true;
                         SetAngryFace(true);
                     }
+                    if (queueTimer >= patienceSeconds) GiveUp();
                     break;
 
                 case CustomerState.WalkingToTable:
@@ -108,6 +115,22 @@ namespace ShawarmaTycoon
                         manager?.Despawn(this);
                     break;
             }
+        }
+
+        /// <summary>
+        /// Patience runs out and the customer walks out without buying. The queue
+        /// had no failure state before this: an ignored customer stood there going
+        /// angry forever and still paid, at 0.6x, whenever you finally got to them,
+        /// so letting the line back up cost nothing but time.
+        /// </summary>
+        private void GiveUp()
+        {
+            LeftUnserved = true;
+            State = CustomerState.Leaving;
+            SetAngryFace(true);
+            ComboSystem.Instance?.BreakCombo();
+            GameProgress.RecordLostCustomer();
+            AudioDirector.Play(GameSfx.Error, 0.55f);
         }
 
         private bool MoveTowards(Vector3 target)

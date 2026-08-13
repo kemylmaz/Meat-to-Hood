@@ -12,6 +12,8 @@ namespace ShawarmaTycoon
         [SerializeField, Min(1f)] private float minimumOrderInterval = 8f;
         [SerializeField, Min(1f)] private float maximumOrderInterval = 12f;
         [SerializeField, Min(1f)] private float lateAfterSeconds = 15f;
+        /// <summary>How long a late order waits before the customer gives up on it.</summary>
+        [SerializeField, Min(2f)] private float expireAfterSeconds = 26f;
         [SerializeField, Min(0.5f)] private float interactionRadius = 1.55f;
         [SerializeField, Min(1)] private int basePayout = 26;
 
@@ -81,7 +83,10 @@ namespace ShawarmaTycoon
                 if (wasLate != IsLate)
                     UpdateVisuals();
 
-                TryPlayerDelivery();
+                if (orderAge >= expireAfterSeconds)
+                    ExpireOrder();
+                else
+                    TryPlayerDelivery();
             }
             else
             {
@@ -117,14 +122,33 @@ namespace ShawarmaTycoon
             float serviceMultiplier = fast ? 1f : 0.60f;
             int payout = RewardCalculator.Calculate(basePayout, serviceMultiplier);
             pendingCash += payout;
+            ClearOrder();
+
+            GameProgress.RecordServed(vip: false, takeaway: true);
+            UpdateVisuals();
+        }
+
+        /// <summary>
+        /// The waiting customer gives up. Without this a late order sat on the
+        /// counter indefinitely and still paid out at 0.6x, so the window was
+        /// free money you could collect whenever it suited you.
+        /// </summary>
+        private void ExpireOrder()
+        {
+            ClearOrder();
+            ComboSystem.Instance?.BreakCombo();
+            GameProgress.RecordLostCustomer();
+            AudioDirector.Play(GameSfx.Error, 0.55f);
+            UpdateVisuals();
+        }
+
+        private void ClearOrder()
+        {
             pendingOrder = false;
             orderAge = 0f;
             orderTimer = Random.Range(
                 Mathf.Min(minimumOrderInterval, maximumOrderInterval),
                 Mathf.Max(minimumOrderInterval, maximumOrderInterval));
-
-            GameProgress.RecordServed(vip: false, takeaway: true);
-            UpdateVisuals();
         }
 
         private void TryPlayerCashCollection()

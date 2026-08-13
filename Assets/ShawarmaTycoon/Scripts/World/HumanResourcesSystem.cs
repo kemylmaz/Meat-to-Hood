@@ -86,14 +86,20 @@ namespace ShawarmaTycoon
             return true;
         }
 
+        /// <summary>
+        /// Raises belts to the level this upgrade grants, and never lowers them.
+        /// A belt can also be bought outright at its own management pad, and those
+        /// pads restore their saved level before this runs: assigning the HR level
+        /// flat used to wipe every belt the player had paid for, on every reload
+        /// and again on every automation upgrade.
+        /// </summary>
         private void ApplyAutomationLevel()
         {
             for (int i = 0; i < conveyors.Count; i++)
             {
                 if (conveyors[i] == null) continue;
-                int targetLevel = adoptUseLevel > i ? 1 : 0;
-                if (adoptUseLevel >= 5 && targetLevel > 0) targetLevel = 2;
-                conveyors[i].SetLevel(targetLevel);
+                int targetLevel = adoptUseLevel > i ? (adoptUseLevel >= 5 ? 2 : 1) : 0;
+                if (targetLevel > conveyors[i].Level) conveyors[i].SetLevel(targetLevel);
             }
         }
     }

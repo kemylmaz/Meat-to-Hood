@@ -103,7 +103,13 @@ namespace ShawarmaTycoon.UI
                 rows[0].text = Task("5 müşteri servis et", GameProgress.ServedToday, ServeTarget);
                 rows[1].text = Task("1 geliştirme satın al", GameProgress.UpgradesToday, UpgradeTarget);
                 rows[2].text = Task("3 çöp temizle", GameProgress.TrashToday, TrashTarget);
-                for (int i = 3; i < rows.Length; i++) rows[i].text = "";
+                rows[3].text = "";
+                // Walk-outs are the only way to lose ground, so they get their own
+                // line rather than being buried in the records tab.
+                int lost = GameProgress.LostToday;
+                rows[4].text = lost > 0 ? $"⚠  Bugün kaçan müşteri:   {lost}" : "";
+                rows[4].color = UITheme.WarmRed;
+                rows[5].text = "";
 
                 bool claimable = TasksComplete() && !GameProgress.DailyRewardClaimed;
                 claimButton.gameObject.SetActive(true);
@@ -115,6 +121,8 @@ namespace ShawarmaTycoon.UI
             else
             {
                 title.text = "RESTORAN REKORLARI";
+                // The tasks view tints one row red; both views share the same rows.
+                for (int i = 0; i < rows.Length; i++) rows[i].color = UITheme.Ink;
                 rows[0].text = Record("Bugünkü gelir", "₺" + GameProgress.RevenueToday);
                 rows[1].text = Record("En iyi gün", "₺" + GameProgress.BestDailyRevenue);
                 rows[2].text = Record("Bugün servis", GameProgress.ServedToday.ToString());

@@ -14,7 +14,6 @@ namespace ShawarmaTycoon
         private ItemStation station;
         private ConveyorLink conveyor;
         private TextMesh label;
-        private GameObject workerVisual;
         private int level;
         private string saveKey;
         private float cooldown;
@@ -57,40 +56,19 @@ namespace ShawarmaTycoon
             RefreshLabel();
         }
 
+        /// <summary>
+        /// The station owns the worker figure, keyed to its own worker level. The
+        /// pad used to spawn a second one of its own, a metre in front of the
+        /// counter on the customer side, standing in the conveyor.
+        /// </summary>
         private void ApplyLevel(bool animate)
         {
             if (upgradeType == StationUpgradeType.Worker)
             {
                 station?.SetWorkerLevel(level);
-                if (level > 0)
-                {
-                    GameProgress.RegisterWorker(gameObject.name);
-                    CreateWorker();
-                }
+                if (level > 0) GameProgress.RegisterWorker(gameObject.name);
             }
             else conveyor?.SetLevel(level);
-        }
-
-        private void CreateWorker()
-        {
-            if (workerVisual != null) return;
-            Transform host = station != null ? station.transform.parent : transform.parent;
-            Vector3 position = station != null
-                ? station.transform.localPosition + new Vector3(0f, 0f, -1.05f)
-                : transform.localPosition + new Vector3(0f, 0f, -0.9f);
-            workerVisual = new GameObject(station != null ? "Isci " + station.name : "Isci");
-            workerVisual.transform.SetParent(host, false);
-            workerVisual.transform.localPosition = position;
-            workerVisual.transform.localRotation = Quaternion.Euler(0f, 180f, 0f);
-            if (MeshyVisuals.TryAttach(
-                    workerVisual.transform, "03_cashier_worker", new Vector3(0.9f, 1.68f, 0.9f),
-                    Vector3.zero, Vector3.zero, false) == null)
-            {
-                PrototypeVisuals.CreatePrimitive(
-                    "Worker Fallback", PrimitiveType.Capsule, workerVisual.transform,
-                    new Vector3(0f, 0.72f, 0f), new Vector3(0.42f, 0.72f, 0.42f),
-                    new Color(0.95f, 0.35f, 0.26f));
-            }
         }
 
         private void RefreshLabel()
