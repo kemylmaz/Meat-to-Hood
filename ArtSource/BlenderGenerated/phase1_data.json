@@ -2765,5 +2765,1360 @@
     "has_rig": false,
     "actions": [],
     "cameras_or_lights_inside": []
+  },
+  {
+    "name": "70_dining_table",
+    "dims_XYZ": [
+      1.32,
+      2.66,
+      1.09
+    ],
+    "bbox_min": [
+      -0.66,
+      -1.33,
+      0.0
+    ],
+    "bbox_max": [
+      0.66,
+      1.33,
+      1.09
+    ],
+    "ground_contact_z": 0.0,
+    "origin_bottom_center": [
+      0.0,
+      0.0
+    ],
+    "root_location": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "root_rotation_deg": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "root_scale": [
+      1.0,
+      1.0,
+      1.0
+    ],
+    "front_direction_local": [
+      0.0,
+      -1.0,
+      0.0
+    ],
+    "tris": {
+      "LOD0": 3268,
+      "LOD1": 1634,
+      "LOD2": 652
+    },
+    "materials": [
+      "MAT_TableCream",
+      "MAT_Taupe",
+      "MAT_SauceCream",
+      "MAT_ChairRed"
+    ],
+    "mesh_checks": {
+      "LOD0": {
+        "non_manifold_edges": 0,
+        "duplicate_faces": 0,
+        "zero_area_faces": 0
+      },
+      "LOD1": {
+        "non_manifold_edges": 0,
+        "duplicate_faces": 0,
+        "zero_area_faces": 0
+      },
+      "LOD2": {
+        "non_manifold_edges": 0,
+        "duplicate_faces": 0,
+        "zero_area_faces": 0
+      }
+    },
+    "unapplied_modifiers": {
+      "LOD0": [],
+      "LOD1": [],
+      "LOD2": []
+    },
+    "anchors": {
+      "70_dining_table_ROOT": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "FRONT_DIRECTION.026": [
+        0.0,
+        -1.0,
+        0.0
+      ],
+      "SEAT_A.001": [
+        0.0,
+        -1.02,
+        0.5
+      ],
+      "SEAT_B.001": [
+        0.0,
+        1.02,
+        0.5
+      ],
+      "CASH_PAD_ANCHOR.001": [
+        0.44,
+        0.0,
+        0.82
+      ],
+      "DIRTY_DISH_ANCHOR.001": [
+        -0.4,
+        0.0,
+        0.82
+      ]
+    },
+    "has_rig": false,
+    "actions": [],
+    "cameras_or_lights_inside": []
+  },
+  {
+    "name": "71_dining_table_dirty",
+    "dims_XYZ": [
+      1.32,
+      2.66,
+      1.09
+    ],
+    "bbox_min": [
+      -0.66,
+      -1.33,
+      0.0
+    ],
+    "bbox_max": [
+      0.66,
+      1.33,
+      1.09
+    ],
+    "ground_contact_z": 0.0,
+    "origin_bottom_center": [
+      0.0,
+      0.0
+    ],
+    "root_location": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "root_rotation_deg": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "root_scale": [
+      1.0,
+      1.0,
+      1.0
+    ],
+    "front_direction_local": [
+      0.0,
+      -1.0,
+      0.0
+    ],
+    "tris": {
+      "LOD0": 4772,
+      "LOD1": 2386,
+      "LOD2": 954
+    },
+    "materials": [
+      "MAT_TableCream",
+      "MAT_Taupe",
+      "MAT_SauceCream",
+      "MAT_ChairRed",
+      "MAT_MeatBrown",
+      "MAT_BoardAmber"
+    ],
+    "mesh_checks": {
+      "LOD0": {
+        "non_manifold_edges": 0,
+        "duplicate_faces": 0,
+        "zero_area_faces": 0
+      },
+      "LOD1": {
+        "non_manifold_edges": 0,
+        "duplicate_faces": 0,
+        "zero_area_faces": 0
+      },
+      "LOD2": {
+        "non_manifold_edges": 0,
+        "duplicate_faces": 0,
+        "zero_area_faces": 0
+      }
+    },
+    "unapplied_modifiers": {
+      "LOD0": [],
+      "LOD1": [],
+      "LOD2": []
+    },
+    "anchors": {
+      "71_dining_table_dirty_ROOT": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "FRONT_DIRECTION.027": [
+        0.0,
+        -1.0,
+        0.0
+      ],
+      "SEAT_A.002": [
+        0.0,
+        -1.02,
+        0.5
+      ],
+      "SEAT_B.002": [
+        0.0,
+        1.02,
+        0.5
+      ],
+      "DIRTY_DISH_ANCHOR.002": [
+        -0.4,
+        0.0,
+        0.82
+      ]
+    },
+    "has_rig": false,
+    "actions": [],
+    "cameras_or_lights_inside": []
+  },
+  {
+    "name": "72_trash_bin",
+    "dims_XYZ": [
+      0.693,
+      0.7865,
+      0.9316
+    ],
+    "bbox_min": [
+      -0.3465,
+      -0.44,
+      0.0
+    ],
+    "bbox_max": [
+      0.3465,
+      0.3465,
+      0.9316
+    ],
+    "ground_contact_z": 0.0,
+    "origin_bottom_center": [
+      0.0,
+      -0.0467
+    ],
+    "root_location": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "root_rotation_deg": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "root_scale": [
+      1.0,
+      1.0,
+      1.0
+    ],
+    "front_direction_local": [
+      0.0,
+      -1.0,
+      0.0
+    ],
+    "tris": {
+      "LOD0": 1640,
+      "LOD1": 820,
+      "LOD2": 328
+    },
+    "materials": [
+      "MAT_BinTeal",
+      "MAT_CounterDark",
+      "MAT_PanelCream",
+      "MAT_Taupe"
+    ],
+    "mesh_checks": {
+      "LOD0": {
+        "non_manifold_edges": 0,
+        "duplicate_faces": 0,
+        "zero_area_faces": 0
+      },
+      "LOD1": {
+        "non_manifold_edges": 0,
+        "duplicate_faces": 0,
+        "zero_area_faces": 0
+      },
+      "LOD2": {
+        "non_manifold_edges": 0,
+        "duplicate_faces": 0,
+        "zero_area_faces": 0
+      }
+    },
+    "unapplied_modifiers": {
+      "LOD0": [],
+      "LOD1": [],
+      "LOD2": []
+    },
+    "anchors": {
+      "72_trash_bin_ROOT": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "FRONT_DIRECTION.028": [
+        0.0,
+        -1.0,
+        0.0
+      ],
+      "INPUT_ANCHOR.007": [
+        0.0,
+        -0.1,
+        0.92
+      ]
+    },
+    "has_rig": false,
+    "actions": [],
+    "cameras_or_lights_inside": []
+  },
+  {
+    "name": "73_planter",
+    "dims_XYZ": [
+      1.0348,
+      1.1597,
+      1.1893
+    ],
+    "bbox_min": [
+      -0.5174,
+      -0.5798,
+      0.0
+    ],
+    "bbox_max": [
+      0.5174,
+      0.5798,
+      1.1893
+    ],
+    "ground_contact_z": 0.0,
+    "origin_bottom_center": [
+      0.0,
+      0.0
+    ],
+    "root_location": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "root_rotation_deg": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "root_scale": [
+      1.0,
+      1.0,
+      1.0
+    ],
+    "front_direction_local": [
+      0.0,
+      -1.0,
+      0.0
+    ],
+    "tris": {
+      "LOD0": 2744,
+      "LOD1": 1372,
+      "LOD2": 548
+    },
+    "materials": [
+      "MAT_Terracotta",
+      "MAT_SoilDark",
+      "MAT_LeafGreen"
+    ],
+    "mesh_checks": {
+      "LOD0": {
+        "non_manifold_edges": 0,
+        "duplicate_faces": 0,
+        "zero_area_faces": 0
+      },
+      "LOD1": {
+        "non_manifold_edges": 0,
+        "duplicate_faces": 0,
+        "zero_area_faces": 0
+      },
+      "LOD2": {
+        "non_manifold_edges": 0,
+        "duplicate_faces": 0,
+        "zero_area_faces": 0
+      }
+    },
+    "unapplied_modifiers": {
+      "LOD0": [],
+      "LOD1": [],
+      "LOD2": []
+    },
+    "anchors": {
+      "73_planter_ROOT": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "FRONT_DIRECTION.029": [
+        0.0,
+        -1.0,
+        0.0
+      ]
+    },
+    "has_rig": false,
+    "actions": [],
+    "cameras_or_lights_inside": []
+  },
+  {
+    "name": "74_wrap_tray_stack",
+    "dims_XYZ": [
+      0.62,
+      0.46,
+      0.6045
+    ],
+    "bbox_min": [
+      -0.31,
+      -0.23,
+      0.0005
+    ],
+    "bbox_max": [
+      0.31,
+      0.23,
+      0.605
+    ],
+    "ground_contact_z": 0.0005,
+    "origin_bottom_center": [
+      0.0,
+      0.0
+    ],
+    "root_location": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "root_rotation_deg": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "root_scale": [
+      1.0,
+      1.0,
+      1.0
+    ],
+    "front_direction_local": [
+      0.0,
+      -1.0,
+      0.0
+    ],
+    "tris": {
+      "LOD0": 4272,
+      "LOD1": 2136,
+      "LOD2": 854
+    },
+    "materials": [
+      "MAT_Taupe",
+      "MAT_LavashPale",
+      "MAT_UniformRed"
+    ],
+    "mesh_checks": {
+      "LOD0": {
+        "non_manifold_edges": 0,
+        "duplicate_faces": 0,
+        "zero_area_faces": 0
+      },
+      "LOD1": {
+        "non_manifold_edges": 0,
+        "duplicate_faces": 0,
+        "zero_area_faces": 0
+      },
+      "LOD2": {
+        "non_manifold_edges": 0,
+        "duplicate_faces": 0,
+        "zero_area_faces": 0
+      }
+    },
+    "unapplied_modifiers": {
+      "LOD0": [],
+      "LOD1": [],
+      "LOD2": []
+    },
+    "anchors": {
+      "74_wrap_tray_stack_ROOT": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "FRONT_DIRECTION.030": [
+        0.0,
+        -1.0,
+        0.0
+      ],
+      "TOP_ANCHOR": [
+        0.0,
+        0.0,
+        0.613
+      ]
+    },
+    "has_rig": false,
+    "actions": [],
+    "cameras_or_lights_inside": []
+  },
+  {
+    "name": "75_meat_tray_stack",
+    "dims_XYZ": [
+      0.62,
+      0.46,
+      0.4745
+    ],
+    "bbox_min": [
+      -0.31,
+      -0.23,
+      0.0005
+    ],
+    "bbox_max": [
+      0.31,
+      0.23,
+      0.475
+    ],
+    "ground_contact_z": 0.0005,
+    "origin_bottom_center": [
+      0.0,
+      0.0
+    ],
+    "root_location": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "root_rotation_deg": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "root_scale": [
+      1.0,
+      1.0,
+      1.0
+    ],
+    "front_direction_local": [
+      0.0,
+      -1.0,
+      0.0
+    ],
+    "tris": {
+      "LOD0": 3360,
+      "LOD1": 1680,
+      "LOD2": 672
+    },
+    "materials": [
+      "MAT_Taupe",
+      "MAT_MeatBrown",
+      "MAT_BoardAmber"
+    ],
+    "mesh_checks": {
+      "LOD0": {
+        "non_manifold_edges": 0,
+        "duplicate_faces": 0,
+        "zero_area_faces": 0
+      },
+      "LOD1": {
+        "non_manifold_edges": 0,
+        "duplicate_faces": 0,
+        "zero_area_faces": 0
+      },
+      "LOD2": {
+        "non_manifold_edges": 0,
+        "duplicate_faces": 0,
+        "zero_area_faces": 0
+      }
+    },
+    "unapplied_modifiers": {
+      "LOD0": [],
+      "LOD1": [],
+      "LOD2": []
+    },
+    "anchors": {
+      "75_meat_tray_stack_ROOT": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "FRONT_DIRECTION.031": [
+        0.0,
+        -1.0,
+        0.0
+      ],
+      "TOP_ANCHOR.001": [
+        0.0,
+        0.0,
+        0.514
+      ]
+    },
+    "has_rig": false,
+    "actions": [],
+    "cameras_or_lights_inside": []
+  },
+  {
+    "name": "76_wall_corner",
+    "dims_XYZ": [
+      3.09,
+      3.15,
+      1.525
+    ],
+    "bbox_min": [
+      -1.545,
+      -1.633,
+      0.0
+    ],
+    "bbox_max": [
+      1.545,
+      1.517,
+      1.525
+    ],
+    "ground_contact_z": 0.0,
+    "origin_bottom_center": [
+      0.0,
+      -0.058
+    ],
+    "root_location": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "root_rotation_deg": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "root_scale": [
+      1.0,
+      1.0,
+      1.0
+    ],
+    "front_direction_local": [
+      0.0,
+      -1.0,
+      0.0
+    ],
+    "tris": {
+      "LOD0": 1800,
+      "LOD1": 900,
+      "LOD2": 360
+    },
+    "materials": [
+      "MAT_PanelCream",
+      "MAT_Terracotta",
+      "MAT_WallCap"
+    ],
+    "mesh_checks": {
+      "LOD0": {
+        "non_manifold_edges": 0,
+        "duplicate_faces": 0,
+        "zero_area_faces": 0
+      },
+      "LOD1": {
+        "non_manifold_edges": 0,
+        "duplicate_faces": 0,
+        "zero_area_faces": 0
+      },
+      "LOD2": {
+        "non_manifold_edges": 0,
+        "duplicate_faces": 0,
+        "zero_area_faces": 0
+      }
+    },
+    "unapplied_modifiers": {
+      "LOD0": [],
+      "LOD1": [],
+      "LOD2": []
+    },
+    "anchors": {
+      "76_wall_corner_ROOT": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "FRONT_DIRECTION.032": [
+        0.0,
+        -1.0,
+        0.0
+      ]
+    },
+    "has_rig": false,
+    "actions": [],
+    "cameras_or_lights_inside": []
+  },
+  {
+    "name": "77_wall_straight",
+    "dims_XYZ": [
+      3.09,
+      0.374,
+      1.525
+    ],
+    "bbox_min": [
+      -1.545,
+      -0.187,
+      0.0
+    ],
+    "bbox_max": [
+      1.545,
+      0.187,
+      1.525
+    ],
+    "ground_contact_z": 0.0,
+    "origin_bottom_center": [
+      0.0,
+      0.0
+    ],
+    "root_location": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "root_rotation_deg": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "root_scale": [
+      1.0,
+      1.0,
+      1.0
+    ],
+    "front_direction_local": [
+      0.0,
+      -1.0,
+      0.0
+    ],
+    "tris": {
+      "LOD0": 900,
+      "LOD1": 450,
+      "LOD2": 180
+    },
+    "materials": [
+      "MAT_PanelCream",
+      "MAT_Terracotta",
+      "MAT_WallCap"
+    ],
+    "mesh_checks": {
+      "LOD0": {
+        "non_manifold_edges": 0,
+        "duplicate_faces": 0,
+        "zero_area_faces": 0
+      },
+      "LOD1": {
+        "non_manifold_edges": 0,
+        "duplicate_faces": 0,
+        "zero_area_faces": 0
+      },
+      "LOD2": {
+        "non_manifold_edges": 0,
+        "duplicate_faces": 0,
+        "zero_area_faces": 0
+      }
+    },
+    "unapplied_modifiers": {
+      "LOD0": [],
+      "LOD1": [],
+      "LOD2": []
+    },
+    "anchors": {
+      "77_wall_straight_ROOT": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "FRONT_DIRECTION.033": [
+        0.0,
+        -1.0,
+        0.0
+      ],
+      "TILE_NEXT.002": [
+        3.0,
+        0.0,
+        0.0
+      ]
+    },
+    "has_rig": false,
+    "actions": [],
+    "cameras_or_lights_inside": []
+  },
+  {
+    "name": "78_floor_tiled",
+    "dims_XYZ": [
+      3.28,
+      3.28,
+      0.2525
+    ],
+    "bbox_min": [
+      -1.64,
+      -1.64,
+      0.0
+    ],
+    "bbox_max": [
+      1.64,
+      1.64,
+      0.2525
+    ],
+    "ground_contact_z": 0.0,
+    "origin_bottom_center": [
+      0.0,
+      0.0
+    ],
+    "root_location": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "root_rotation_deg": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "root_scale": [
+      1.0,
+      1.0,
+      1.0
+    ],
+    "front_direction_local": [
+      0.0,
+      -1.0,
+      0.0
+    ],
+    "tris": {
+      "LOD0": 4188,
+      "LOD1": 2094,
+      "LOD2": 836
+    },
+    "materials": [
+      "MAT_PanelCream",
+      "MAT_TileTerracotta"
+    ],
+    "mesh_checks": {
+      "LOD0": {
+        "non_manifold_edges": 0,
+        "duplicate_faces": 0,
+        "zero_area_faces": 0
+      },
+      "LOD1": {
+        "non_manifold_edges": 0,
+        "duplicate_faces": 0,
+        "zero_area_faces": 0
+      },
+      "LOD2": {
+        "non_manifold_edges": 0,
+        "duplicate_faces": 0,
+        "zero_area_faces": 0
+      }
+    },
+    "unapplied_modifiers": {
+      "LOD0": [],
+      "LOD1": [],
+      "LOD2": []
+    },
+    "anchors": {
+      "78_floor_tiled_ROOT": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "FRONT_DIRECTION.034": [
+        0.0,
+        -1.0,
+        0.0
+      ],
+      "TILE_NEXT.003": [
+        3.28,
+        0.0,
+        0.0
+      ]
+    },
+    "has_rig": false,
+    "actions": [],
+    "cameras_or_lights_inside": []
+  },
+  {
+    "name": "79_floor_plot",
+    "dims_XYZ": [
+      5.64,
+      5.64,
+      1.5556
+    ],
+    "bbox_min": [
+      -2.82,
+      -2.82,
+      0.02
+    ],
+    "bbox_max": [
+      2.82,
+      2.82,
+      1.5756
+    ],
+    "ground_contact_z": 0.02,
+    "origin_bottom_center": [
+      0.0,
+      0.0
+    ],
+    "root_location": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "root_rotation_deg": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "root_scale": [
+      1.0,
+      1.0,
+      1.0
+    ],
+    "front_direction_local": [
+      0.0,
+      -1.0,
+      0.0
+    ],
+    "tris": {
+      "LOD0": 12572,
+      "LOD1": 6286,
+      "LOD2": 2514
+    },
+    "materials": [
+      "MAT_PlotUnderside",
+      "MAT_PanelCream",
+      "MAT_TileTerracotta",
+      "MAT_LeafGreen"
+    ],
+    "mesh_checks": {
+      "LOD0": {
+        "non_manifold_edges": 0,
+        "duplicate_faces": 0,
+        "zero_area_faces": 0
+      },
+      "LOD1": {
+        "non_manifold_edges": 0,
+        "duplicate_faces": 0,
+        "zero_area_faces": 0
+      },
+      "LOD2": {
+        "non_manifold_edges": 0,
+        "duplicate_faces": 0,
+        "zero_area_faces": 0
+      }
+    },
+    "unapplied_modifiers": {
+      "LOD0": [],
+      "LOD1": [],
+      "LOD2": []
+    },
+    "anchors": {
+      "79_floor_plot_ROOT": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "FRONT_DIRECTION.035": [
+        0.0,
+        -1.0,
+        0.0
+      ],
+      "DECK_ANCHOR": [
+        0.0,
+        0.0,
+        1.5
+      ]
+    },
+    "has_rig": false,
+    "actions": [],
+    "cameras_or_lights_inside": []
+  },
+  {
+    "name": "80_entrance",
+    "dims_XYZ": [
+      3.05,
+      0.955,
+      2.9
+    ],
+    "bbox_min": [
+      -1.325,
+      -0.645,
+      0.0
+    ],
+    "bbox_max": [
+      1.725,
+      0.31,
+      2.9
+    ],
+    "ground_contact_z": 0.0,
+    "origin_bottom_center": [
+      0.2,
+      -0.1675
+    ],
+    "root_location": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "root_rotation_deg": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "root_scale": [
+      1.0,
+      1.0,
+      1.0
+    ],
+    "front_direction_local": [
+      0.0,
+      -1.0,
+      0.0
+    ],
+    "tris": {
+      "LOD0": 3888,
+      "LOD1": 1944,
+      "LOD2": 776
+    },
+    "materials": [
+      "MAT_Taupe",
+      "MAT_PanelCream",
+      "MAT_Terracotta",
+      "MAT_DoorGlassTeal"
+    ],
+    "mesh_checks": {
+      "LOD0": {
+        "non_manifold_edges": 0,
+        "duplicate_faces": 0,
+        "zero_area_faces": 0
+      },
+      "LOD1": {
+        "non_manifold_edges": 0,
+        "duplicate_faces": 0,
+        "zero_area_faces": 0
+      },
+      "LOD2": {
+        "non_manifold_edges": 0,
+        "duplicate_faces": 0,
+        "zero_area_faces": 0
+      }
+    },
+    "unapplied_modifiers": {
+      "LOD0": [],
+      "LOD1": [],
+      "LOD2": []
+    },
+    "anchors": {
+      "80_entrance_ROOT": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "FRONT_DIRECTION.036": [
+        0.0,
+        -1.0,
+        0.0
+      ],
+      "ENTRY_ANCHOR": [
+        0.2,
+        -0.9,
+        0.0
+      ]
+    },
+    "has_rig": false,
+    "actions": [],
+    "cameras_or_lights_inside": []
+  },
+  {
+    "name": "81_lock_pad",
+    "dims_XYZ": [
+      1.36,
+      1.36,
+      0.755
+    ],
+    "bbox_min": [
+      -0.68,
+      -0.68,
+      0.0
+    ],
+    "bbox_max": [
+      0.68,
+      0.68,
+      0.755
+    ],
+    "ground_contact_z": 0.0,
+    "origin_bottom_center": [
+      0.0,
+      0.0
+    ],
+    "root_location": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "root_rotation_deg": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "root_scale": [
+      1.0,
+      1.0,
+      1.0
+    ],
+    "front_direction_local": [
+      0.0,
+      -1.0,
+      0.0
+    ],
+    "tris": {
+      "LOD0": 1572,
+      "LOD1": 786,
+      "LOD2": 314
+    },
+    "materials": [
+      "MAT_PanelCream",
+      "MAT_LockPlate",
+      "MAT_KnifeSteel",
+      "MAT_TieGold",
+      "MAT_WallCap"
+    ],
+    "mesh_checks": {
+      "LOD0": {
+        "non_manifold_edges": 0,
+        "duplicate_faces": 0,
+        "zero_area_faces": 0
+      },
+      "LOD1": {
+        "non_manifold_edges": 0,
+        "duplicate_faces": 0,
+        "zero_area_faces": 0
+      },
+      "LOD2": {
+        "non_manifold_edges": 0,
+        "duplicate_faces": 0,
+        "zero_area_faces": 0
+      }
+    },
+    "unapplied_modifiers": {
+      "LOD0": [],
+      "LOD1": [],
+      "LOD2": []
+    },
+    "anchors": {
+      "81_lock_pad_ROOT": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "FRONT_DIRECTION.037": [
+        0.0,
+        -1.0,
+        0.0
+      ],
+      "PAD_ANCHOR": [
+        0.0,
+        0.0,
+        0.22
+      ]
+    },
+    "has_rig": false,
+    "actions": [],
+    "cameras_or_lights_inside": []
+  },
+  {
+    "name": "82_money_pad",
+    "dims_XYZ": [
+      1.28,
+      1.28,
+      0.622
+    ],
+    "bbox_min": [
+      -0.64,
+      -0.64,
+      0.0
+    ],
+    "bbox_max": [
+      0.64,
+      0.64,
+      0.622
+    ],
+    "ground_contact_z": 0.0,
+    "origin_bottom_center": [
+      0.0,
+      0.0
+    ],
+    "root_location": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "root_rotation_deg": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "root_scale": [
+      1.0,
+      1.0,
+      1.0
+    ],
+    "front_direction_local": [
+      0.0,
+      -1.0,
+      0.0
+    ],
+    "tris": {
+      "LOD0": 2564,
+      "LOD1": 1282,
+      "LOD2": 512
+    },
+    "materials": [
+      "MAT_PanelCream",
+      "MAT_Teal",
+      "MAT_MoneyGreen",
+      "MAT_LeafGreen",
+      "MAT_TieGold"
+    ],
+    "mesh_checks": {
+      "LOD0": {
+        "non_manifold_edges": 0,
+        "duplicate_faces": 0,
+        "zero_area_faces": 0
+      },
+      "LOD1": {
+        "non_manifold_edges": 0,
+        "duplicate_faces": 0,
+        "zero_area_faces": 0
+      },
+      "LOD2": {
+        "non_manifold_edges": 0,
+        "duplicate_faces": 0,
+        "zero_area_faces": 0
+      }
+    },
+    "unapplied_modifiers": {
+      "LOD0": [],
+      "LOD1": [],
+      "LOD2": []
+    },
+    "anchors": {
+      "82_money_pad_ROOT": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "FRONT_DIRECTION.038": [
+        0.0,
+        -1.0,
+        0.0
+      ],
+      "PAD_ANCHOR.001": [
+        0.0,
+        0.0,
+        0.22
+      ]
+    },
+    "has_rig": false,
+    "actions": [],
+    "cameras_or_lights_inside": []
+  },
+  {
+    "name": "83_upgrade_pad",
+    "dims_XYZ": [
+      1.4,
+      1.3923,
+      0.41
+    ],
+    "bbox_min": [
+      -0.7,
+      -0.6962,
+      0.0
+    ],
+    "bbox_max": [
+      0.7,
+      0.6962,
+      0.41
+    ],
+    "ground_contact_z": 0.0,
+    "origin_bottom_center": [
+      0.0,
+      0.0
+    ],
+    "root_location": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "root_rotation_deg": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "root_scale": [
+      1.0,
+      1.0,
+      1.0
+    ],
+    "front_direction_local": [
+      0.0,
+      -1.0,
+      0.0
+    ],
+    "tris": {
+      "LOD0": 972,
+      "LOD1": 486,
+      "LOD2": 194
+    },
+    "materials": [
+      "MAT_PadGold",
+      "MAT_PadMint",
+      "MAT_PanelCream"
+    ],
+    "mesh_checks": {
+      "LOD0": {
+        "non_manifold_edges": 0,
+        "duplicate_faces": 0,
+        "zero_area_faces": 0
+      },
+      "LOD1": {
+        "non_manifold_edges": 0,
+        "duplicate_faces": 0,
+        "zero_area_faces": 0
+      },
+      "LOD2": {
+        "non_manifold_edges": 0,
+        "duplicate_faces": 0,
+        "zero_area_faces": 0
+      }
+    },
+    "unapplied_modifiers": {
+      "LOD0": [],
+      "LOD1": [],
+      "LOD2": []
+    },
+    "anchors": {
+      "83_upgrade_pad_ROOT": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "FRONT_DIRECTION.039": [
+        0.0,
+        -1.0,
+        0.0
+      ],
+      "PAD_ANCHOR.002": [
+        0.0,
+        0.0,
+        0.3
+      ]
+    },
+    "has_rig": false,
+    "actions": [],
+    "cameras_or_lights_inside": []
   }
 ]
