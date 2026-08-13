@@ -1915,5 +1915,855 @@
       "Walk"
     ],
     "cameras_or_lights_inside": []
+  },
+  {
+    "name": "60_cutting_station",
+    "dims_XYZ": [
+      1.86,
+      1.337,
+      1.29
+    ],
+    "bbox_min": [
+      -0.93,
+      -0.697,
+      0.0
+    ],
+    "bbox_max": [
+      0.93,
+      0.64,
+      1.29
+    ],
+    "ground_contact_z": 0.0,
+    "origin_bottom_center": [
+      0.0,
+      -0.0285
+    ],
+    "root_location": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "root_rotation_deg": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "root_scale": [
+      1.0,
+      1.0,
+      1.0
+    ],
+    "front_direction_local": [
+      0.0,
+      -1.0,
+      0.0
+    ],
+    "tris": {
+      "LOD0": 2668,
+      "LOD1": 1334,
+      "LOD2": 532
+    },
+    "materials": [
+      "MAT_Taupe",
+      "MAT_TaupeDark",
+      "MAT_PanelCream",
+      "MAT_BoardAmber",
+      "MAT_MeatBrown",
+      "MAT_SauceCream",
+      "MAT_KnifeSteel",
+      "MAT_CounterDark"
+    ],
+    "mesh_checks": {
+      "LOD0": {
+        "non_manifold_edges": 0,
+        "duplicate_faces": 0,
+        "zero_area_faces": 0
+      },
+      "LOD1": {
+        "non_manifold_edges": 0,
+        "duplicate_faces": 0,
+        "zero_area_faces": 0
+      },
+      "LOD2": {
+        "non_manifold_edges": 0,
+        "duplicate_faces": 0,
+        "zero_area_faces": 0
+      }
+    },
+    "unapplied_modifiers": {
+      "LOD0": [],
+      "LOD1": [],
+      "LOD2": []
+    },
+    "anchors": {
+      "60_cutting_station_ROOT": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "FRONT_DIRECTION.018": [
+        0.0,
+        -1.0,
+        0.0
+      ],
+      "INPUT_ANCHOR.002": [
+        -0.55,
+        -0.3,
+        1.02
+      ],
+      "OUTPUT_ANCHOR.001": [
+        0.55,
+        -0.3,
+        1.02
+      ],
+      "WORKER_ANCHOR.001": [
+        0.0,
+        -1.05,
+        0.0
+      ]
+    },
+    "has_rig": false,
+    "actions": [],
+    "cameras_or_lights_inside": []
+  },
+  {
+    "name": "61_wrap_station",
+    "dims_XYZ": [
+      1.8156,
+      1.326,
+      1.182
+    ],
+    "bbox_min": [
+      -0.9078,
+      -0.663,
+      0.0
+    ],
+    "bbox_max": [
+      0.9078,
+      0.663,
+      1.182
+    ],
+    "ground_contact_z": 0.0,
+    "origin_bottom_center": [
+      0.0,
+      0.0
+    ],
+    "root_location": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "root_rotation_deg": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "root_scale": [
+      1.0,
+      1.0,
+      1.0
+    ],
+    "front_direction_local": [
+      0.0,
+      -1.0,
+      0.0
+    ],
+    "tris": {
+      "LOD0": 2536,
+      "LOD1": 1268,
+      "LOD2": 506
+    },
+    "materials": [
+      "MAT_PanelCream",
+      "MAT_Taupe",
+      "MAT_TaupeDark",
+      "MAT_LettuceGreen",
+      "MAT_TomatoRed",
+      "MAT_SauceCream",
+      "MAT_BoardAmber",
+      "MAT_LavashPale"
+    ],
+    "mesh_checks": {
+      "LOD0": {
+        "non_manifold_edges": 0,
+        "duplicate_faces": 0,
+        "zero_area_faces": 0
+      },
+      "LOD1": {
+        "non_manifold_edges": 0,
+        "duplicate_faces": 0,
+        "zero_area_faces": 0
+      },
+      "LOD2": {
+        "non_manifold_edges": 0,
+        "duplicate_faces": 0,
+        "zero_area_faces": 0
+      }
+    },
+    "unapplied_modifiers": {
+      "LOD0": [],
+      "LOD1": [],
+      "LOD2": []
+    },
+    "anchors": {
+      "61_wrap_station_ROOT": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "FRONT_DIRECTION.019": [
+        0.0,
+        -1.0,
+        0.0
+      ],
+      "INPUT_ANCHOR.003": [
+        -0.52,
+        -0.34,
+        1.06
+      ],
+      "OUTPUT_ANCHOR.002": [
+        0.52,
+        -0.34,
+        1.06
+      ],
+      "WORKER_ANCHOR.002": [
+        0.0,
+        -1.05,
+        0.0
+      ]
+    },
+    "has_rig": false,
+    "actions": [],
+    "cameras_or_lights_inside": []
+  },
+  {
+    "name": "62_cashier_counter",
+    "dims_XYZ": [
+      2.2032,
+      1.1008,
+      1.505
+    ],
+    "bbox_min": [
+      -1.1016,
+      -0.56,
+      0.0
+    ],
+    "bbox_max": [
+      1.1016,
+      0.5408,
+      1.505
+    ],
+    "ground_contact_z": 0.0,
+    "origin_bottom_center": [
+      0.0,
+      -0.0096
+    ],
+    "root_location": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "root_rotation_deg": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "root_scale": [
+      1.0,
+      1.0,
+      1.0
+    ],
+    "front_direction_local": [
+      0.0,
+      -1.0,
+      0.0
+    ],
+    "tris": {
+      "LOD0": 2200,
+      "LOD1": 1100,
+      "LOD2": 440
+    },
+    "materials": [
+      "MAT_PanelCream",
+      "MAT_CounterDark",
+      "MAT_BeltDark",
+      "MAT_Terracotta",
+      "MAT_Taupe",
+      "MAT_TaupeDark",
+      "MAT_TomatoRed"
+    ],
+    "mesh_checks": {
+      "LOD0": {
+        "non_manifold_edges": 0,
+        "duplicate_faces": 0,
+        "zero_area_faces": 0
+      },
+      "LOD1": {
+        "non_manifold_edges": 0,
+        "duplicate_faces": 0,
+        "zero_area_faces": 0
+      },
+      "LOD2": {
+        "non_manifold_edges": 0,
+        "duplicate_faces": 0,
+        "zero_area_faces": 0
+      }
+    },
+    "unapplied_modifiers": {
+      "LOD0": [],
+      "LOD1": [],
+      "LOD2": []
+    },
+    "anchors": {
+      "62_cashier_counter_ROOT": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "FRONT_DIRECTION.020": [
+        0.0,
+        -1.0,
+        0.0
+      ],
+      "INPUT_ANCHOR.004": [
+        -0.24,
+        0.0,
+        1.06
+      ],
+      "OUTPUT_ANCHOR.003": [
+        -0.24,
+        -0.34,
+        1.06
+      ],
+      "WORKER_ANCHOR.003": [
+        0.0,
+        0.95,
+        0.0
+      ]
+    },
+    "has_rig": false,
+    "actions": [],
+    "cameras_or_lights_inside": []
+  },
+  {
+    "name": "63_conveyor_straight",
+    "dims_XYZ": [
+      2.05,
+      0.9325,
+      0.7579
+    ],
+    "bbox_min": [
+      -1.025,
+      -0.485,
+      0.0
+    ],
+    "bbox_max": [
+      1.025,
+      0.4475,
+      0.7579
+    ],
+    "ground_contact_z": 0.0,
+    "origin_bottom_center": [
+      0.0,
+      -0.0187
+    ],
+    "root_location": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "root_rotation_deg": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "root_scale": [
+      1.0,
+      1.0,
+      1.0
+    ],
+    "front_direction_local": [
+      0.0,
+      -1.0,
+      0.0
+    ],
+    "tris": {
+      "LOD0": 2632,
+      "LOD1": 1316,
+      "LOD2": 526
+    },
+    "materials": [
+      "MAT_Taupe",
+      "MAT_TaupeDark",
+      "MAT_Terracotta",
+      "MAT_BeltDark"
+    ],
+    "mesh_checks": {
+      "LOD0": {
+        "non_manifold_edges": 0,
+        "duplicate_faces": 0,
+        "zero_area_faces": 0
+      },
+      "LOD1": {
+        "non_manifold_edges": 0,
+        "duplicate_faces": 0,
+        "zero_area_faces": 0
+      },
+      "LOD2": {
+        "non_manifold_edges": 0,
+        "duplicate_faces": 0,
+        "zero_area_faces": 0
+      }
+    },
+    "unapplied_modifiers": {
+      "LOD0": [],
+      "LOD1": [],
+      "LOD2": []
+    },
+    "anchors": {
+      "63_conveyor_straight_ROOT": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "FRONT_DIRECTION.021": [
+        0.0,
+        -1.0,
+        0.0
+      ],
+      "INPUT_ANCHOR.005": [
+        -1.0,
+        0.0,
+        0.74
+      ],
+      "OUTPUT_ANCHOR.004": [
+        1.0,
+        0.0,
+        0.74
+      ]
+    },
+    "has_rig": false,
+    "actions": [],
+    "cameras_or_lights_inside": []
+  },
+  {
+    "name": "64_conveyor_corner",
+    "dims_XYZ": [
+      1.4,
+      1.4,
+      0.76
+    ],
+    "bbox_min": [
+      -1.725,
+      -0.885,
+      0.0
+    ],
+    "bbox_max": [
+      -0.325,
+      0.515,
+      0.76
+    ],
+    "ground_contact_z": 0.0,
+    "origin_bottom_center": [
+      -1.025,
+      -0.185
+    ],
+    "root_location": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "root_rotation_deg": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "root_scale": [
+      1.0,
+      1.0,
+      1.0
+    ],
+    "front_direction_local": [
+      0.0,
+      -1.0,
+      0.0
+    ],
+    "tris": {
+      "LOD0": 1664,
+      "LOD1": 832,
+      "LOD2": 332
+    },
+    "materials": [
+      "MAT_BeltDark",
+      "MAT_Taupe",
+      "MAT_Terracotta",
+      "MAT_TaupeDark"
+    ],
+    "mesh_checks": {
+      "LOD0": {
+        "non_manifold_edges": 0,
+        "duplicate_faces": 0,
+        "zero_area_faces": 0
+      },
+      "LOD1": {
+        "non_manifold_edges": 0,
+        "duplicate_faces": 0,
+        "zero_area_faces": 0
+      },
+      "LOD2": {
+        "non_manifold_edges": 0,
+        "duplicate_faces": 0,
+        "zero_area_faces": 0
+      }
+    },
+    "unapplied_modifiers": {
+      "LOD0": [],
+      "LOD1": [],
+      "LOD2": []
+    },
+    "anchors": {
+      "64_conveyor_corner_ROOT": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "FRONT_DIRECTION.022": [
+        0.0,
+        -1.0,
+        0.0
+      ],
+      "INPUT_ANCHOR.006": [
+        -1.36,
+        0.42,
+        0.74
+      ],
+      "OUTPUT_ANCHOR.005": [
+        -0.42,
+        1.36,
+        0.74
+      ]
+    },
+    "has_rig": false,
+    "actions": [],
+    "cameras_or_lights_inside": []
+  },
+  {
+    "name": "65_manager_desk_stamp",
+    "dims_XYZ": [
+      2.75,
+      2.07,
+      1.92
+    ],
+    "bbox_min": [
+      -1.3,
+      -0.97,
+      0.0
+    ],
+    "bbox_max": [
+      1.45,
+      1.1,
+      1.92
+    ],
+    "ground_contact_z": 0.0,
+    "origin_bottom_center": [
+      0.075,
+      0.065
+    ],
+    "root_location": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "root_rotation_deg": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "root_scale": [
+      1.0,
+      1.0,
+      1.0
+    ],
+    "front_direction_local": [
+      0.0,
+      -1.0,
+      0.0
+    ],
+    "tris": {
+      "LOD0": 5392,
+      "LOD1": 2696,
+      "LOD2": 1078
+    },
+    "materials": [
+      "MAT_WoodPale",
+      "MAT_PanelCream",
+      "MAT_WoodPaleDark",
+      "MAT_ScreenGrey",
+      "MAT_ScreenGlass",
+      "MAT_BookMint",
+      "MAT_TieGold",
+      "MAT_ChairRed"
+    ],
+    "mesh_checks": {
+      "LOD0": {
+        "non_manifold_edges": 0,
+        "duplicate_faces": 0,
+        "zero_area_faces": 0
+      },
+      "LOD1": {
+        "non_manifold_edges": 0,
+        "duplicate_faces": 0,
+        "zero_area_faces": 0
+      },
+      "LOD2": {
+        "non_manifold_edges": 0,
+        "duplicate_faces": 0,
+        "zero_area_faces": 0
+      }
+    },
+    "unapplied_modifiers": {
+      "LOD0": [],
+      "LOD1": [],
+      "LOD2": []
+    },
+    "anchors": {
+      "65_manager_desk_stamp_ROOT": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "FRONT_DIRECTION.023": [
+        0.0,
+        -1.0,
+        0.0
+      ],
+      "WORKER_ANCHOR.004": [
+        -0.62,
+        -0.62,
+        0.0
+      ],
+      "TERMINAL_ANCHOR": [
+        0.3,
+        -0.4,
+        0.9
+      ]
+    },
+    "has_rig": false,
+    "actions": [],
+    "cameras_or_lights_inside": []
+  },
+  {
+    "name": "66_manager_desk_pencils",
+    "dims_XYZ": [
+      2.745,
+      2.07,
+      1.92
+    ],
+    "bbox_min": [
+      -1.3,
+      -0.97,
+      0.0
+    ],
+    "bbox_max": [
+      1.445,
+      1.1,
+      1.92
+    ],
+    "ground_contact_z": 0.0,
+    "origin_bottom_center": [
+      0.0725,
+      0.065
+    ],
+    "root_location": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "root_rotation_deg": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "root_scale": [
+      1.0,
+      1.0,
+      1.0
+    ],
+    "front_direction_local": [
+      0.0,
+      -1.0,
+      0.0
+    ],
+    "tris": {
+      "LOD0": 5428,
+      "LOD1": 2714,
+      "LOD2": 1084
+    },
+    "materials": [
+      "MAT_WoodPale",
+      "MAT_PanelCream",
+      "MAT_WoodPaleDark",
+      "MAT_ScreenGrey",
+      "MAT_ScreenGlass",
+      "MAT_BookMint",
+      "MAT_Terracotta",
+      "MAT_LettuceGreen",
+      "MAT_TieGold",
+      "MAT_TomatoRed",
+      "MAT_ChairBlue"
+    ],
+    "mesh_checks": {
+      "LOD0": {
+        "non_manifold_edges": 0,
+        "duplicate_faces": 0,
+        "zero_area_faces": 0
+      },
+      "LOD1": {
+        "non_manifold_edges": 0,
+        "duplicate_faces": 0,
+        "zero_area_faces": 0
+      },
+      "LOD2": {
+        "non_manifold_edges": 0,
+        "duplicate_faces": 0,
+        "zero_area_faces": 0
+      }
+    },
+    "unapplied_modifiers": {
+      "LOD0": [],
+      "LOD1": [],
+      "LOD2": []
+    },
+    "anchors": {
+      "66_manager_desk_pencils_ROOT": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "FRONT_DIRECTION.024": [
+        0.0,
+        -1.0,
+        0.0
+      ],
+      "WORKER_ANCHOR.005": [
+        -0.62,
+        -0.62,
+        0.0
+      ],
+      "TERMINAL_ANCHOR.001": [
+        0.3,
+        -0.4,
+        0.9
+      ]
+    },
+    "has_rig": false,
+    "actions": [],
+    "cameras_or_lights_inside": []
+  },
+  {
+    "name": "67_manager_desk_plant",
+    "dims_XYZ": [
+      2.7952,
+      2.07,
+      1.92
+    ],
+    "bbox_min": [
+      -1.3,
+      -0.97,
+      0.0
+    ],
+    "bbox_max": [
+      1.4952,
+      1.1,
+      1.92
+    ],
+    "ground_contact_z": 0.0,
+    "origin_bottom_center": [
+      0.0976,
+      0.065
+    ],
+    "root_location": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "root_rotation_deg": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "root_scale": [
+      1.0,
+      1.0,
+      1.0
+    ],
+    "front_direction_local": [
+      0.0,
+      -1.0,
+      0.0
+    ],
+    "tris": {
+      "LOD0": 5764,
+      "LOD1": 2882,
+      "LOD2": 1152
+    },
+    "materials": [
+      "MAT_WoodPale",
+      "MAT_PanelCream",
+      "MAT_WoodPaleDark",
+      "MAT_ScreenGrey",
+      "MAT_ScreenGlass",
+      "MAT_BookMint",
+      "MAT_Terracotta",
+      "MAT_LettuceGreen",
+      "MAT_ChairRed"
+    ],
+    "mesh_checks": {
+      "LOD0": {
+        "non_manifold_edges": 0,
+        "duplicate_faces": 0,
+        "zero_area_faces": 0
+      },
+      "LOD1": {
+        "non_manifold_edges": 0,
+        "duplicate_faces": 0,
+        "zero_area_faces": 0
+      },
+      "LOD2": {
+        "non_manifold_edges": 0,
+        "duplicate_faces": 0,
+        "zero_area_faces": 0
+      }
+    },
+    "unapplied_modifiers": {
+      "LOD0": [],
+      "LOD1": [],
+      "LOD2": []
+    },
+    "anchors": {
+      "67_manager_desk_plant_ROOT": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "FRONT_DIRECTION.025": [
+        0.0,
+        -1.0,
+        0.0
+      ],
+      "WORKER_ANCHOR.006": [
+        -0.62,
+        -0.62,
+        0.0
+      ],
+      "TERMINAL_ANCHOR.002": [
+        0.3,
+        -0.4,
+        0.9
+      ]
+    },
+    "has_rig": false,
+    "actions": [],
+    "cameras_or_lights_inside": []
   }
 ]

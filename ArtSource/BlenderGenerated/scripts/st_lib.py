@@ -87,6 +87,13 @@ PALETTE = {
     "MAT_Taupe":           ("A79C90", 0.78, 0.0),
     "MAT_TaupeDark":       ("8B8175", 0.78, 0.0),
     "MAT_BoardAmber":      ("D89A46", 0.74, 0.0),
+    "MAT_BeltDark":        ("5C5A57", 0.82, 0.0),
+    "MAT_CounterDark":     ("4E4A45", 0.80, 0.0),
+    "MAT_LettuceGreen":    ("6FB04A", 0.78, 0.0),
+    "MAT_TomatoRed":       ("D9453C", 0.74, 0.0),
+    "MAT_SauceCream":      ("F2EDE0", 0.76, 0.0),
+    "MAT_LavashPale":      ("E8D7A8", 0.80, 0.0),
+    "MAT_KnifeSteel":      ("C8CCD2", 0.35, 1.0),
     # preview-only helpers (never inside an asset collection)
     "PRV_Ground":          ("E9DCC8", 0.90, 0.0),
     "PRV_Arrow":           ("E0217A", 0.60, 0.0),

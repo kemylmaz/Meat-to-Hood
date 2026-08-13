@@ -14,6 +14,7 @@ from st_lib import (get_mat, new_collection, move_to_collection, bbox_of,
 import st_chars
 import st_props
 import st_cozy2
+import st_cozy2_stations
 import st_city
 
 ROOT_DIR = os.path.normpath(
@@ -27,9 +28,11 @@ DATA_JSON = ROOT_DIR + "/phase1_data.json"
 PHASE1_ORDER = ["01_player_character", "02_customer_character",
                 "06_rotisserie_station", "15_dining_table", "17_trash_bin"]
 CITY_ORDER = [name for name, _ in st_city.CITY_BUILDERS]
-COZY2_ORDER = [name for name, _ in st_cozy2.COZY2_CHARACTERS]
+COZY2_ORDER = ([name for name, _ in st_cozy2.COZY2_CHARACTERS] +
+               [name for name, _ in st_cozy2_stations.COZY2_STATIONS])
 ASSET_ORDER = PHASE1_ORDER + CITY_ORDER + COZY2_ORDER
-CHARACTERS = {"01_player_character", "02_customer_character"} | set(COZY2_ORDER)
+CHARACTERS = ({"01_player_character", "02_customer_character"} |
+              {n for n, _ in st_cozy2.COZY2_CHARACTERS})
 
 VIEWS = {
     "front": (0.0, -1.0, 0.0),
@@ -294,7 +297,8 @@ def build_all():
         ("06_rotisserie_station", st_props.build_rotisserie),
         ("15_dining_table", st_props.build_dining_table),
         ("17_trash_bin", st_props.build_trash_bin),
-    ] + list(st_city.CITY_BUILDERS) + list(st_cozy2.COZY2_CHARACTERS)
+    ] + list(st_city.CITY_BUILDERS) + list(st_cozy2.COZY2_CHARACTERS) \
+        + list(st_cozy2_stations.COZY2_STATIONS)
     first_rig = None
     for name, fn in builders:
         a = fn()
