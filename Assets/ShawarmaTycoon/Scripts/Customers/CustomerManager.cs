@@ -123,8 +123,12 @@ namespace ShawarmaTycoon
             customer.transform.SetParent(transform, false);
             customer.transform.position = entryPoint.position;
 
+            // Rotate through the authored body variants so a queue is not six
+            // copies of the same person.
+            string bodyId = MeshyVisuals.CustomerVariants[
+                spawnNumber % MeshyVisuals.CustomerVariants.Length];
             if (MeshyVisuals.TryAttach(
-                    customer.transform, "02_customer_character", new Vector3(0.75f, 1.70f, 0.85f),
+                    customer.transform, bodyId, new Vector3(0.75f, 1.70f, 0.85f),
                     Vector3.zero, Vector3.zero, false) == null)
             {
                 PrototypeVisuals.CreatePrimitive(

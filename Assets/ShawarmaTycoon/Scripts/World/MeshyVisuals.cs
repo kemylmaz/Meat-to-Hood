@@ -14,13 +14,48 @@ namespace ShawarmaTycoon
         private const string Phase1ResourceFolder = "Phase1Prefabs/";
         private const string LegacyResourceFolder = "MeshyPrefabs/";
         private static readonly Dictionary<string, GameObject> Prefabs = new();
+        /// <summary>
+        /// Maps the gameplay-facing asset ids the bootstrap asks for onto the
+        /// approved art. Phase 3 (the soft "cozy" set built from the reference
+        /// renders) supersedes the earlier packs wherever it has a match.
+        /// </summary>
         private static readonly Dictionary<string, string> Phase1Aliases = new()
         {
-            { "01_player_character", "01_player_character" },
-            { "02_customer_character", "02_customer_character" },
+            // characters
+            { "01_player_character", "54_worker_red" },
+            { "02_customer_character", "52_customer_sweater" },
+            { "03_cashier_worker", "53_worker_teal" },
+            // stations
             { "06_shawarma_rotisserie", "06_rotisserie_station" },
-            { "15_dining_table_clean", "15_dining_table" },
-            { "17_trash_bin", "17_trash_bin" }
+            { "08_cutting_station", "60_cutting_station" },
+            { "10_wrap_preparation_station", "61_wrap_station" },
+            { "12_service_cashier_counter", "62_cashier_counter" },
+            { "13_conveyor_straight", "63_conveyor_straight" },
+            { "14_conveyor_corner", "64_conveyor_corner" },
+            // furniture and props
+            { "15_dining_table_clean", "70_dining_table" },
+            { "16_dirty_table_props", "71_dining_table_dirty" },
+            { "17_trash_bin", "72_trash_bin" },
+            { "33_decorative_plant", "73_planter" },
+            // pads and shell
+            { "18_money_collection_pad", "82_money_pad" },
+            { "19_upgrade_pad", "83_upgrade_pad" },
+            { "20_locked_expansion_pad", "81_lock_pad" },
+            { "21_entrance_door", "80_entrance" },
+            { "22_modular_floor_tile", "78_floor_tiled" },
+            { "23_modular_wall_straight", "77_wall_straight" },
+            { "24_modular_wall_corner", "76_wall_corner" },
+            { "34_floating_diorama_island", "79_floor_plot" },
+            // offices
+            { "25_hr_manager_desk", "65_manager_desk_stamp" },
+            { "26_recruitment_desk", "66_manager_desk_pencils" },
+            { "27_general_manager_desk", "67_manager_desk_plant" }
+        };
+
+        /// <summary>Customer body variants, picked per spawn for visual variety.</summary>
+        public static readonly string[] CustomerVariants =
+        {
+            "50_customer_vest_green", "51_customer_vest_navy", "52_customer_sweater"
         };
 
         public static bool IsAvailable(string assetName) => Load(assetName) != null;
