@@ -7,6 +7,8 @@ namespace ShawarmaTycoon
     public sealed class CarryInventory : MonoBehaviour
     {
         [SerializeField, Min(1)] private int capacity = 12;
+        /// <summary>Dirty plates ride in their own slot, outside the one-type rule.</summary>
+        [SerializeField, Min(1)] private int trashCapacity = 4;
         [SerializeField, Min(1)] private int maxVisibleItems = 12;
         [SerializeField] private Transform stackRoot;
         [SerializeField] private GameObject rawMeatPrefab;
@@ -21,6 +23,7 @@ namespace ShawarmaTycoon
         public ItemType HeldType { get; private set; } = ItemType.None;
         public int Count { get; private set; }
         public int Capacity => capacity;
+        public int TrashCount { get; private set; }
         public event Action Changed;
 
         private void Awake()
@@ -63,14 +66,30 @@ namespace ShawarmaTycoon
             stackRoot.localScale = Vector3.one;
         }
 
+        /// <summary>
+        /// Dirty plates are exempt from the one-kind-at-a-time rule. Sharing the
+        /// stack with stock meant a player carrying wraps could not clear a table,
+        /// so a backed up line and a full dining room deadlocked each other and
+        /// the only way out was binning a batch of finished food.
+        /// </summary>
         public bool CanAccept(ItemType type)
         {
-            return type != ItemType.None && Count < capacity && (Count == 0 || HeldType == type);
+            if (type == ItemType.None) return false;
+            if (type == ItemType.Trash) return TrashCount < trashCapacity;
+            return Count < capacity && (Count == 0 || HeldType == type);
         }
 
         public bool TryAdd(ItemType type, int amount = 1)
         {
             if (amount <= 0 || !CanAccept(type)) return false;
+
+            if (type == ItemType.Trash)
+            {
+                TrashCount += Mathf.Min(amount, trashCapacity - TrashCount);
+                RefreshVisuals();
+                return true;
+            }
+
             int accepted = Mathf.Min(amount, capacity - Count);
             if (Count == 0) HeldType = type;
             Count += accepted;
@@ -80,18 +99,37 @@ namespace ShawarmaTycoon
 
         public bool TryRemove(ItemType type, int amount = 1)
         {
-            if (amount <= 0 || Count <= 0 || HeldType != type) return false;
+            if (amount <= 0) return false;
+
+            if (type == ItemType.Trash)
+            {
+                if (TrashCount <= 0) return false;
+                TrashCount -= Mathf.Min(amount, TrashCount);
+                RefreshVisuals();
+                return true;
+            }
+
+            if (Count <= 0 || HeldType != type) return false;
             Count -= Mathf.Min(amount, Count);
             if (Count == 0) HeldType = ItemType.None;
             RefreshVisuals();
             return true;
         }
 
+        /// <summary>Drops the stock being carried. Leaves the trash slot alone.</summary>
         public int Clear()
         {
             int removed = Count;
             Count = 0;
             HeldType = ItemType.None;
+            RefreshVisuals();
+            return removed;
+        }
+
+        public int ClearTrash()
+        {
+            int removed = TrashCount;
+            TrashCount = 0;
             RefreshVisuals();
             return removed;
         }
@@ -121,6 +159,16 @@ namespace ShawarmaTycoon
                 foreach (Collider collider in visual.GetComponentsInChildren<Collider>())
                     collider.enabled = false;
                 visuals.Add(visual);
+            }
+
+            // Plates ride on top of the stock, so both loads read at a glance.
+            for (int i = 0; i < TrashCount; i++)
+            {
+                GameObject plate = PrototypeVisuals.CreateItemVisual(
+                    ItemType.Trash, stackRoot, Vector3.up * ((visibleCount + i) * 0.16f + 0.05f));
+                foreach (Collider collider in plate.GetComponentsInChildren<Collider>())
+                    collider.enabled = false;
+                visuals.Add(plate);
             }
 
             Changed?.Invoke();

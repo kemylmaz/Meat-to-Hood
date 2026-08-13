@@ -92,28 +92,23 @@ namespace ShawarmaTycoon.UI
 
         private string ObjectiveText()
         {
-            bool holdingStock = inventory != null && inventory.Count > 0
-                && inventory.HeldType != ItemType.Trash;
+            bool holdingStock = inventory != null && inventory.Count > 0;
             ItemStation destination = holdingStock ? DestinationFor(inventory.HeldType) : null;
             bool destinationFull = destination != null && !destination.CanAcceptDelivery;
 
             // A dining room with nowhere to seat anyone outranks the carry hint:
             // however much stock is on the counter, nobody can be served until a
-            // table is cleared.
+            // table is cleared. Plates ride in their own slot now, so a full load
+            // of stock is no longer in the way - only a full plate slot is.
             if (NoSeatsLeft())
-            {
-                if (!holdingStock) return "Boş masa yok - kirli masaları temizle";
-
-                // One kind of thing at a time, so a dirty plate cannot be picked
-                // up until the stock is put down. Usually it can go on its own
-                // counter; the bin is only the answer when that is full too.
-                return destinationFull
-                    ? "Her yer dolu - elindekini çöpe at, masaları temizle"
-                    : "Önce elindekini bırak, sonra masaları temizle";
-            }
+                return inventory != null && !inventory.CanAccept(ItemType.Trash)
+                    ? "Elin çöp dolu - çöp kutusuna boşalt"
+                    : "Boş masa yok - kirli masaları temizle";
 
             if (inventory == null || inventory.Count == 0)
-                return "Et deposundan çiğ et al";
+                return inventory != null && inventory.TrashCount > 0
+                    ? "Çöpü çöp kutusuna at"
+                    : "Et deposundan çiğ et al";
 
             if (destinationFull)
             {
@@ -136,7 +131,6 @@ namespace ShawarmaTycoon.UI
                 ItemType.CookedMeat => "Pişen etleri kesim tezgâhına götür",
                 ItemType.SlicedMeat => "Kesilmiş etleri dürüm tezgâhına götür",
                 ItemType.Wrap => "Dürümleri servis tezgâhına bırak",
-                ItemType.Trash => "Çöpü çöp kutusuna at",
                 _ => string.Empty
             };
         }
