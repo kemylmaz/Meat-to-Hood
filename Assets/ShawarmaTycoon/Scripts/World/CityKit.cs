@@ -75,6 +75,23 @@ namespace ShawarmaTycoon
             return count;
         }
 
+        /// <summary>
+        /// Repeats a tile along Z, centred on <paramref name="centerZ"/>. The
+        /// piece is turned a quarter turn, so its authored length runs along Z.
+        /// </summary>
+        public static int TileAlongZ(
+            string assetName, Transform parent, float x, float centerZ, float span, float yaw)
+        {
+            float pitch = TileWidth(assetName, 4f);
+            if (pitch <= 0.01f) return 0;
+
+            int count = Mathf.Max(1, Mathf.CeilToInt(span / pitch));
+            float start = centerZ - (count - 1) * pitch * 0.5f;
+            for (int i = 0; i < count; i++)
+                Spawn(assetName, parent, new Vector3(x, 0f, start + i * pitch), yaw);
+            return count;
+        }
+
         private static GameObject Load(string assetName)
         {
             if (Cache.TryGetValue(assetName, out GameObject cached))

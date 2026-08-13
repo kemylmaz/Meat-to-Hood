@@ -191,25 +191,29 @@ namespace ShawarmaTycoon
                 playerTransform, gmWing, 200, "office.gm", "GM OFFICE\n$200");
 
 
+            // Dining room sits symmetrically in the open middle of the lot, clear
+            // of the kitchen line at z = 6.3, the office strip around z = -4 and
+            // the walk-in path from the entrance to the queue.
             List<CustomerTable> tables = new()
             {
-                CreateTable(runtimeRoot, "Masa 1", new Vector3(0.8f, 0.25f, -0.55f)),
-                CreateTable(runtimeRoot, "Masa 2", new Vector3(4.5f, 0.25f, -0.55f))
+                CreateTable(runtimeRoot, "Masa 1", new Vector3(-3.4f, 0.25f, 1.3f)),
+                CreateTable(runtimeRoot, "Masa 2", new Vector3(3.4f, 0.25f, 1.3f))
             };
 
             List<GameObject> expansionModules = new();
             GameObject moduleOne = CreateExpansionModule(
                 "Genişleme 1", new Vector3(16f, 0f, -3f), new Vector3(8f, 0.5f, 14f));
-            CustomerTable tableThree = CreateTable(moduleOne.transform, "Masa 3", new Vector3(-1.9f, 0.25f, -2.8f));
-            CustomerTable tableFour = CreateTable(moduleOne.transform, "Masa 4", new Vector3(1.9f, 0.25f, -2.8f));
+            // Centred in the 8 x 14 plot instead of bunched against its front edge.
+            CustomerTable tableThree = CreateTable(moduleOne.transform, "Masa 3", new Vector3(-2.0f, 0.25f, 0f));
+            CustomerTable tableFour = CreateTable(moduleOne.transform, "Masa 4", new Vector3(2.0f, 0.25f, 0f));
             expansionModules.Add(moduleOne);
             tables.Add(tableThree);
             tables.Add(tableFour);
 
             GameObject moduleTwo = CreateExpansionModule(
                 "Genişleme 2", new Vector3(16f, 0f, 6.5f), new Vector3(8f, 0.5f, 5f));
-            CustomerTable tableFive = CreateTable(moduleTwo.transform, "Masa 5", new Vector3(-1.9f, 0.25f, 0f));
-            CustomerTable tableSix = CreateTable(moduleTwo.transform, "Masa 6", new Vector3(1.9f, 0.25f, 0f));
+            CustomerTable tableFive = CreateTable(moduleTwo.transform, "Masa 5", new Vector3(-2.0f, 0.25f, 0f));
+            CustomerTable tableSix = CreateTable(moduleTwo.transform, "Masa 6", new Vector3(2.0f, 0.25f, 0f));
             expansionModules.Add(moduleTwo);
             tables.Add(tableFive);
             tables.Add(tableSix);

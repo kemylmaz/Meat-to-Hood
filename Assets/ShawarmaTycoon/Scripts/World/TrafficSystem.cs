@@ -147,7 +147,7 @@ namespace ShawarmaTycoon
         /// would be the same red. Recolour just the body submesh through a
         /// property block, which keeps batching and touches no shared asset.
         /// </summary>
-        private static void TintBody(Transform root, Color bodyColor)
+        public static void TintBody(Transform root, Color bodyColor)
         {
             MaterialPropertyBlock block = new();
             block.SetColor(BaseColorId, bodyColor);

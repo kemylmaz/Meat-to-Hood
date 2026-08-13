@@ -128,6 +128,15 @@ namespace ShawarmaTycoon
                     layout.NearWalkCenterZ, span, 180f);
                 CityKit.Tile(WalkTile, walks.transform, layout.CenterX,
                     layout.FarWalkCenterZ, span, 0f);
+
+                // Pavement down the -X flank, filling the gap the side facades
+                // were pushed back to leave. +X is left clear for expansions.
+                float flankX = layout.CenterX -
+                    (layout.LotWidth * 0.5f + layout.SideWalkGap * 0.5f);
+                float flankFrom = layout.FrontEdgeZ;
+                float flankTo = layout.LotDepth * 0.5f;
+                CityKit.TileAlongZ(WalkTile, walks.transform, flankX,
+                    (flankFrom + flankTo) * 0.5f, flankTo - flankFrom, -90f);
                 return;
             }
 
@@ -238,9 +247,11 @@ namespace ShawarmaTycoon
                 layout.CenterX + layout.GroundWidth * 0.40f,
                 15f, 25f, ref seed);
 
-            // side walls of the block
+            // Only the -X flank gets facades. The camera always sits at +X/-Z of
+            // the player, so anything tall on the +X side ends up between the
+            // lens and the restaurant and swallows the play area.
             SideBuildings(skyline.transform, layout, -1f, ref seed);
-            SideBuildings(skyline.transform, layout, 1f, ref seed);
+            BuildEastEdge(skyline.transform, layout);
 
             BuildLamps(skyline.transform, layout);
         }
@@ -291,9 +302,12 @@ namespace ShawarmaTycoon
 
         private static void SideBuildings(Transform parent, CityLayout layout, float side, ref int seed)
         {
-            // Asymmetric on purpose: the -X side can hug the lot and fill the
-            // empty left of frame, while +X has to clear the expansion plots.
-            float offset = side < 0f ? layout.LotWidth * 0.5f + 7f : layout.LotWidth * 0.5f + 14f;
+            // frontX is where the facade's FRONT WALL lands, leaving a pavement
+            // strip between it and the lot. Asymmetric on purpose: +X has to
+            // clear the purchasable expansion plots, which reach x = 20.
+            float offset = side < 0f
+                ? layout.LotWidth * 0.5f + layout.SideWalkGap
+                : layout.ExpansionReach + layout.SideWalkGap;
             float frontX = layout.CenterX + side * offset;
             float z = layout.FrontEdgeZ + 2f;
             float end = layout.RoadCenterZ - layout.RoadWidth * 0.5f - 1f;
@@ -314,16 +328,17 @@ namespace ShawarmaTycoon
                     float along = CityKit.TileWidth(model, 8f);
                     float deep = CityKit.TileDepth(model, 6f);
                     if (z + along > end) break;
+                    // The facade faces the lot, so the body sits BEHIND frontX.
                     CityKit.Spawn(model, parent,
-                        new Vector3(frontX - side * deep * 0.5f, 0f, z + along * 0.5f), yaw);
+                        new Vector3(frontX + side * deep * 0.5f, 0f, z + along * 0.5f), yaw);
                     z += along + Random(ref seed, 0.25f, 0.9f);
                 }
                 else
                 {
                     float depth = Random(ref seed, 5.5f, 8.5f);
                     float height = Random(ref seed, 8f, 15f);
-                    Building(parent, new Vector3(frontX, 0f, z + depth * 0.5f), 9f, depth, height,
-                        -side, ref seed, sideFacing: true);
+                    Building(parent, new Vector3(frontX + side * 4.5f, 0f, z + depth * 0.5f),
+                        9f, depth, height, -side, ref seed, sideFacing: true);
                     z += depth + Random(ref seed, 0.4f, 1.2f);
                 }
             }
@@ -372,6 +387,50 @@ namespace ShawarmaTycoon
                 }
             }
         }
+
+        /// <summary>
+        /// Low dressing for the +X flank: a pavement run past the expansion
+        /// plots with a few parked cars. Nothing here is tall enough to occlude,
+        /// which is the whole point of not putting facades on this side.
+        /// </summary>
+        private static void BuildEastEdge(Transform parent, CityLayout layout)
+        {
+            GameObject edge = new("East Edge");
+            edge.transform.SetParent(parent, false);
+
+            float walkX = layout.CenterX + layout.ExpansionReach + layout.WalkDepth * 0.5f + 0.4f;
+            float from = layout.FrontEdgeZ;
+            float to = layout.LotDepth * 0.5f + 2f;
+
+            if (CityKit.Has(WalkTile))
+            {
+                CityKit.TileAlongZ(WalkTile, edge.transform, walkX,
+                    (from + to) * 0.5f, to - from, 90f);
+            }
+            else
+            {
+                PrototypeVisuals.CreatePrimitive("East Walk", PrimitiveType.Cube, edge.transform,
+                    new Vector3(walkX, 0.09f, (from + to) * 0.5f),
+                    new Vector3(layout.WalkDepth, 0.18f, to - from), Sidewalk);
+            }
+
+            if (!CityKit.Has(ParkedCar)) return;
+            float parkX = walkX + layout.WalkDepth * 0.5f + 1.2f;
+            Color[] parkedColors =
+            {
+                new(0.38f, 0.45f, 0.62f), new(0.92f, 0.92f, 0.90f), new(0.45f, 0.58f, 0.40f)
+            };
+            for (int i = 0; i < 3; i++)
+            {
+                GameObject car = CityKit.Spawn(ParkedCar, edge.transform,
+                    new Vector3(parkX, 0.10f, from + 4f + i * 6.5f), 0f);
+                if (car == null) continue;
+                car.name = "Parked Car";
+                CityCar.TintBody(car.transform, parkedColors[i % parkedColors.Length]);
+            }
+        }
+
+        private const string ParkedCar = "46_city_car";
 
         private static void BuildLamps(Transform parent, CityLayout layout)
         {
@@ -451,6 +510,12 @@ namespace ShawarmaTycoon
         public float RoadWidth = 7.2f;
         public float CenterX = 0f;
         public float CrossingX = 6f;
+
+        /// <summary>Clear space between the lot edge and the flanking facades.</summary>
+        public float SideWalkGap = 3.4f;
+
+        /// <summary>How far the purchasable expansion plots reach along +X.</summary>
+        public float ExpansionReach = 20f;
 
         /// <summary>Gap between the lot kerb and the near pavement.</summary>
         public float LotToWalk = 0.6f;
