@@ -1,132 +1,113 @@
 # Shawarma Tycoon
 
-A mobile restaurant-management prototype built in Unity 6. You run a shawarma
-shop on a city corner: carry raw meat down the line, wrap it, get it to the
-counter before the queue gives up, clear the tables, and spend the takings on
-staff and conveyors until the shop runs itself.
+Shawarma Tycoon is a mobile-first restaurant-management prototype built in Unity. Players run a stylized shawarma shop, move ingredients through a production chain, serve dine-in and takeaway customers, hire staff, unlock automation, and expand the business.
 
-Everything you see is generated. The world is built from code at runtime, and
-all 40 models in it were authored procedurally in Blender — 28 of them drawn
-to match the reference sheets in `ArtSource/References/assetlist/`, the rest
-a street kit and the first benchmark props. There are no hand-placed scene
-objects beyond a camera, a light and a bootstrap component.
+> Development status: private Unity prototype. The core loop is implemented; runtime stabilization, balancing, and build validation are still in progress.
 
----
+![The shop mid-service: production line, dining room, management office and the street outside](Docs/shop-overview.png)
 
-## Running it
+## Core gameplay
 
-- **Unity 6000.3.11f1** (URP 17.3, new Input System)
-- **Git LFS is required.** The models and reference art are stored in LFS; a
-  clone without it gives you pointer files and a scene full of grey boxes.
+- Process `Raw Meat -> Cooked Meat -> Sliced Meat -> Wrap`
+- Carry ingredients, meals, and dirty plates with capacity-based inventory rules
+- Manage customer queues, patience, VIP guests, tables, and cleaning
+- Fulfill takeaway orders before they expire
+- Build combos and capitalize on rush-hour multipliers
+- Upgrade the player, stations, staff, conveyors, and the management office
+- Recruit cashiers, cleaners, runners, and production workers
+- Expand the restaurant diorama and surrounding city block
+- Earn offline income through local session persistence
+
+## Mobile-first UX
+
+- Floating touch joystick
+- Orthographic follow camera with pinch zoom
+- Safe-area-aware UI
+- Touch-friendly HUD, objectives, tasks, and upgrade panels
+- Local save/autosave flow designed for mobile and WebGL-compatible persistence
+
+## Technology
+
+- Unity `6000.3.11f1`
+- C#
+- Universal Render Pipeline `17.3.0`
+- Unity Input System `1.19.0`
+- Unity AI Navigation
+- Git LFS for large art assets
+
+## Getting started
+
+**Git LFS is required.** Models and reference art are stored in LFS; a clone without it produces pointer files and a scene full of grey placeholder boxes.
 
 ```bash
 git lfs install
 git clone https://github.com/kemylmaz/shawarmatycoon.git
 ```
 
-Open the project, then open `Assets/ShawarmaTycoon/Scenes/ShawarmaTycoonPrototype.unity`
-and press Play. It is the only scene in the build settings.
+Open the project and load `Assets/ShawarmaTycoon/Scenes/ShawarmaTycoonPrototype.unity` — the only scene in the build settings — then press Play.
 
-`Shawarma Tycoon → Reset Save Progress` in the menu bar wipes coins, records,
-unlocks and hired staff. Progress lives in `PlayerPrefs`, so it survives
-between sessions.
+`Shawarma Tycoon → Reset Save Progress` in the menu bar clears coins, records, unlocks, and hired staff. Progress lives in `PlayerPrefs` and persists between sessions.
 
----
+## Project architecture
 
-## How it is put together
+The main scene stays intentionally lightweight. `ShawarmaPrototypeBootstrap.cs` assembles the prototype at runtime, while feature code is grouped by responsibility:
 
-The scene is close to empty on purpose. `ShawarmaPrototypeBootstrap.Awake()`
-builds the city block, the kitchen line, the dining room, the management
-office, the HUD and every system, in code. Nothing is wired through the
-inspector, so a change to the layout is a change to one file rather than a
-merge conflict in a scene.
+- `Assets/ShawarmaTycoon/Scripts/Core` - economy, progression, combos, rewards, and persistence
+- `Assets/ShawarmaTycoon/Scripts/Stations` - production stations and worker operation
+- `Assets/ShawarmaTycoon/Scripts/Customers` - queues, tables, takeaway, and cleaning
+- `Assets/ShawarmaTycoon/Scripts/Player` - movement, camera, and carry inventory
+- `Assets/ShawarmaTycoon/Scripts/World` - upgrades, staff, expansion, visuals, and traffic
+- `Assets/ShawarmaTycoon/Scripts/UI` - HUD, safe area, tasks, and touch controls
 
-```
-Assets/ShawarmaTycoon/
-  Scripts/
-    Core/       economy, progress, combo, rush hour, reward maths
-    Player/     movement, camera rig, carry inventory
-    Stations/   the production line
-    Customers/  queue, tables, takeaway window, floor spills
-    World/      city, traffic, conveyors, upgrade pads, recruitment, HR
-    UI/         runtime uGUI: HUD, joystick, panels, objective banner
-    Audio/      synthesised SFX - no audio files ship with the project
-  Editor/       cozy pack builder, save reset menu
-  Resources/    model prefabs, loaded by name at runtime
-  Scenes/       the one scene
-```
+Two conventions are worth knowing before editing:
 
-Two details worth knowing before editing:
+- **Models are resolved by name, not by reference.** `MeshyVisuals` fits a model into a target box for gameplay objects; `CityKit` places modular street pieces at 1:1 so tile pitch survives. Both fall back to primitives when a model is missing, so the project still runs with an empty `Resources` folder.
+- **The UI is generated at runtime too.** `UIFactory` builds its own nine-sliced sprites and uses the built-in legacy font, so there is no TextMeshPro import step and no HUD prefab to keep in sync.
 
-**Models are looked up by name, never by reference.** `MeshyVisuals` fits a
-model into a target box for gameplay objects; `CityKit` places modular pieces
-at 1:1 so tile pitch survives. Both fall back to primitives when a model is
-missing, so the game runs with an empty `Resources` folder.
+## Art pipeline
 
-**The UI is built at runtime too.** `UIFactory` generates its own nine-sliced
-sprites and uses the built-in legacy font, so there is no TMP import step and
-no prefab to keep in sync.
+`ArtSource/BlenderGenerated/scripts/` is a procedural modelling library. Running `st_build.py` inside Blender rebuilds all 40 assets from scratch: meshes, materials, LOD0/1/2, anchor empties, character rigs with idle, walk, and carry-walk clips, preview renders, and FBX exports that are re-imported into an empty file to verify they round-trip.
 
----
+Twenty-eight of the models were authored to match the reference sheets in `ArtSource/References/assetlist/`; the remainder are a modular street kit and the first benchmark props.
 
-## The art pipeline
+Rendered previews of the full library:
 
-`ArtSource/BlenderGenerated/scripts/` is a small procedural modelling library.
-Running `st_build.py` inside Blender rebuilds all 40 assets from scratch:
-meshes, materials, LOD0/1/2, anchor empties, character rigs with idle, walk
-and carry-walk clips, preview renders, and FBX exports that are re-imported
-into an empty file to prove they round-trip.
+| Sheet | Contents |
+| --- | --- |
+| [Characters](ArtSource/BlenderGenerated/Previews/_contact_sheet_cozy2.png) | Player, workers, customer variants |
+| [Stations](ArtSource/BlenderGenerated/Previews/_contact_sheet_stations.png) | Production line and manager desks |
+| [Props](ArtSource/BlenderGenerated/Previews/_contact_sheet_props.png) | Tables, pads, trays, walls, floors |
+| [City kit](ArtSource/BlenderGenerated/Previews/_contact_sheet_city.png) | Roads, pavements, buildings, vehicles |
 
-The house rules the library enforces — Z-up, characters facing local −Y,
-origin at bottom-centre, ground contact at Z=0, triangle budgets per asset
-class, no baked text or logos — are documented with the measured results in
-[`PHASE1_REPORT.md`](ArtSource/BlenderGenerated/PHASE1_REPORT.md) and
-[`PHASE2A_CITYKIT.md`](ArtSource/BlenderGenerated/PHASE2A_CITYKIT.md).
+The house rules the library enforces — Z-up, characters facing local −Y, origin at bottom-centre, ground contact at Z=0, per-class triangle budgets, no baked text or logos — are documented with measured results in [`PHASE1_REPORT.md`](ArtSource/BlenderGenerated/PHASE1_REPORT.md) and [`PHASE2A_CITYKIT.md`](ArtSource/BlenderGenerated/PHASE2A_CITYKIT.md).
 
-`ArtSource/References/assetlist/` holds the reference sheets every model was
-matched against.
+## Balance
 
----
-
-## The game loop
-
-Raw meat → oven → cutting board → wrap counter → service till. A processing
-station only runs while you stand at it, until you hire a worker for it;
-conveyors move goods between stations once you buy them.
-
-Customers queue, take a table, eat, and leave the table dirty and the cash on
-its pad. Both need collecting. Dirty tables block seating, which is the main
-thing that stops a busy shop dead.
-
-Money goes on station workers, conveyor belts, dining-room expansion, three
-hired assistants (cashier, cleaner, runner) and the shared HR upgrades. Rush
-hour doubles income and makes everyone less patient.
-
-### Balance
-
-The numbers below are measured, not estimated: a scripted near-optimal player
-was run against the build from a clean save, and the pacing thresholds were
-set from what it could actually achieve.
+The figures below are measured rather than estimated: a scripted near-optimal player was run against the build from a clean save, and the pacing constants were set from what it could actually achieve.
 
 | Time | Served/min | Customers kept | Income |
-|-----:|-----------:|---------------:|-------:|
+| ---: | ---: | ---: | ---: |
 | 1.4 min | 4.4 | 86% | 50 /min |
 | 4.4 min | 5.5 | 80% | 90 /min |
 | 6.8 min | 7.5 | 89% | 258 /min |
 | 9.4 min | 10.0 | 94% | 374 /min |
 
-By nine minutes that run had bought all seven station upgrades, the dining
-expansion, and the cleaner and cashier.
+By nine minutes that run had bought all seven station upgrades, the dining expansion, and both the cleaner and the cashier.
 
-Three constants have to agree with the service rate or the game breaks in ways
-that are hard to see: queue length against patience, the full-price window
-against how long the back of the queue waits, and the combo timeout against
-the gap between customers. They are commented in place — if you change one,
-check the other two.
+Three constants have to agree with the achievable service rate or the game breaks in ways that are hard to see: queue length against patience, the full-price window against how long the back of the queue waits, and the combo timeout against the gap between customers. They are commented in place — changing one means checking the other two.
 
----
+## Current development priorities
 
-## Status
+- Stabilize the management-menu refresh path and remove repeated runtime exceptions
+- Validate Android and WebGL builds on target devices and browsers
+- Balance offline income and the later upgrade tiers
+- Replace remaining fallback visuals and complete animation/audio polish
+- Add automated tests for progression, persistence, and reward calculations
+- Audit third-party asset licenses and add root `LICENSE` / `CREDITS` files
+- Expand the screenshot set once the layout pass is finished
 
-A working prototype: the full loop, progression and economy run end to end.
-Not shipped, not content-complete, and the layout is still being tuned.
+## Ownership and licensing
+
+Created by **Kemal Yılmaz / Poppanda Interactive**.
+
+No open-source license has been granted yet. Until a root `LICENSE` file is added, the project source and original assets are all rights reserved. Third-party assets remain subject to their respective licenses.
