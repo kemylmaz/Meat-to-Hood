@@ -19,6 +19,10 @@ namespace ShawarmaTycoon
 
         public static float WorkerSpeedMultiplier => Instance == null ? 1f : 1f + Instance.movementLevel * 0.12f;
         public static int WorkerCapacityBonus => Instance == null ? 0 : Instance.capacityLevel * 2;
+        /// <summary>
+        /// Automation rate, applied to both the hired assistants' action interval
+        /// and every conveyor belt. Lower is faster.
+        /// </summary>
         public static float AssistIntervalMultiplier => Instance == null ? 1f : Mathf.Lerp(1f, 0.55f, Instance.adoptUseLevel / 5f);
 
         private void Awake()
@@ -87,20 +91,14 @@ namespace ShawarmaTycoon
         }
 
         /// <summary>
-        /// Raises belts to the level this upgrade grants, and never lowers them.
-        /// A belt can also be bought outright at its own management pad, and those
-        /// pads restore their saved level before this runs: assigning the HR level
-        /// flat used to wipe every belt the player had paid for, on every reload
-        /// and again on every automation upgrade.
+        /// Pushes the new automation rate onto the belts. It does not touch their
+        /// levels: which belts you own is what their own management pads sell, and
+        /// assigning levels here used to wipe every belt the player had paid for.
         /// </summary>
         private void ApplyAutomationLevel()
         {
             for (int i = 0; i < conveyors.Count; i++)
-            {
-                if (conveyors[i] == null) continue;
-                int targetLevel = adoptUseLevel > i ? (adoptUseLevel >= 5 ? 2 : 1) : 0;
-                if (targetLevel > conveyors[i].Level) conveyors[i].SetLevel(targetLevel);
-            }
+                if (conveyors[i] != null) conveyors[i].ApplyInterval();
         }
     }
 }

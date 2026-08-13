@@ -128,6 +128,15 @@ namespace ShawarmaTycoon
             takeawayRoot.transform.localPosition = new Vector3(-9.45f, 0.25f, -7.05f);
             TakeawaySystem takeaway = takeawayRoot.AddComponent<TakeawaySystem>();
             takeaway.Configure(playerTransform, inventory);
+            // Same authored counter as the service station: both are a till the
+            // customer walks up to, and the window was still a bare grey box.
+            // Only the body is replaced - the bag, order light and cash pad on top
+            // of it are gameplay state and stay.
+            if (MeshyVisuals.TryReplaceDirect(
+                    takeawayRoot.transform, "12_service_cashier_counter",
+                    new Vector3(2.05f, 1.20f, 1.60f), Vector3.zero, new Vector3(0f, 180f, 0f),
+                    false, "Takeaway Counter Body", "Takeaway Counter Top"))
+                takeaway.SetCounterTopHeight(1.20f);
 
             GameObject takeawayUnlockObject = new("Takeaway Unlock Pad");
             takeawayUnlockObject.transform.SetParent(runtimeRoot, false);

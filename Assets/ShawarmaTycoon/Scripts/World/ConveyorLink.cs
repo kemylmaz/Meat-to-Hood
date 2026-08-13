@@ -64,8 +64,25 @@ namespace ShawarmaTycoon
         {
             level = Mathf.Clamp(newLevel, 0, 3);
             unlocked = level > 0;
-            transferInterval = level switch { 3 => 0.28f, 2 => 0.46f, _ => 0.75f };
+            ApplyInterval();
             UpdateVisual();
+        }
+
+        /// <summary>
+        /// Recomputes the transfer rate from the two things that own it: the belt's
+        /// own management pad sets the level, and the HR automation upgrade scales
+        /// every belt on top of that.
+        ///
+        /// The two used to sell the same thing at different prices, and automation
+        /// assigned levels directly - so buying it overwrote whatever the pads had
+        /// bought. They are now separate: pads buy belts, automation makes the ones
+        /// you own run faster.
+        /// </summary>
+        public void ApplyInterval()
+        {
+            float perLevel = level switch { 3 => 0.28f, 2 => 0.46f, _ => 0.75f };
+            transferInterval = Mathf.Max(
+                0.1f, perLevel * HumanResourcesSystem.AssistIntervalMultiplier);
         }
 
         private void Update()

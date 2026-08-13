@@ -140,9 +140,11 @@ namespace ShawarmaTycoon
             }
 
             CustomerAgent agent = customer.AddComponent<CustomerAgent>();
-            // VIPs are worth the most and are the least willing to wait.
-            agent.Configure(this, exitPoint, 2.4f, 4.5f, 15,
-                vip ? customerPatience * 0.75f : customerPatience, vip);
+            // VIPs are worth the most and are the least willing to wait; during a
+            // rush nobody has time to spare.
+            float patience = (vip ? customerPatience * 0.75f : customerPatience)
+                * RushHourSystem.PatienceMultiplier;
+            agent.Configure(this, exitPoint, 2.4f, 4.5f, 15, patience, vip);
             customers.Add(agent);
             AudioDirector.Play(GameSfx.CustomerArrive, vip ? 0.9f : 0.45f, vip ? 1.15f : 1f);
             return agent;

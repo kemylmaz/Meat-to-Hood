@@ -13,6 +13,7 @@ namespace ShawarmaTycoon
         [SerializeField, Min(0.1f)] private float cooldownSeconds = 75f;
         [SerializeField, Range(0.1f, 1f)] private float activeSpawnIntervalMultiplier = 0.47f;
         [SerializeField, Min(1f)] private float activeIncomeMultiplier = 2f;
+        [SerializeField, Range(0.1f, 1f)] private float activePatienceMultiplier = 0.7f;
 
         private bool isActive;
         private float countdown;
@@ -27,6 +28,15 @@ namespace ShawarmaTycoon
 
         public static float IncomeMultiplier =>
             Instance != null && Instance.isActive ? Instance.activeIncomeMultiplier : 1f;
+
+        /// <summary>
+        /// Rush arrivals are in a hurry and give up sooner. This is read once,
+        /// when a customer or a takeaway order appears, so the rush starting does
+        /// not shorten the fuse on people who are already waiting - which would
+        /// empty the queue in one go the moment the bell rang.
+        /// </summary>
+        public static float PatienceMultiplier =>
+            Instance != null && Instance.isActive ? Instance.activePatienceMultiplier : 1f;
 
         public event Action<bool> RushStateChanged;
 

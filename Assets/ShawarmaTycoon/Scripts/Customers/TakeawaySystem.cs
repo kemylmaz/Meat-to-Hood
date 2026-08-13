@@ -27,6 +27,9 @@ namespace ShawarmaTycoon
         private GameObject cashStack;
         private float orderTimer;
         private float orderAge;
+        /// <summary>Deadlines for the order in hand; a rush order gets shorter ones.</summary>
+        private float lateAt;
+        private float expireAt;
         private float transferCooldown;
         private bool pendingOrder;
         private int pendingCash;
@@ -35,7 +38,7 @@ namespace ShawarmaTycoon
         public bool NeedsWrap => pendingOrder;
         public bool PendingOrder => pendingOrder;
         public int PendingCash => pendingCash;
-        public bool IsLate => pendingOrder && orderAge >= lateAfterSeconds;
+        public bool IsLate => pendingOrder && orderAge >= lateAt;
 
         public void Configure(Transform playerTransform, CarryInventory playerInventory)
         {
@@ -46,10 +49,30 @@ namespace ShawarmaTycoon
             UpdateVisuals();
         }
 
+        /// <summary>
+        /// Moves the props that stand on the counter to a new top height. The
+        /// authored counter is a good deal taller than the primitive box it
+        /// replaces, which would otherwise bury the bag and the order light
+        /// inside it.
+        /// </summary>
+        public void SetCounterTopHeight(float localTop)
+        {
+            if (bagVisual != null)
+                bagVisual.transform.localPosition = new Vector3(-0.43f, localTop + 0.25f, -0.05f);
+            if (orderLight != null)
+                orderLight.transform.localPosition = new Vector3(0.43f, localTop + 0.12f, -0.05f);
+            if (orderLabel != null)
+                orderLabel.transform.localPosition = new Vector3(0f, localTop + 0.72f, 0f);
+        }
+
         public bool CreateOrderNow()
         {
             if (pendingOrder)
                 return false;
+
+            float hurry = RushHourSystem.PatienceMultiplier;
+            lateAt = lateAfterSeconds * hurry;
+            expireAt = Mathf.Max(lateAt + 1f, expireAfterSeconds * hurry);
 
             pendingOrder = true;
             orderAge = 0f;
@@ -83,7 +106,7 @@ namespace ShawarmaTycoon
                 if (wasLate != IsLate)
                     UpdateVisuals();
 
-                if (orderAge >= expireAfterSeconds)
+                if (orderAge >= expireAt)
                     ExpireOrder();
                 else
                     TryPlayerDelivery();
