@@ -196,32 +196,40 @@ namespace ShawarmaTycoon
                 CreateTable(runtimeRoot, "Masa 2", new Vector3(3.4f, 0.25f, 1.3f))
             };
 
+            // Both wings are one authored plot each, so their footprints match the
+            // model exactly and the two squares butt up against the lot and each
+            // other with no seam.
+            Vector3 plotScale = new(PlotSpan, 0.5f, PlotSpan);
+            Vector3 plotOne = new(12f + PlotSpan * 0.5f, 0f, -3f);
+            Vector3 plotTwo = new(plotOne.x, 0f, plotOne.z + PlotSpan);
+
             List<GameObject> expansionModules = new();
-            GameObject moduleOne = CreateExpansionModule(
-                "Genişleme 1", new Vector3(16f, 0f, -3f), new Vector3(8f, 0.5f, 14f));
-            // Centred in the 8 x 14 plot instead of bunched against its front edge.
-            CustomerTable tableThree = CreateTable(moduleOne.transform, "Masa 3", new Vector3(-2.0f, 0.25f, 0f));
-            CustomerTable tableFour = CreateTable(moduleOne.transform, "Masa 4", new Vector3(2.0f, 0.25f, 0f));
+            GameObject moduleOne = CreateExpansionModule("Genişleme 1", plotOne, plotScale);
+            CustomerTable tableThree = CreateTable(moduleOne.transform, "Masa 3", new Vector3(-1.4f, 0.25f, 0f));
+            CustomerTable tableFour = CreateTable(moduleOne.transform, "Masa 4", new Vector3(1.4f, 0.25f, 0f));
             expansionModules.Add(moduleOne);
             tables.Add(tableThree);
             tables.Add(tableFour);
 
-            GameObject moduleTwo = CreateExpansionModule(
-                "Genişleme 2", new Vector3(16f, 0f, 6.5f), new Vector3(8f, 0.5f, 5f));
-            CustomerTable tableFive = CreateTable(moduleTwo.transform, "Masa 5", new Vector3(-2.0f, 0.25f, 0f));
-            CustomerTable tableSix = CreateTable(moduleTwo.transform, "Masa 6", new Vector3(2.0f, 0.25f, 0f));
+            GameObject moduleTwo = CreateExpansionModule("Genişleme 2", plotTwo, plotScale);
+            CustomerTable tableFive = CreateTable(moduleTwo.transform, "Masa 5", new Vector3(-1.4f, 0.25f, 0f));
+            CustomerTable tableSix = CreateTable(moduleTwo.transform, "Masa 6", new Vector3(1.4f, 0.25f, 0f));
             expansionModules.Add(moduleTwo);
             tables.Add(tableFive);
             tables.Add(tableSix);
 
-            GameObject previewOne = CreateLockedExpansionPlot("Locked Dining Wing", new Vector3(16f, 0.03f, -3f), new Vector3(8f, 0.5f, 14f));
-            GameObject previewTwo = CreateLockedExpansionPlot("Locked Office Wing", new Vector3(16f, 0.03f, 6.5f), new Vector3(8f, 0.5f, 5f));
+            GameObject previewOne = CreateLockedExpansionPlot(
+                "Locked Dining Wing", plotOne + Vector3.up * 0.03f, plotScale);
+            GameObject previewTwo = CreateLockedExpansionPlot(
+                "Locked Office Wing", plotTwo + Vector3.up * 0.03f, plotScale);
 
             moduleOne.SetActive(false);
             moduleTwo.SetActive(false);
 
             DioramaExpansion expansion = root.AddComponent<DioramaExpansion>();
-            expansion.Configure(playerMotor, expansionModules, new[] { previewOne, previewTwo }, new[] { 19f, 19f });
+            float plotEdge = plotOne.x + PlotSpan * 0.5f - 0.6f;
+            expansion.Configure(playerMotor, expansionModules, new[] { previewOne, previewTwo },
+                new[] { plotEdge, plotEdge });
 
             GameObject upgradeRoot = new("Masa Genişletme Alanı");
             upgradeRoot.transform.SetParent(runtimeRoot, false);
@@ -714,12 +722,41 @@ namespace ShawarmaTycoon
             return plot;
         }
 
+        /// <summary>Authored plot footprint; modules are sized to it so it never scales.</summary>
+        private const float PlotSpan = 5.64f;
+
+        /// <summary>
+        /// Drop needed to land the model's deck on the lot surface. The plot is
+        /// authored as a floating island, so its earth tapers 1.3 m below the
+        /// deck; sunk this far the city ground hides the earth and only the kerb
+        /// and tiling read above the lot.
+        /// </summary>
+        private const float PlotDeckOffset = -1.23f;
+
         private GameObject CreateExpansionModule(string moduleName, Vector3 position, Vector3 scale)
         {
             GameObject module = new(moduleName);
             module.transform.SetParent(runtimeRoot, false);
             module.transform.localPosition = position;
-            CreateIslandGeometry(module.transform, scale);
+
+            if (MeshyVisuals.IsAvailable("34_floating_diorama_island"))
+            {
+                // Invisible slab keeps the walkable surface and its collider;
+                // the model supplies everything you actually see.
+                GameObject floor = PrototypeVisuals.CreatePrimitive(
+                    "Plot Surface", PrimitiveType.Cube, module.transform,
+                    Vector3.zero, scale, PrototypeVisuals.IslandTop, colliderEnabled: true);
+                Renderer renderer = floor.GetComponent<Renderer>();
+                if (renderer != null) renderer.enabled = false;
+
+                MeshyVisuals.TryAttach(module.transform, "34_floating_diorama_island",
+                    new Vector3(scale.x, 20f, scale.z),
+                    Vector3.up * PlotDeckOffset, Vector3.zero);
+            }
+            else
+            {
+                CreateIslandGeometry(module.transform, scale);
+            }
             return module;
         }
 
