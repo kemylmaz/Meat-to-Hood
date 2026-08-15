@@ -17,6 +17,13 @@ namespace ShawarmaTycoon
         private Vector2 maxBounds = new(8.4f, 6.4f);
         private float baseMoveSpeed;
         private Vector3 safePosition;
+        /// <summary>
+        /// Largest drop the player will step down; anything deeper is a ledge.
+        /// The lot and the plots stand 25 cm over the pavement and everything the
+        /// player is meant to walk on is level with them, so this sits under that
+        /// step: the kerb becomes the edge of the premises.
+        /// </summary>
+        [SerializeField, Min(0.05f)] private float maxStepDown = 0.15f;
 
         public Vector2 JoystickValue => joystick != null ? joystick.Value : Vector2.zero;
 
@@ -72,7 +79,8 @@ namespace ShawarmaTycoon
             Vector3 desired = transform.position + horizontal;
             desired.x = Mathf.Clamp(desired.x, minBounds.x, maxBounds.x);
             desired.z = Mathf.Clamp(desired.z, minBounds.y, maxBounds.y);
-            Vector3 constrainedHorizontal = new(desired.x - transform.position.x, 0f, desired.z - transform.position.z);
+            Vector3 constrainedHorizontal = ResolveFooting(
+                new Vector3(desired.x - transform.position.x, 0f, desired.z - transform.position.z));
 
             characterController.Move(constrainedHorizontal + Vector3.up * (verticalVelocity * Time.deltaTime));
 
@@ -89,10 +97,69 @@ namespace ShawarmaTycoon
             }
         }
 
+        /// <summary>
+        /// Refuses a step that would walk off a ledge, sliding along the edge
+        /// rather than sticking to it. The lot and the expansion plots stand
+        /// 25 cm above the city pavement while the walk bounds are one rectangle,
+        /// so past the ends of the plots that rectangle ran out over open ground.
+        /// Probing the floor keeps the player on it whatever the layout does next.
+        /// </summary>
+        private Vector3 ResolveFooting(Vector3 step)
+        {
+            if (step.sqrMagnitude < 1e-6f || HasFooting(transform.position + step))
+                return step;
+
+            Vector3 alongX = new(step.x, 0f, 0f);
+            if (alongX.sqrMagnitude > 1e-6f && HasFooting(transform.position + alongX))
+                return alongX;
+
+            Vector3 alongZ = new(0f, 0f, step.z);
+            if (alongZ.sqrMagnitude > 1e-6f && HasFooting(transform.position + alongZ))
+                return alongZ;
+
+            return Vector3.zero;
+        }
+
+        private bool HasFooting(Vector3 position)
+        {
+            float there = GroundHeight(position);
+            if (there <= NoGround) return false;
+            float here = GroundHeight(transform.position);
+            return here <= NoGround || there >= here - maxStepDown;
+        }
+
+        private const float NoGround = -900f;
+        private readonly RaycastHit[] groundHits = new RaycastHit[8];
+
+        /// <summary>
+        /// Height of the floor under <paramref name="position"/>. The probe starts
+        /// above head height and so passes straight through the player's own
+        /// capsule on the way down; that hit has to be discarded or every probe
+        /// reports the player standing on themselves and nothing can move.
+        /// </summary>
+        private float GroundHeight(Vector3 position)
+        {
+            int count = Physics.RaycastNonAlloc(position + Vector3.up * 2.5f, Vector3.down,
+                groundHits, 8f, ~0, QueryTriggerInteraction.Ignore);
+
+            float best = NoGround;
+            for (int i = 0; i < count; i++)
+            {
+                if (groundHits[i].collider.transform.IsChildOf(transform)) continue;
+                if (groundHits[i].point.y > best) best = groundHits[i].point.y;
+            }
+            return best;
+        }
+
         private void RecoverFromFall()
         {
+            // Land on whatever the last safe spot actually stands on rather than a
+            // fixed height, so a rescue onto the raised lot does not drop the
+            // player through it.
+            float ground = GroundHeight(safePosition);
+            float y = ground <= NoGround ? safePosition.y : ground + 0.05f;
             characterController.enabled = false;
-            transform.position = new Vector3(safePosition.x, 0.26f, safePosition.z);
+            transform.position = new Vector3(safePosition.x, y, safePosition.z);
             characterController.enabled = true;
             verticalVelocity = -1f;
         }
