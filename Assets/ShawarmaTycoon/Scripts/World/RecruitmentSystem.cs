@@ -17,6 +17,8 @@ namespace ShawarmaTycoon
         private TakeawaySystem takeaway;
         private FloorSpillSystem floorSpills;
         private Transform visualParent;
+        /// <summary>Where the cleaner takes the plates it collects.</summary>
+        private Transform trashPoint;
         private float cashierTimer;
         private float cleanerTimer;
         private float runnerTimer;
@@ -32,7 +34,8 @@ namespace ShawarmaTycoon
             ItemStation service,
             TakeawaySystem takeawayCounter,
             FloorSpillSystem spillSystem,
-            Transform workerVisualParent)
+            Transform workerVisualParent,
+            Transform binPoint)
         {
             customers = customerManager;
             wrapStation = wrap;
@@ -40,6 +43,7 @@ namespace ShawarmaTycoon
             takeaway = takeawayCounter;
             floorSpills = spillSystem;
             visualParent = workerVisualParent;
+            trashPoint = binPoint;
             cashier = GameProgress.GetInt("recruit.cashier", 0) == 1;
             cleaner = GameProgress.GetInt("recruit.cleaner", 0) == 1;
             runner = GameProgress.GetInt("recruit.runner", 0) == 1;
@@ -96,60 +100,122 @@ namespace ShawarmaTycoon
             return true;
         }
 
+        /// <summary>
+        /// Hands each idle worker its next errand. The timers now pace how often
+        /// a worker is willing to set off, not how often the job teleports itself
+        /// into being done - the work lands when the worker arrives.
+        /// </summary>
         private void Update()
         {
             float assist = HumanResourcesSystem.AssistIntervalMultiplier;
-            if (cashier && customers != null)
+
+            if (cashier)
             {
                 cashierTimer -= Time.deltaTime;
-                if (cashierTimer <= 0f)
-                {
-                    bool handled = cashierTakeawayTurn
-                        ? takeaway != null && takeaway.TryAutoCollectCash()
-                        : customers.TryCollectTableCashByWorker();
-                    if (!handled)
-                    {
-                        if (cashierTakeawayTurn) customers.TryCollectTableCashByWorker();
-                        else if (takeaway != null) takeaway.TryAutoCollectCash();
-                    }
-                    cashierTakeawayTurn = !cashierTakeawayTurn;
+                if (cashierTimer <= 0f && DispatchCashier())
                     cashierTimer = cashierInterval * assist;
-                }
             }
 
-            if (cleaner && customers != null)
+            if (cleaner)
             {
                 cleanerTimer -= Time.deltaTime;
-                if (cleanerTimer <= 0f)
-                {
-                    bool handled = cleanerSpillTurn
-                        ? floorSpills != null && floorSpills.TryCleanByWorker()
-                        : customers.TryCleanTableByWorker();
-                    if (!handled)
-                    {
-                        if (cleanerSpillTurn) customers.TryCleanTableByWorker();
-                        else if (floorSpills != null) floorSpills.TryCleanByWorker();
-                    }
-                    cleanerSpillTurn = !cleanerSpillTurn;
+                if (cleanerTimer <= 0f && DispatchCleaner())
                     cleanerTimer = cleanerInterval * assist;
-                }
             }
 
-            if (runner && wrapStation != null && serviceStation != null)
+            if (runner)
             {
                 runnerTimer -= Time.deltaTime;
-                if (runnerTimer <= 0f)
-                {
-                    bool sendToTakeaway = takeaway != null && takeaway.NeedsWrap && serviceStation.OutputCount >= 2;
-                    if (wrapStation.TryTakeOutputForConveyor(out ItemType item))
-                    {
-                        bool delivered = sendToTakeaway && takeaway.TryReceiveWrap(item, true);
-                        if (!delivered) delivered = serviceStation.TryReceiveFromConveyor(item);
-                        if (!delivered) wrapStation.ReturnOutputFromConveyor(item);
-                    }
+                if (runnerTimer <= 0f && DispatchRunner())
                     runnerTimer = runnerInterval * assist;
-                }
             }
+        }
+
+        private bool DispatchCashier()
+        {
+            WorkerAgent agent = AgentFor(RecruitRole.Cashier);
+            if (agent == null || agent.IsBusy) return false;
+
+            // Alternate so a busy till does not starve the dining room.
+            if (cashierTakeawayTurn && takeaway != null && takeaway.PendingCash > 0)
+            {
+                cashierTakeawayTurn = false;
+                return agent.Dispatch(takeaway.transform.position,
+                    () => takeaway.TryAutoCollectCash(), ItemType.None, Vector3.zero, null);
+            }
+
+            CustomerTable table = customers != null ? customers.FindTableWithCash() : null;
+            if (table != null)
+            {
+                cashierTakeawayTurn = true;
+                return agent.Dispatch(table.CashPoint,
+                    () => table.TryAutoCollectCash(), ItemType.None, Vector3.zero, null);
+            }
+
+            if (takeaway != null && takeaway.PendingCash > 0)
+                return agent.Dispatch(takeaway.transform.position,
+                    () => takeaway.TryAutoCollectCash(), ItemType.None, Vector3.zero, null);
+
+            return false;
+        }
+
+        private bool DispatchCleaner()
+        {
+            WorkerAgent agent = AgentFor(RecruitRole.Cleaner);
+            if (agent == null || agent.IsBusy) return false;
+
+            CustomerTable table = customers != null ? customers.FindDirtyTable() : null;
+            if (table != null && trashPoint != null)
+            {
+                // Plates are carried to the bin rather than vanishing at the table.
+                return agent.Dispatch(table.transform.position,
+                    () => table.TryAutoCleanTrash(), ItemType.Trash,
+                    trashPoint.position, () => true);
+            }
+
+            if (floorSpills != null && cleanerSpillTurn)
+                return agent.Dispatch(transform.position, () => floorSpills.TryCleanByWorker(),
+                    ItemType.None, Vector3.zero, null);
+
+            cleanerSpillTurn = !cleanerSpillTurn;
+            return false;
+        }
+
+        private bool DispatchRunner()
+        {
+            WorkerAgent agent = AgentFor(RecruitRole.Runner);
+            if (agent == null || agent.IsBusy || wrapStation == null || serviceStation == null)
+                return false;
+            if (wrapStation.OutputCount <= 0) return false;
+
+            bool toTakeaway = takeaway != null && takeaway.NeedsWrap && serviceStation.OutputCount >= 2;
+            Vector3 dropAt = toTakeaway ? takeaway.transform.position : serviceStation.transform.position;
+
+            ItemType carried = ItemType.None;
+            return agent.Dispatch(
+                wrapStation.transform.position,
+                () =>
+                {
+                    if (!wrapStation.TryTakeOutputForConveyor(out carried)) return false;
+                    return true;
+                },
+                ItemType.Wrap,
+                dropAt,
+                () =>
+                {
+                    bool delivered = toTakeaway && takeaway.TryReceiveWrap(carried, true);
+                    if (!delivered) delivered = serviceStation.TryReceiveFromConveyor(carried);
+                    // Nowhere to put it: give it back rather than losing the wrap.
+                    if (!delivered) wrapStation.ReturnOutputFromConveyor(carried);
+                    return delivered;
+                });
+        }
+
+        private WorkerAgent AgentFor(RecruitRole role)
+        {
+            if (visualParent == null) return null;
+            Transform found = visualParent.Find("Recruit " + role);
+            return found != null ? found.GetComponent<WorkerAgent>() : null;
         }
 
         private void CreateWorkerVisual(RecruitRole role)
@@ -186,6 +252,13 @@ namespace ShawarmaTycoon
             PrototypeVisuals.CreatePrimitive(
                 "Role Badge", PrimitiveType.Sphere, worker.transform,
                 new Vector3(0f, 1.48f, -0.30f), new Vector3(0.13f, 0.13f, 0.06f), color);
+
+            // Hands of their own, so the animation driver can tell walking from
+            // carrying and the plate or wrap is visible on the way.
+            CarryInventory hands = worker.AddComponent<CarryInventory>();
+            hands.Configure(4);
+            worker.AddComponent<CozyAnimationDriver>();
+            worker.AddComponent<WorkerAgent>().Configure(position, hands);
         }
     }
 }

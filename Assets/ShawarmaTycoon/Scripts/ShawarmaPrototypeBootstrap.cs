@@ -285,7 +285,8 @@ namespace ShawarmaTycoon
             PlayerUpgradeSystem playerUpgrades = root.AddComponent<PlayerUpgradeSystem>();
             playerUpgrades.Configure(playerTransform, playerMotor, inventory);
             RecruitmentSystem recruitment = root.AddComponent<RecruitmentSystem>();
-            recruitment.Configure(customerManager, wrap, service, takeaway, floorSpills, runtimeRoot);
+            recruitment.Configure(customerManager, wrap, service, takeaway, floorSpills,
+                runtimeRoot, trashBinObject.transform);
             ManagementMenuHUD managementHud = root.AddComponent<ManagementMenuHUD>();
             managementHud.Configure(humanResources, playerUpgrades, recruitment);
             hrTerminal.Configure(playerTransform, managementHud, ManagementMenu.HumanResources, "HR UPGRADE");

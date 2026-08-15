@@ -24,6 +24,10 @@ namespace ShawarmaTycoon
 
         public bool IsAvailable => gameObject.activeInHierarchy && !reserved && !dirty;
         public bool IsDirty => dirty;
+        /// <summary>Money still sitting on the pad, so a cashier has somewhere to go.</summary>
+        public bool HasUncollectedCash => pendingCash > 0;
+        /// <summary>Where the money actually is, which is not the table centre.</summary>
+        public Vector3 CashPoint => cashPad != null ? cashPad.transform.position : transform.position;
         public bool IsReserved => reserved;
         public Transform SeatPoint => seatPoint;
 

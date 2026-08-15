@@ -71,6 +71,25 @@ namespace ShawarmaTycoon
             if (table != null && !tables.Contains(table)) tables.Add(table);
         }
 
+        /// <summary>
+        /// The table a worker should walk to, rather than only whether the job
+        /// could be done from anywhere. Null when there is nothing to go for.
+        /// </summary>
+        public CustomerTable FindTableWithCash() => FindTable(t => t.HasUncollectedCash);
+
+        public CustomerTable FindDirtyTable() => FindTable(t => t.IsDirty);
+
+        private CustomerTable FindTable(System.Func<CustomerTable, bool> wanted)
+        {
+            for (int i = 0; i < tables.Count; i++)
+            {
+                CustomerTable table = tables[i];
+                if (table != null && table.gameObject.activeInHierarchy && wanted(table))
+                    return table;
+            }
+            return null;
+        }
+
         public bool TryCollectTableCashByWorker()
         {
             for (int i = 0; i < tables.Count; i++)

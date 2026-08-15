@@ -52,7 +52,9 @@ namespace ShawarmaTycoon
                 ? displacement.magnitude / Time.deltaTime
                 : 0f;
             bool moving = speed >= movementThreshold;
-            bool carrying = inventory != null && inventory.Count > 0;
+            // Plates live in their own slot and are not counted in the stack, so
+            // asking Count alone walks a cleaner to the bin empty-handed.
+            bool carrying = inventory != null && (inventory.Count > 0 || inventory.TrashCount > 0);
             string desiredState = moving
                 ? carrying ? "CarryWalk" : "Walk"
                 : "Idle";
