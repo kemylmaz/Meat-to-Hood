@@ -17,8 +17,11 @@ namespace ShawarmaTycoon.UI
                 new Vector2(-24f, -124f), new Vector2(88f, 88f));
 
             mute = button.gameObject.AddComponent<MuteButton>();
-            mute.glyph = UIFactory.Label("Glyph", button.transform, "♪",
-                UITheme.FontLarge, UITheme.Ink);
+            // The button brings its own label; adding a second one here would
+            // stack two glyphs on top of each other.
+            mute.glyph = button.GetComponentInChildren<Text>();
+            mute.glyph.text = "♪";
+            mute.glyph.fontSize = UITheme.FontLarge;
             UIFactory.Stretch(mute.glyph.rectTransform);
             return mute;
         }

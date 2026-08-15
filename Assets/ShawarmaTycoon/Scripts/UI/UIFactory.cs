@@ -85,11 +85,12 @@ namespace ShawarmaTycoon.UI
             button.colors = colors;
             if (onClick != null) button.onClick.AddListener(() => onClick());
 
-            if (!string.IsNullOrEmpty(caption))
-            {
-                Text label = Label("Label", image.transform, caption, fontSize, textColor);
-                Stretch(label.rectTransform, 10f, 6f);
-            }
+            // Always built, even for an empty caption. Callers that fill the text
+            // in later reach for it with GetComponentInChildren<Text>, and when it
+            // was skipped they cached a null and threw on every frame the panel
+            // was open.
+            Text label = Label("Label", image.transform, caption, fontSize, textColor);
+            Stretch(label.rectTransform, 10f, 6f);
             return button;
         }
 

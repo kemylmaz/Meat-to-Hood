@@ -217,11 +217,20 @@ namespace ShawarmaTycoon
             }
         }
 
+        /// <summary>
+        /// No rewarded-ad provider is integrated yet. Flip this on with the SDK
+        /// that grants the reward, not before.
+        /// </summary>
+        private const bool RewardedAdsAvailable = false;
+
         private static void ApplyCard(Card card, string title, string state, bool available, int cost)
         {
             card.Title.text = title;
             card.Pips.text = state;
-            card.Free.gameObject.SetActive(available);
+            // Hidden until there is a rewarded ad behind it. As wired it hands out
+            // the upgrade for nothing the moment it is pressed, which is every
+            // priced upgrade in the game available free.
+            card.Free.gameObject.SetActive(available && RewardedAdsAvailable);
             card.Paid.gameObject.SetActive(available);
             card.MaxLabel.gameObject.SetActive(!available);
             if (available) card.PaidLabel.text = "₺ " + cost;

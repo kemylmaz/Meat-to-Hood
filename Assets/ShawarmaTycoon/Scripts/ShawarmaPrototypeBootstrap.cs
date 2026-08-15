@@ -190,8 +190,11 @@ namespace ShawarmaTycoon
             CreateManagementPad(managementRoot.transform, "Ocak İşçisi", new Vector3(-6.8f, 0.28f, -6.0f), StationUpgradeType.Worker, 90, oven, null);
             CreateManagementPad(managementRoot.transform, "Kesim İşçisi", new Vector3(-5.1f, 0.28f, -6.0f), StationUpgradeType.Worker, 150, cutting, null);
             CreateManagementPad(managementRoot.transform, "Dürüm İşçisi", new Vector3(-3.4f, 0.28f, -6.0f), StationUpgradeType.Worker, 210, wrap, null);
-            CreatePlayerUpgradePad(managementRoot.transform, "Hız Geliştirmesi", new Vector3(-1.7f, 0.28f, -6.0f), PlayerUpgradeType.MoveSpeed, 55);
-            CreatePlayerUpgradePad(managementRoot.transform, "Kapasite Geliştirmesi", new Vector3(0.0f, 0.28f, -6.0f), PlayerUpgradeType.CarryCapacity, 65);
+            // Player speed and carry capacity belong to the GM desk alone. They
+            // used to also be sold on two pads here, writing player.* save keys
+            // while the desk wrote gm.* - both drove the same two setters, so
+            // whichever loaded last won and a pad purchase was silently wiped on
+            // the next launch.
             CreateManagementPad(managementRoot.transform, "Et Bandı", new Vector3(-5.95f, 0.28f, -7.7f), StationUpgradeType.Conveyor, 120, null, rawBelt);
             CreateManagementPad(managementRoot.transform, "Ocak Bandı", new Vector3(-4.25f, 0.28f, -7.7f), StationUpgradeType.Conveyor, 180, null, ovenBelt);
             CreateManagementPad(managementRoot.transform, "Kesim Bandı", new Vector3(-2.55f, 0.28f, -7.7f), StationUpgradeType.Conveyor, 240, null, cutBelt);
@@ -680,20 +683,6 @@ namespace ShawarmaTycoon
                 false, "Satın Alma Alanı");
             StationUpgradePad upgrade = pad.AddComponent<StationUpgradePad>();
             upgrade.Configure(playerTransform, type, cost, station, conveyor);
-        }
-
-        private void CreatePlayerUpgradePad(Transform parent, string name, Vector3 position, PlayerUpgradeType type, int cost)
-        {
-            GameObject pad = new(name);
-            pad.transform.SetParent(parent, false);
-            pad.transform.localPosition = position;
-            PrototypeVisuals.CreatePrimitive("Oyuncu Upgrade", PrimitiveType.Cylinder, pad.transform, Vector3.zero,
-                new Vector3(0.55f, 0.05f, 0.55f), new Color(0.28f, 0.68f, 0.92f));
-            MeshyVisuals.TryReplaceDirect(pad.transform, "19_upgrade_pad",
-                new Vector3(0.95f, 0.30f, 0.95f), Vector3.down * 0.03f, Vector3.zero,
-                false, "Oyuncu Upgrade");
-            PlayerUpgradePad upgrade = pad.AddComponent<PlayerUpgradePad>();
-            upgrade.Configure(playerTransform, playerMotor, inventory, type, cost);
         }
 
         private static void DecorateMeatSource(Transform station)
