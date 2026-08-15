@@ -170,15 +170,19 @@ namespace ShawarmaTycoon
             managementRoot.transform.SetParent(runtimeRoot, false);
             BuildOfficeFloor(managementRoot.transform);
 
-            ManagementOfficeTerminal hrTerminal = CreateManagerDesk(
-                managementRoot.transform, "HR Masası", "25_hr_manager_desk",
-                new Vector3(-6.6f, 0.25f, -4.2f));
-            ManagementOfficeTerminal recruitTerminal = CreateManagerDesk(
-                managementRoot.transform, "İşe Alım Masası", "26_recruitment_desk",
-                new Vector3(-3.4f, 0.25f, -4.2f));
-            ManagementOfficeTerminal gmTerminal = CreateManagerDesk(
-                managementRoot.transform, "GM Masası", "27_general_manager_desk",
-                new Vector3(-0.2f, 0.25f, -4.2f));
+            // Three offices, each behind its own door and its own price. They used
+            // to stand together in one open room that was there from the first
+            // second, so the whole management side of the game was handed over
+            // before the player had sold anything.
+            ManagementOfficeTerminal hrTerminal = CreateManagementRoom(
+                managementRoot.transform, "İK Odası", "25_hr_manager_desk",
+                -7.4f, "office.hr", "IK", 260);
+            ManagementOfficeTerminal recruitTerminal = CreateManagementRoom(
+                managementRoot.transform, "İşe Alım Odası", "26_recruitment_desk",
+                -2.8f, "office.recruit", "ISE ALIM", 420);
+            ManagementOfficeTerminal gmTerminal = CreateManagementRoom(
+                managementRoot.transform, "GM Odası", "27_general_manager_desk",
+                1.8f, "office.gm", "GM", 650);
 
             // Upgrade pads in front of the desks. Each pad floats a world-space
             // label, so the two rows are staggered and spaced well apart -
@@ -607,6 +611,69 @@ namespace ShawarmaTycoon
         /// walls, so the room is just three of these in a row - no separate
         /// wall shell needed.
         /// </summary>
+        /// <summary>One wall run of an office, with the blocker that makes it solid.</summary>
+        private static void AddRoomWall(Transform room, Vector3 position, bool alongZ)
+        {
+            CityKit.Spawn("77_wall_straight", room, position, alongZ ? 90f : 0f);
+
+            GameObject blocker = new("Wall Blocker");
+            blocker.transform.SetParent(room, false);
+            blocker.transform.localPosition = position + Vector3.up * 0.76f;
+            BoxCollider box = blocker.AddComponent<BoxCollider>();
+            box.size = alongZ
+                ? new Vector3(0.34f, 1.52f, WallPitch)
+                : new Vector3(WallPitch, 1.52f, 0.34f);
+        }
+
+        /// <summary>Office footprint. Rooms sit north of the upgrade yard.</summary>
+        private const float RoomWidth = 4.2f;
+        private const float RoomDepth = 3.4f;
+        private const float RoomCentreZ = -3.2f;
+
+        /// <summary>
+        /// One locked office: three walls, a desk and an unlock pad of its own.
+        ///
+        /// The door gap is in the north wall, which is the side the player walks
+        /// in from. The south side is left open on purpose - it faces the camera,
+        /// and a wall there would hide the desk it is meant to frame.
+        /// </summary>
+        private ManagementOfficeTerminal CreateManagementRoom(
+            Transform parent, string roomName, string deskAsset,
+            float centreX, string saveKey, string padTitle, int cost)
+        {
+            GameObject room = new(roomName);
+            room.transform.SetParent(parent, false);
+
+            float north = RoomCentreZ + RoomDepth * 0.5f;
+            float halfWidth = RoomWidth * 0.5f;
+
+            // Back wall pushed west of centre, leaving the eastern end open as the
+            // doorway. Each run gets a blocker of its own: the models arrive with
+            // their colliders switched off, so without one the walls are a picture
+            // and the door is not a door.
+            AddRoomWall(room.transform, new Vector3(centreX - 0.6f, WallBaseY, north), false);
+            AddRoomWall(room.transform, new Vector3(centreX - halfWidth, WallBaseY, RoomCentreZ), true);
+            AddRoomWall(room.transform, new Vector3(centreX + halfWidth, WallBaseY, RoomCentreZ), true);
+
+            ManagementOfficeTerminal terminal = CreateManagerDesk(
+                room.transform, roomName + " Masası", deskAsset,
+                new Vector3(centreX, 0.25f, RoomCentreZ + 0.7f));
+
+            GameObject padObject = new(roomName + " Kilidi");
+            padObject.transform.SetParent(parent, false);
+            padObject.transform.localPosition = new Vector3(centreX + 1.5f, 0.28f, north + 0.9f);
+            PrototypeVisuals.CreatePrimitive(
+                "Room Unlock Pad", PrimitiveType.Cylinder, padObject.transform,
+                Vector3.zero, new Vector3(0.82f, 0.06f, 0.82f), new Color(0.95f, 0.58f, 0.20f));
+            MeshyVisuals.TryReplaceDirect(padObject.transform, "20_locked_expansion_pad",
+                new Vector3(1.10f, 0.60f, 1.10f), Vector3.zero, Vector3.zero,
+                false, "Room Unlock Pad");
+            padObject.AddComponent<ManagementRoomUnlockPad>()
+                .Configure(playerTransform, room, cost, saveKey, padTitle);
+
+            return terminal;
+        }
+
         private ManagementOfficeTerminal CreateManagerDesk(
             Transform parent, string title, string assetId, Vector3 position)
         {
