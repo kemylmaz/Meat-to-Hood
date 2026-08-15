@@ -91,8 +91,7 @@ namespace ShawarmaTycoon
 
             if (direction.sqrMagnitude > 0.01f)
             {
-                // Meshy character models face their local -Z axis.
-                Quaternion targetRotation = Quaternion.LookRotation(-direction, Vector3.up);
+                Quaternion targetRotation = Quaternion.LookRotation(direction, Vector3.up);
                 transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, rotationSpeed * Time.deltaTime);
             }
         }

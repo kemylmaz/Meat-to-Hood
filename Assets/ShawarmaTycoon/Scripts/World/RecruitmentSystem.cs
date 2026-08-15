@@ -238,9 +238,10 @@ namespace ShawarmaTycoon
             GameObject worker = new("Recruit " + role);
             worker.transform.SetParent(visualParent, false);
             worker.transform.localPosition = position;
-            worker.transform.localRotation = role == RecruitRole.Runner
-                ? Quaternion.Euler(0f, 180f, 0f)
-                : Quaternion.identity;
+            // Models look along +Z, so a half turn faces the shop floor rather
+            // than the street. Only the first appearance uses this - once a job
+            // comes in the agent turns them by where they are walking.
+            worker.transform.localRotation = Quaternion.Euler(0f, 180f, 0f);
             if (MeshyVisuals.TryAttach(
                     worker.transform, "03_cashier_worker", new Vector3(0.9f, 1.68f, 0.9f),
                     Vector3.zero, Vector3.zero, false) == null)

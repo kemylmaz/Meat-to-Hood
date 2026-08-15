@@ -75,7 +75,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ShawarmaTycoon.CozyVisualMetadata
   sourceAssetId: 50_customer_vest_green
-  runtimeEulerOffset: {x: 0, y: 180, z: 0}
+  runtimeEulerOffset: {x: 0, y: 0, z: 0}
   hasAuthoredFace: 1
 --- !u!114 &5341368051905990481
 MonoBehaviour:

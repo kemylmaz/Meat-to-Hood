@@ -9,6 +9,15 @@ namespace ShawarmaTycoon
         [SerializeField] private bool buildOnAwake = true;
         [SerializeField, Min(0)] private int startingCoins;
 
+        /// <summary>
+        /// Half turn for anything that should look at the customer. Models are
+        /// authored looking along +Z, which is Unity's forward, and this shop is
+        /// laid out with the customer side at -Z. The turn used to be buried in
+        /// every prefab's metadata, which meant nothing could be placed without
+        /// silently inheriting it.
+        /// </summary>
+        private static readonly Vector3 FacingCustomer = new(0f, 180f, 0f);
+
         private Transform runtimeRoot;
         private Transform playerTransform;
         private MobilePlayerController playerMotor;
@@ -120,7 +129,7 @@ namespace ShawarmaTycoon
             trashBin.Configure(playerTransform, inventory);
             MeshyVisuals.TryReplaceDirect(
                 trashBinObject.transform, "17_trash_bin", new Vector3(0.70f, 1.05f, 0.70f),
-                Vector3.zero, Vector3.zero, false,
+                Vector3.zero, FacingCustomer, false,
                 "Çöp Gövdesi", "Çöp Kapak", "Çöp Açıklığı", "Ayak Pedalı");
 
             GameObject takeawayRoot = new("Takeaway Counter");
@@ -683,7 +692,7 @@ namespace ShawarmaTycoon
             desk.transform.localPosition = position;
 
             if (MeshyVisuals.TryAttach(desk.transform, assetId,
-                    new Vector3(2.75f, 1.92f, 2.07f), Vector3.zero, Vector3.zero) == null)
+                    new Vector3(2.75f, 1.92f, 2.07f), Vector3.zero, FacingCustomer) == null)
             {
                 PrototypeVisuals.CreatePrimitive("Desk Fallback", PrimitiveType.Cube,
                     desk.transform, new Vector3(0f, 0.45f, 0.2f),
@@ -819,7 +828,7 @@ namespace ShawarmaTycoon
             TextMesh sign = PrototypeVisuals.CreateLabel("ENTRANCE", gate.transform, new Vector3(0f, 3.15f, 0f), 0.11f);
             sign.color = new Color(0.95f, 0.22f, 0.16f);
             MeshyVisuals.TryReplaceDirect(gate.transform, "21_entrance_door",
-                new Vector3(3.05f, 2.90f, 0.95f), Vector3.zero, Vector3.zero, false,
+                new Vector3(3.05f, 2.90f, 0.95f), Vector3.zero, FacingCustomer, false,
                 "Entrance Top", "Entrance Left", "Entrance Right");
         }
 
@@ -841,7 +850,8 @@ namespace ShawarmaTycoon
             GameObject seat = new("Customer Seat");
             seat.transform.SetParent(tableObject.transform, false);
             seat.transform.localPosition = new Vector3(0f, 0f, -1.05f);
-            seat.transform.localRotation = Quaternion.Euler(0f, 180f, 0f);
+            // The seat is south of the table, so looking north is looking at it.
+            seat.transform.localRotation = Quaternion.identity;
 
             CustomerTable table = tableObject.AddComponent<CustomerTable>();
             table.Configure(playerTransform, seat.transform);
@@ -849,7 +859,7 @@ namespace ShawarmaTycoon
             Vector3 tableSize = new(1.44f, 1.08f, 2.12f);
             bool swapped = MeshyVisuals.TryReplaceDirect(
                 tableObject.transform, "15_dining_table_clean", tableSize,
-                Vector3.zero, Vector3.zero, false,
+                Vector3.zero, FacingCustomer, false,
                 "Table Top", "Table Leg", "Customer Chair", "Guest Chair");
             if (swapped)
             {
@@ -858,7 +868,7 @@ namespace ShawarmaTycoon
                 Transform clean = tableObject.transform.Find("15_dining_table_clean Visual");
                 GameObject dirty = MeshyVisuals.TryAttach(
                     tableObject.transform, "16_dirty_table_props", tableSize,
-                    Vector3.zero, Vector3.zero);
+                    Vector3.zero, FacingCustomer);
                 if (clean != null && dirty != null)
                     table.SetTableVariants(clean.gameObject, dirty);
             }

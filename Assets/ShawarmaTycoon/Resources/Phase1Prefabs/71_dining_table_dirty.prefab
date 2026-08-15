@@ -74,7 +74,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ShawarmaTycoon.CozyVisualMetadata
   sourceAssetId: 71_dining_table_dirty
-  runtimeEulerOffset: {x: 0, y: 180, z: 0}
+  runtimeEulerOffset: {x: 0, y: 0, z: 0}
   hasAuthoredFace: 0
 --- !u!1001 &2625810340112614318
 PrefabInstance:

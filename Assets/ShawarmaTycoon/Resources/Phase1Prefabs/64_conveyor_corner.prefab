@@ -74,7 +74,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ShawarmaTycoon.CozyVisualMetadata
   sourceAssetId: 64_conveyor_corner
-  runtimeEulerOffset: {x: 0, y: 180, z: 0}
+  runtimeEulerOffset: {x: 0, y: 0, z: 0}
   hasAuthoredFace: 0
 --- !u!1001 &7704797527000930408
 PrefabInstance:

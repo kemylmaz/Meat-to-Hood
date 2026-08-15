@@ -74,7 +74,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ShawarmaTycoon.CozyVisualMetadata
   sourceAssetId: 46_city_car
-  runtimeEulerOffset: {x: 0, y: 180, z: 0}
+  runtimeEulerOffset: {x: 0, y: 0, z: 0}
   hasAuthoredFace: 0
 --- !u!1001 &4852039296147513676
 PrefabInstance:

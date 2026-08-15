@@ -156,7 +156,7 @@ namespace ShawarmaTycoon
             transform.position = Vector3.MoveTowards(transform.position, target, moveSpeed * Time.deltaTime);
             transform.rotation = Quaternion.Slerp(
                 transform.rotation,
-                Quaternion.LookRotation(-direction, Vector3.up),
+                Quaternion.LookRotation(direction, Vector3.up),
                 12f * Time.deltaTime);
             return false;
         }

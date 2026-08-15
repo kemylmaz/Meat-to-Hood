@@ -282,7 +282,9 @@ namespace ShawarmaTycoon
             workerVisual = new GameObject("İşçi");
             workerVisual.transform.SetParent(transform, false);
             workerVisual.transform.localPosition = new Vector3(0f, 0f, 1.25f);
+            // Models look along +Z, so facing the serving side is a half turn.
             workerVisual.transform.localRotation = Quaternion.Euler(0f, 180f, 0f);
+
 
             if (MeshyVisuals.TryAttach(
                     workerVisual.transform, "55_worker_red_backcap",

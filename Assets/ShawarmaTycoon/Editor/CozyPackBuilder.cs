@@ -76,7 +76,7 @@ namespace ShawarmaTycoon.EditorTools
         {
             new("01_player_character", "01_player_character", AssetProfile.Character, true, 0f),
             new("02_customer_character", "02_customer_character", AssetProfile.Character, true, 0f),
-            new("06_rotisserie_station", "06_shawarma_rotisserie", AssetProfile.Station, false, 180f),
+            new("06_rotisserie_station", "06_shawarma_rotisserie", AssetProfile.Station, false, 0f),
             new("15_dining_table", "15_dining_table_clean", AssetProfile.Prop, false, 0f),
             new("17_trash_bin", "17_trash_bin", AssetProfile.Prop, false, 0f),
             // --- phase 2A city kit ---
@@ -94,10 +94,9 @@ namespace ShawarmaTycoon.EditorTools
             new("53_worker_teal", "53_worker_teal", AssetProfile.Character, true, 0f),
             new("54_worker_red", "54_worker_red", AssetProfile.Character, true, 0f),
             new("55_worker_red_backcap", "55_worker_red_backcap", AssetProfile.Character, true, 0f),
-            // stations keep the bootstrap's existing 180 degree caller yaw
-            new("60_cutting_station", "60_cutting_station", AssetProfile.Station, false, 180f),
-            new("61_wrap_station", "61_wrap_station", AssetProfile.Station, false, 180f),
-            new("62_cashier_counter", "62_cashier_counter", AssetProfile.Station, false, 180f),
+            new("60_cutting_station", "60_cutting_station", AssetProfile.Station, false, 0f),
+            new("61_wrap_station", "61_wrap_station", AssetProfile.Station, false, 0f),
+            new("62_cashier_counter", "62_cashier_counter", AssetProfile.Station, false, 0f),
             new("63_conveyor_straight", "63_conveyor_straight", AssetProfile.Environment, false, 0f),
             new("64_conveyor_corner", "64_conveyor_corner", AssetProfile.Environment, false, 0f),
             new("65_manager_desk_stamp", "65_manager_desk_stamp", AssetProfile.Environment, false, 0f),
@@ -501,11 +500,18 @@ namespace ShawarmaTycoon.EditorTools
                 });
                 lodGroup.RecalculateBounds();
 
+                // Turn the authored front onto +Z, which is what Unity calls
+                // forward. The models already export that way - every
+                // FRONT_DIRECTION lands on local (0, 0, 1) - so this correction
+                // comes out at zero and the prefabs stop carrying a standing
+                // half turn. It used to aim at 180 because the project had
+                // inherited a -Z front from the older imported models, and every
+                // caller then had to undo it.
                 Vector3 importedFront = FindImportedFront(prefabRoot.transform);
                 float importedYaw = Mathf.Atan2(importedFront.x, importedFront.z) * Mathf.Rad2Deg;
                 float correctionYaw = importedFront.sqrMagnitude > 0.25f
-                    ? Mathf.DeltaAngle(importedYaw, 180f)
-                    : 180f;
+                    ? Mathf.DeltaAngle(importedYaw, 0f)
+                    : 0f;
                 float runtimeOffset = Mathf.DeltaAngle(spec.ExistingCallerYaw, correctionYaw);
                 CozyVisualMetadata metadata = prefabRoot.AddComponent<CozyVisualMetadata>();
                 metadata.Configure(
