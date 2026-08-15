@@ -129,7 +129,13 @@ namespace ShawarmaTycoon
             if (mode == StationMode.Source)
                 outputCount = outputCapacity;
 
+            HumanResourcesSystem.CapacityChanged += RefreshVisuals;
             RefreshVisuals();
+        }
+
+        private void OnDestroy()
+        {
+            HumanResourcesSystem.CapacityChanged -= RefreshVisuals;
         }
 
         private Transform CreateRoot(string rootName, Vector3 localPosition)
@@ -381,6 +387,11 @@ namespace ShawarmaTycoon
                         visibleOutputType, outputRoot, Vector3.up * (y + i * 0.12f), 0.85f));
             }
             UpdateLabel();
+            // Every count change funnels through here, so this is the one place
+            // the MAX flag can be kept honest. It used to be refreshed only when
+            // a worker was hired, which left it lit on a station the player had
+            // just emptied, and dark on one that had just filled up.
+            UpdateMaxIndicator();
         }
 
         private static void ClearVisuals(List<GameObject> visuals)

@@ -5,6 +5,8 @@ namespace ShawarmaTycoon
     public sealed class CustomerTable : MonoBehaviour
     {
         [SerializeField, Min(0.5f)] private float trashPickupRadius = 1.65f;
+        /// <summary>Reach of the money pad itself, kept to roughly the pad's own footprint.</summary>
+        [SerializeField, Min(0.3f)] private float cashPadRadius = 0.95f;
 
         private Transform player;
         private Transform seatPoint;
@@ -132,16 +134,16 @@ namespace ShawarmaTycoon
         }
 
         /// <summary>
-        /// Cash is picked up by approaching the table, not by stepping exactly on
-        /// its pad. The pad sits barely a metre from the table, so the tighter
-        /// radius turned one visit into two: clear the plates, then shuffle across
-        /// and stand on the money.
+        /// Cash is taken by standing on the pad it is sitting on, and only there.
+        /// Collecting it from anywhere near the table made the pad a decoration:
+        /// money arrived without the player ever going to where it was drawn, and
+        /// clearing the plates quietly banked it as a side effect.
         /// </summary>
         private void CollectCashIfNearby()
         {
             if (pendingCash <= 0 || cashPad == null || GameEconomy.Instance == null) return;
-            if (Vector3.SqrMagnitude(player.position - transform.position) >
-                trashPickupRadius * trashPickupRadius) return;
+            if (Vector3.SqrMagnitude(player.position - cashPad.transform.position) >
+                cashPadRadius * cashPadRadius) return;
             CollectCash(false);
         }
 

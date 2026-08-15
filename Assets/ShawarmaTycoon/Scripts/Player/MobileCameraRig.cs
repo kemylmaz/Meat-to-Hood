@@ -14,8 +14,13 @@ namespace ShawarmaTycoon
         [SerializeField] private float maxZoom = 10.0f;
         [SerializeField] private Vector3 cameraOffset = new(9f, 16.5f, -11f);
         [SerializeField, Min(0f)] private float lookAtHeight = 0.85f;
-        // Bias the frame toward +Z so the street behind the kitchen stays in shot.
-        [SerializeField] private float lookAheadZ = 2.6f;
+        /// <summary>
+        /// Shifts the framing along +Z, away from the player. Kept at zero: it was
+        /// set to 2.6 to hold the street behind the kitchen in shot, but that put
+        /// the character permanently below the middle of the screen, which is the
+        /// one thing a follow camera has to get right.
+        /// </summary>
+        [SerializeField] private float lookAheadZ;
         [SerializeField] private Vector2 xBounds = new(-9f, 19f);
         [SerializeField] private Vector2 zBounds = new(-9f, 10f);
 

@@ -19,6 +19,13 @@ namespace ShawarmaTycoon
 
         public static float WorkerSpeedMultiplier => Instance == null ? 1f : 1f + Instance.movementLevel * 0.12f;
         public static int WorkerCapacityBonus => Instance == null ? 0 : Instance.capacityLevel * 2;
+
+        /// <summary>
+        /// Raised when the shared capacity bonus changes. Station limits move
+        /// without any count moving, so anything showing a full/not-full state
+        /// has to be told rather than waiting for the next delivery.
+        /// </summary>
+        public static event System.Action CapacityChanged;
         /// <summary>
         /// Automation rate, applied to both the hired assistants' action interval
         /// and every conveyor belt. Lower is faster.
@@ -80,6 +87,7 @@ namespace ShawarmaTycoon
                 case EmployeeUpgradeType.Capacity:
                     capacityLevel = level;
                     GameProgress.SetInt("hr.capacity", level);
+                    CapacityChanged?.Invoke();
                     break;
                 default:
                     adoptUseLevel = level;
