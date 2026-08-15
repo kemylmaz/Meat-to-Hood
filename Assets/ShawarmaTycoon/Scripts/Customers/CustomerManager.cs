@@ -19,6 +19,8 @@ namespace ShawarmaTycoon
         [SerializeField, Min(2f)] private float customerPatience = 28f;
 
         [SerializeField, Min(0.5f)] private float queueSpacing = 1.05f;
+        /// <summary>How much each person already waiting sours a new arrival.</summary>
+        [SerializeField, Range(0f, 0.3f)] private float queuePressurePenalty = 0.09f;
 
         private readonly List<CustomerTable> tables = new();
         private readonly List<CustomerAgent> customers = new();
@@ -172,7 +174,16 @@ namespace ShawarmaTycoon
             // rush nobody has time to spare.
             float patience = (vip ? customerPatience * 0.75f : customerPatience)
                 * RushHourSystem.PatienceMultiplier;
-            agent.Configure(this, exitPoint, 2.4f, 4.5f, 15, patience, vip);
+
+            // Walking up to a queue already sours the mood, so a shop that lets
+            // the line build pays less on the people joining it as well as on
+            // the ones already standing there.
+            int waiting = 0;
+            for (int i = 0; i < customers.Count; i++)
+                if (customers[i] != null && customers[i].State == CustomerState.Queueing) waiting++;
+            float arrivalMood = Mathf.Clamp(1f - waiting * queuePressurePenalty, 0.6f, 1f);
+
+            agent.Configure(this, exitPoint, 2.4f, 4.5f, 15, patience, vip, arrivalMood);
             customers.Add(agent);
             AudioDirector.Play(GameSfx.CustomerArrive, vip ? 0.9f : 0.45f, vip ? 1.15f : 1f);
             return agent;

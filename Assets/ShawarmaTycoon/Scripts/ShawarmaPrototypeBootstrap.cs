@@ -45,6 +45,7 @@ namespace ShawarmaTycoon
             economy.Configure(startingCoins);
             root.AddComponent<RushHourSystem>();
             root.AddComponent<ComboSystem>();
+            root.AddComponent<ReputationSystem>();
             AudioDirector.Ensure(runtimeRoot);
 
             BuildCity();

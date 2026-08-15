@@ -80,9 +80,12 @@ namespace ShawarmaTycoon.UI
             }
 
             bool active = combo.IsActive;
-            comboLabel.text = active
+            string reputation = ReputationSystem.Instance != null
+                ? $"   İTİBAR {ReputationSystem.Instance.Score:0}"
+                : string.Empty;
+            comboLabel.text = (active
                 ? $"KOMBO {combo.Streak}   x{combo.Multiplier:0.0}"
-                : "KOMBO hazır";
+                : "KOMBO hazır") + reputation;
             comboLabel.color = active ? UITheme.Teal : UITheme.InkSoft;
             comboFill.fillAmount = active
                 ? Mathf.Clamp01(combo.TimeRemaining / Mathf.Max(0.01f, combo.TimeoutSeconds))

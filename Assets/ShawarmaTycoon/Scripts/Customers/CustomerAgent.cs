@@ -16,14 +16,24 @@ namespace ShawarmaTycoon
         [SerializeField, Min(0.1f)] private float eatingDuration = 4.5f;
         [SerializeField, Min(1)] private int mealPayout = 15;
         /// <summary>
-        /// The line between a happy customer and a grudging one: full price and a
-        /// combo step under it, 0.6x and a broken combo over. It has to be
-        /// reachable from the back of a full queue - at 8 s it was not, so every
-        /// customer past the first paid the penalty rate and the combo could
-        /// never get off the ground in a busy shop.
+        /// How long a customer stays happy. Under this they pay full and step the
+        /// combo; past it their mood drops a notch every AngerStepSeconds. It has
+        /// to be reachable from the back of a full queue - at 8 s it was not, so
+        /// every customer past the first paid a penalty and the combo could never
+        /// get off the ground in a busy shop.
         /// </summary>
         [SerializeField, Min(1f)] private float angryAfterSeconds = 15f;
         [SerializeField, Min(2f)] private float patienceSeconds = 20f;
+
+        /// <summary>Seconds between one drop in mood and the next.</summary>
+        [SerializeField, Min(1f)] private float angerStepSeconds = 7f;
+
+        /// <summary>
+        /// What each mood pays, from content down to furious. An ordinary
+        /// customer never leaves - they just get less worth serving, which is
+        /// what the queue costs you now.
+        /// </summary>
+        private static readonly float[] MoodPayout = { 1f, 0.8f, 0.55f, 0.3f };
 
         private CustomerManager manager;
         private CustomerTable table;
@@ -36,15 +46,19 @@ namespace ShawarmaTycoon
         private bool isVip;
         private bool isAngry;
         private bool reachedQueue;
+        private int moodStep;
+        private float arrivalMultiplier = 1f;
 
         public CustomerState State { get; private set; } = CustomerState.Queueing;
         public bool IsVip => isVip;
         public bool IsAngry => isAngry;
         public bool LeftUnserved { get; private set; }
+        /// <summary>0 content, 3 furious. Drives payout and the face.</summary>
+        public int MoodStep => moodStep;
 
         public void Configure(
             CustomerManager owner, Transform exitTransform, float speed, float eatingSeconds,
-            int payout, float patience, bool vip = false)
+            int payout, float patience, bool vip = false, float arrivalMood = 1f)
         {
             manager = owner;
             exitPoint = exitTransform;
@@ -53,10 +67,12 @@ namespace ShawarmaTycoon
             mealPayout = Mathf.Max(1, payout);
             finalPayout = mealPayout;
             patienceSeconds = Mathf.Max(angryAfterSeconds + 1f, patience);
+            arrivalMultiplier = Mathf.Clamp(arrivalMood, 0.1f, 1f);
             isVip = vip;
             isAngry = false;
             reachedQueue = false;
             LeftUnserved = false;
+            moodStep = 0;
             State = CustomerState.Queueing;
             if (isVip) CreateVipVisual();
         }
@@ -69,11 +85,17 @@ namespace ShawarmaTycoon
         public void Serve(CustomerTable assignedTable)
         {
             table = assignedTable;
-            bool fast = !isAngry && queueTimer < angryAfterSeconds;
+            bool fast = moodStep == 0;
             ComboSystem.Instance?.RegisterDineIn(fast, isVip);
-            float serviceMultiplier = isVip
-                ? (fast ? 3f : 1f)
-                : (fast ? 1f : 0.6f);
+
+            // Mood, what the queue looked like when they arrived, and the shop's
+            // standing all bear on the bill. A VIP served promptly is still the
+            // prize; a VIP kept waiting is worth no more than anyone else.
+            float serviceMultiplier = MoodPayout[moodStep] * arrivalMultiplier
+                * ReputationSystem.PayoutMultiplier;
+            if (isVip && fast) serviceMultiplier *= 3f;
+
+            if (fast) ReputationSystem.Instance?.RegisterHappyCustomer();
             finalPayout = RewardCalculator.Calculate(mealPayout, serviceMultiplier);
             State = CustomerState.WalkingToTable;
         }
@@ -88,12 +110,10 @@ namespace ShawarmaTycoon
                     // 13 m approach, before the customer had waited for anything.
                     if (MoveTowards(queueTarget)) reachedQueue = true;
                     if (reachedQueue) queueTimer += Time.deltaTime;
-                    if (!isAngry && queueTimer >= angryAfterSeconds)
-                    {
-                        isAngry = true;
-                        SetAngryFace(true);
-                    }
-                    if (queueTimer >= patienceSeconds) GiveUp();
+                    UpdateMood();
+                    // Only a VIP walks. An ordinary customer waits, and what it
+                    // costs you is what they are worth by the time you get there.
+                    if (isVip && queueTimer >= patienceSeconds) GiveUp();
                     break;
 
                 case CustomerState.WalkingToTable:
@@ -130,10 +150,54 @@ namespace ShawarmaTycoon
         }
 
         /// <summary>
-        /// Patience runs out and the customer walks out without buying. The queue
-        /// had no failure state before this: an ignored customer stood there going
-        /// angry forever and still paid, at 0.6x, whenever you finally got to them,
-        /// so letting the line back up cost nothing but time.
+        /// Steps the mood down while they wait. Each step costs the shop's
+        /// standing, so an ignored queue bleeds reputation for as long as it is
+        /// ignored rather than settling at one flat penalty.
+        /// </summary>
+        private void UpdateMood()
+        {
+            if (queueTimer < angryAfterSeconds) return;
+
+            int step = 1 + Mathf.FloorToInt((queueTimer - angryAfterSeconds) / angerStepSeconds);
+            step = Mathf.Min(step, MoodPayout.Length - 1);
+            if (step <= moodStep) return;
+
+            // The first notch is the ordinary cost of a queue and only shows in
+            // the bill. Reputation answers for real neglect, from the second
+            // notch on - otherwise a well run shop still bleeds it, because the
+            // back of a three deep queue passes the happy mark by design.
+            for (int i = Mathf.Max(moodStep, 1); i < step; i++)
+                ReputationSystem.Instance?.RegisterAngerStep();
+
+            moodStep = step;
+            if (!isAngry)
+            {
+                isAngry = true;
+                SetAngryFace(true);
+                ComboSystem.Instance?.BreakCombo();
+            }
+            ShowMood();
+        }
+
+        /// <summary>Deepens the angry face as the mood drops.</summary>
+        private void ShowMood()
+        {
+            if (angryFace == null) return;
+            Transform face = angryFace.transform.Find("Yüz");
+            if (face == null) return;
+            Renderer renderer = face.GetComponent<Renderer>();
+            if (renderer == null) return;
+
+            float t = moodStep / (float)(MoodPayout.Length - 1);
+            renderer.sharedMaterial = PrototypeVisuals.Material(
+                Color.Lerp(new Color(0.98f, 0.76f, 0.26f), PrototypeVisuals.Red, t));
+            float scale = 1f + t * 0.35f;
+            angryFace.transform.localScale = new Vector3(scale, scale, 1f);
+        }
+
+        /// <summary>
+        /// A VIP gives up and walks out. Ordinary customers stay - what an
+        /// ignored queue costs is their mood, the combo and the shop's name.
         /// </summary>
         private void GiveUp()
         {
