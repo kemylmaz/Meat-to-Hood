@@ -5,46 +5,40 @@ namespace ShawarmaTycoon
 {
     public static class GameProgress
     {
-        // Shared local-save prefix for mobile and WebGL builds.
-        private const string Prefix = "shawarma.tycoon.";
-
         public static int ServedToday => GetDaily("served");
         public static int RevenueToday => GetDaily("revenue");
         public static int TrashToday => GetDaily("trash");
         public static int LostToday => GetDaily("lost");
         public static int UpgradesToday => GetDaily("upgrades");
-        public static int WorkerCount => PlayerPrefs.GetInt(Prefix + "workers", 0);
+        public static int WorkerCount => GetInt("workers");
         public static int BestDailyRevenue => GetInt("records.best_daily_revenue");
         public static int BestDailyServed => GetInt("records.best_daily_served");
         public static int BestCombo => GetInt("records.best_combo");
         public static int VipServedTotal => GetInt("records.vip_served");
         public static int TakeawayServedTotal => GetInt("records.takeaway_served");
-        public static bool DailyRewardClaimed => PlayerPrefs.GetInt(DailyKey("claimed"), 0) == 1;
+        public static bool DailyRewardClaimed => GetInt(DailyKey("claimed")) == 1;
 
         public static void RecordServed(bool vip = false, bool takeaway = false)
         {
             int served = ServedToday + 1;
-            PlayerPrefs.SetInt(DailyKey("served"), served);
+            SetInt(DailyKey("served"), served);
             SetRecordIfHigher("records.best_daily_served", served);
-            if (vip) PlayerPrefs.SetInt(Prefix + "records.vip_served", VipServedTotal + 1);
-            if (takeaway) PlayerPrefs.SetInt(Prefix + "records.takeaway_served", TakeawayServedTotal + 1);
-            PlayerPrefs.Save();
+            if (vip) SetInt("records.vip_served", VipServedTotal + 1);
+            if (takeaway) SetInt("records.takeaway_served", TakeawayServedTotal + 1);
         }
 
         public static void RecordRevenue(int amount)
         {
             if (amount <= 0) return;
             int revenue = RevenueToday + amount;
-            PlayerPrefs.SetInt(DailyKey("revenue"), revenue);
+            SetInt(DailyKey("revenue"), revenue);
             SetRecordIfHigher("records.best_daily_revenue", revenue);
-            PlayerPrefs.Save();
         }
 
         public static void RecordBestCombo(int combo)
         {
             if (combo <= BestCombo) return;
-            PlayerPrefs.SetInt(Prefix + "records.best_combo", combo);
-            PlayerPrefs.Save();
+            SetInt("records.best_combo", combo);
         }
 
         public static void RecordTrash(int count) => SetDaily("trash", TrashToday + Mathf.Max(0, count));
@@ -56,63 +50,49 @@ namespace ShawarmaTycoon
 
         public static void RegisterWorker(string uniqueName)
         {
-            string key = Prefix + "worker." + uniqueName;
-            if (PlayerPrefs.GetInt(key, 0) == 1) return;
-            PlayerPrefs.SetInt(key, 1);
-            PlayerPrefs.SetInt(Prefix + "workers", WorkerCount + 1);
-            PlayerPrefs.Save();
+            string key = "worker." + uniqueName;
+            if (GetInt(key) == 1) return;
+            SetInt(key, 1);
+            SetInt("workers", WorkerCount + 1);
         }
 
         public static void ClaimDailyReward()
         {
-            PlayerPrefs.SetInt(DailyKey("claimed"), 1);
-            PlayerPrefs.Save();
+            SetInt(DailyKey("claimed"), 1);
         }
 
         /// <summary>
-        /// Wipes every saved value: coins, records, daily counters, unlocks and
-        /// hired staff. Keys are generated (per worker, per calendar day) so they
-        /// cannot be enumerated - and this project stores nothing else in
-        /// PlayerPrefs, so clearing the lot is the only complete reset.
+        /// Wipes this game's versioned save without deleting preferences owned
+        /// by another SDK or subsystem.
         /// </summary>
         public static void ResetAll()
         {
-            PlayerPrefs.DeleteAll();
-            PlayerPrefs.Save();
+            SaveRepository.ResetAll();
         }
 
-        public static int GetInt(string key, int fallback = 0) => PlayerPrefs.GetInt(Prefix + key, fallback);
-        public static void SetInt(string key, int value)
-        {
-            PlayerPrefs.SetInt(Prefix + key, value);
-            PlayerPrefs.Save();
-        }
+        public static int GetInt(string key, int fallback = 0) => SaveRepository.GetInt(key, fallback);
+        public static void SetInt(string key, int value) => SaveRepository.SetInt(key, value);
 
         public static long GetLastSeen()
         {
-            return long.TryParse(PlayerPrefs.GetString(Prefix + "last_seen", "0"), out long value) ? value : 0L;
+            return SaveRepository.GetLong("last_seen");
         }
 
         public static void SaveLastSeen()
         {
-            PlayerPrefs.SetString(Prefix + "last_seen", DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString());
-            PlayerPrefs.Save();
+            SaveRepository.SetLong("last_seen", DateTimeOffset.UtcNow.ToUnixTimeSeconds());
         }
 
-        private static int GetDaily(string name) => PlayerPrefs.GetInt(DailyKey(name), 0);
-        private static void SetDaily(string name, int value)
-        {
-            PlayerPrefs.SetInt(DailyKey(name), value);
-            PlayerPrefs.Save();
-        }
+        public static void FlushNow() => SaveRepository.FlushNow();
+
+        private static int GetDaily(string name) => GetInt(DailyKey(name));
+        private static void SetDaily(string name, int value) => SetInt(DailyKey(name), value);
 
         private static void SetRecordIfHigher(string key, int value)
         {
-            string fullKey = Prefix + key;
-            if (value > PlayerPrefs.GetInt(fullKey, 0))
-                PlayerPrefs.SetInt(fullKey, value);
+            if (value > GetInt(key)) SetInt(key, value);
         }
 
-        private static string DailyKey(string name) => Prefix + "daily." + DateTime.UtcNow.ToString("yyyyMMdd") + "." + name;
+        private static string DailyKey(string name) => "daily." + DateTime.UtcNow.ToString("yyyyMMdd") + "." + name;
     }
 }

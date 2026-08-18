@@ -65,6 +65,21 @@ namespace ShawarmaTycoon
                 orderLabel.transform.localPosition = new Vector3(0f, localTop + 0.72f, 0f);
         }
 
+        /// <summary>
+        /// Which side of the counter the shop stands on, as a sign on local Z. The
+        /// drive-through window faces the street, so its takings have to land on
+        /// the kitchen side of it; left where they were, the cash pad sat out in
+        /// the driveway where nobody could ever walk to collect from it.
+        /// </summary>
+        public void SetStaffSide(float zSign)
+        {
+            if (cashPad == null) return;
+            float sign = zSign >= 0f ? 1f : -1f;
+            Vector3 local = cashPad.transform.localPosition;
+            cashPad.transform.localPosition = new Vector3(
+                local.x, local.y, Mathf.Abs(local.z) * sign);
+        }
+
         public bool CreateOrderNow()
         {
             if (pendingOrder)
@@ -274,7 +289,11 @@ namespace ShawarmaTycoon
 
             if (orderLabel != null)
             {
-                orderLabel.text = pendingOrder ? (IsLate ? "GEÇ" : "DÜRÜM") : "PAKET";
+                // Only while there is an order. Idle it read "PAKET" across the
+                // shop for as long as the window stood there, which is a sign, not
+                // a piece of state worth a caption.
+                orderLabel.gameObject.SetActive(pendingOrder);
+                orderLabel.text = IsLate ? "GEÇ" : "DÜRÜM";
                 orderLabel.color = IsLate ? PrototypeVisuals.Red : new Color(0.24f, 0.15f, 0.11f);
             }
 

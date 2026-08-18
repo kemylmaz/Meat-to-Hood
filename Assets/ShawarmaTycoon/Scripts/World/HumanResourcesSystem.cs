@@ -10,7 +10,7 @@ namespace ShawarmaTycoon
     {
         public static HumanResourcesSystem Instance { get; private set; }
 
-        [SerializeField, Min(1)] private int maxLevel = 5;
+        [SerializeField, Min(1)] private int maxLevel = ShopPrices.BoardLevels;
         private Transform player;
         private readonly List<ConveyorLink> conveyors = new();
         private int movementLevel;
@@ -45,6 +45,12 @@ namespace ShawarmaTycoon
             movementLevel = GameProgress.GetInt("hr.movement", 0);
             capacityLevel = GameProgress.GetInt("hr.capacity", 0);
             adoptUseLevel = GameProgress.GetInt("hr.adopt", 0);
+            foreach (EmployeeUpgradeType type in
+                     (EmployeeUpgradeType[])System.Enum.GetValues(typeof(EmployeeUpgradeType)))
+            {
+                EmployeeUpgradeType captured = type;
+                UpgradeProgress.Register("hr." + type, maxLevel, () => GetLevel(captured));
+            }
             ApplyAutomationLevel();
         }
 
@@ -57,16 +63,18 @@ namespace ShawarmaTycoon
 
         public int GetCost(EmployeeUpgradeType type)
         {
-            // Automation was the cheapest thing on the board at 150, below a
-            // single belt, while speeding up every belt and every assistant at
-            // once. It is the strongest upgrade here and is priced like it.
+            // Automation is still the strongest thing here - it speeds up every
+            // belt and every assistant at once - so it stays the dearest of the
+            // three. The board as a whole came down by a factor of six: it is a
+            // set of multipliers on a shop the player has already built, and it
+            // was costing four times what building that shop cost.
             int baseCost = type switch
             {
-                EmployeeUpgradeType.MovementSpeed => 500,
-                EmployeeUpgradeType.Capacity => 300,
-                _ => 450
+                EmployeeUpgradeType.MovementSpeed => ShopPrices.StaffSpeed,
+                EmployeeUpgradeType.Capacity => ShopPrices.StaffCapacity,
+                _ => ShopPrices.StaffAutomation
             };
-            return Mathf.RoundToInt(baseCost * Mathf.Pow(1.55f, GetLevel(type)));
+            return ShopPrices.BoardCost(baseCost, GetLevel(type));
         }
 
         public bool TryUpgrade(EmployeeUpgradeType type, bool free)
@@ -97,6 +105,7 @@ namespace ShawarmaTycoon
             }
 
             GameProgress.RecordUpgrade();
+            UpgradeProgress.NotifyChanged();
             if (!free) CoinBurst.Spawn(player != null ? player.position + Vector3.up * 1.2f : transform.position + Vector3.up, cost);
             return true;
         }

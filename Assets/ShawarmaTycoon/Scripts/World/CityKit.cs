@@ -10,11 +10,12 @@ namespace ShawarmaTycoon
     /// for gameplay wrappers but wrong for modular tiles: a road tile has to keep
     /// its exact 4 m pitch or the street stops lining up. So the kit instantiates
     /// prefabs directly and only applies the authored orientation offset, which
-    /// leaves every piece facing world -Z.
+    /// leaves every piece facing its authored Unity-forward direction (+Z).
     /// </summary>
     public static class CityKit
     {
         private const string Folder = "Phase1Prefabs/";
+        private const string PolyFolder = "PolyPrefabs/";
         private static readonly Dictionary<string, GameObject> Cache = new();
 
         public static bool Has(string assetName) => Load(assetName) != null;
@@ -37,7 +38,19 @@ namespace ShawarmaTycoon
         }
 
         /// <summary>
-        /// Spawns a piece with its authored front rotated to -Z, then turned by
+        /// How tall a piece stands. These models have their pivot at the base, so
+        /// this is what a caller subtracts to land a tile's top on a chosen height.
+        /// </summary>
+        public static float TileHeight(string assetName, float fallback)
+        {
+            GameObject prefab = Load(assetName);
+            if (prefab == null) return fallback;
+            Bounds bounds = MeasureBounds(prefab);
+            return bounds.size.y > 0.01f ? bounds.size.y : fallback;
+        }
+
+        /// <summary>
+        /// Spawns a piece with its authored +Z front, then turns it by
         /// <paramref name="extraYaw"/>. Returns null when the model is absent so
         /// callers can fall back to primitives.
         /// </summary>
@@ -63,7 +76,7 @@ namespace ShawarmaTycoon
         /// <summary>Repeats a tile along X, centred on <paramref name="centerX"/>.</summary>
         public static int Tile(
             string assetName, Transform parent, float centerX, float z, float span,
-            float extraYaw = 0f)
+            float extraYaw = 0f, float y = 0f)
         {
             float pitch = TileWidth(assetName, 4f);
             if (pitch <= 0.01f) return 0;
@@ -71,7 +84,7 @@ namespace ShawarmaTycoon
             int count = Mathf.Max(1, Mathf.CeilToInt(span / pitch));
             float start = centerX - (count - 1) * pitch * 0.5f;
             for (int i = 0; i < count; i++)
-                Spawn(assetName, parent, new Vector3(start + i * pitch, 0f, z), extraYaw);
+                Spawn(assetName, parent, new Vector3(start + i * pitch, y, z), extraYaw);
             return count;
         }
 
@@ -80,7 +93,8 @@ namespace ShawarmaTycoon
         /// piece is turned a quarter turn, so its authored length runs along Z.
         /// </summary>
         public static int TileAlongZ(
-            string assetName, Transform parent, float x, float centerZ, float span, float yaw)
+            string assetName, Transform parent, float x, float centerZ, float span, float yaw,
+            float y = 0f)
         {
             float pitch = TileWidth(assetName, 4f);
             if (pitch <= 0.01f) return 0;
@@ -88,7 +102,7 @@ namespace ShawarmaTycoon
             int count = Mathf.Max(1, Mathf.CeilToInt(span / pitch));
             float start = centerZ - (count - 1) * pitch * 0.5f;
             for (int i = 0; i < count; i++)
-                Spawn(assetName, parent, new Vector3(x, 0f, start + i * pitch), yaw);
+                Spawn(assetName, parent, new Vector3(x, y, start + i * pitch), yaw);
             return count;
         }
 
@@ -96,7 +110,11 @@ namespace ShawarmaTycoon
         {
             if (Cache.TryGetValue(assetName, out GameObject cached))
                 return cached;
-            GameObject prefab = Resources.Load<GameObject>(Folder + assetName);
+            GameObject prefab = GameCatalogs.TryGetArt(assetName, out GameObject catalogPrefab)
+                ? catalogPrefab
+                : Resources.Load<GameObject>(Folder + assetName);
+            if (prefab == null)
+                prefab = Resources.Load<GameObject>(PolyFolder + assetName);
             Cache[assetName] = prefab;
             return prefab;
         }
@@ -104,13 +122,21 @@ namespace ShawarmaTycoon
         private static Bounds MeasureBounds(GameObject prefab)
         {
             Renderer[] renderers = prefab.GetComponentsInChildren<Renderer>(true);
+            // LOD1/LOD2 sit at the same place, so on the authored pack LOD0 alone
+            // is enough and avoids counting decimated duplicates. The Poly Pizza
+            // pieces are single-mesh, so a pass that finds no LOD0 measures the
+            // whole model rather than reporting a zero-size tile.
+            Bounds bounds = Measure(renderers, lod0Only: true);
+            return bounds.size.sqrMagnitude > 0f ? bounds : Measure(renderers, lod0Only: false);
+        }
+
+        private static Bounds Measure(Renderer[] renderers, bool lod0Only)
+        {
             bool found = false;
             Bounds bounds = default;
             foreach (Renderer renderer in renderers)
             {
-                // LOD1/LOD2 sit at the same place; LOD0 alone is enough and
-                // avoids counting decimated duplicates.
-                if (!renderer.name.EndsWith("LOD0")) continue;
+                if (lod0Only && !renderer.name.EndsWith("LOD0")) continue;
                 if (!found)
                 {
                     bounds = renderer.bounds;

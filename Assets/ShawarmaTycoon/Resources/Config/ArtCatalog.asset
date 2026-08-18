@@ -1,0 +1,139 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5c6289e079fe2474ea9d2652038b0420, type: 3}
+  m_Name: ArtCatalog
+  m_EditorClassIdentifier: Assembly-CSharp::ShawarmaTycoon.ArtCatalog
+  entries:
+  - id: 01_player_character
+    prefab: {fileID: 1070115393358184505, guid: 39d9eb9a25b7b97449c3fbee3d267c77, type: 3}
+  - id: 02_customer_character
+    prefab: {fileID: 3507143172303507371, guid: 3e2e99c16b62531469ff086134cc7c93, type: 3}
+  - id: 03_cashier_worker
+    prefab: {fileID: 6028393035084846214, guid: 8c8176d39c0ef044195cf54fd711bdd1, type: 3}
+  - id: 04_meat_storage_rack
+    prefab: {fileID: 2273706397715312768, guid: 1f56f7ba696aea2479dd8b631336f79d, type: 3}
+  - id: 06_rotisserie_station
+    prefab: {fileID: 1214807961003969025, guid: ee3486a6b35049345938d5ae3457c25d, type: 3}
+  - id: 06_shawarma_rotisserie
+    prefab: {fileID: 1214807961003969025, guid: ee3486a6b35049345938d5ae3457c25d, type: 3}
+  - id: 08_cutting_station
+    prefab: {fileID: 3795817982395246360, guid: a0ec21278f4d4d1449c23d094843ed28, type: 3}
+  - id: 10_wrap_preparation_station
+    prefab: {fileID: 3270049935449037340, guid: 05f9d3d37f155da44bb5b409455e32a4, type: 3}
+  - id: 12_service_cashier_counter
+    prefab: {fileID: 1429049574944675996, guid: 14b4b3800100cfc4d9bbc62c336d8ea3, type: 3}
+  - id: 13_conveyor_straight
+    prefab: {fileID: 5993579121741095229, guid: d6c8b985a85fc3148aa47bfbd3798089, type: 3}
+  - id: 14_conveyor_corner
+    prefab: {fileID: 89783591744182666, guid: d10cc8574a435bc49a0282436fdbf1ff, type: 3}
+  - id: 15_dining_table
+    prefab: {fileID: 4304701702658714869, guid: a08096c913ad51d458334f3b913273f7, type: 3}
+  - id: 15_dining_table_clean
+    prefab: {fileID: 5315561926349812589, guid: 5c2e070956bb4af4798723009e15f390, type: 3}
+  - id: 16_dirty_table_props
+    prefab: {fileID: 4584867763042638373, guid: 9bc0a591b364f044cb40ff9da1318016, type: 3}
+  - id: 17_trash_bin
+    prefab: {fileID: 248607796985599781, guid: 5cd6168f0b8d36a46aac398fa2a20c97, type: 3}
+  - id: 18_money_collection_pad
+    prefab: {fileID: 176125237251574770, guid: 4dd562db54e7c2941abfd393a475efc1, type: 3}
+  - id: 19_upgrade_pad
+    prefab: {fileID: 2889471061823570675, guid: cf7169f58d2dfb94e809976c9e90e5cf, type: 3}
+  - id: 20_locked_expansion_pad
+    prefab: {fileID: 2329038049587144965, guid: 80a3bb6e001a274408f0abf40fefbc88, type: 3}
+  - id: 21_entrance_door
+    prefab: {fileID: 813499311721163432, guid: c5626355b78b7d14d88fe470d287b4f4, type: 3}
+  - id: 22_modular_floor_tile
+    prefab: {fileID: 461834434764349128, guid: d3276ef79f764eb4885710f90c18dac4, type: 3}
+  - id: 23_modular_wall_straight
+    prefab: {fileID: 5993110356008565854, guid: 200da7bae8d753b47a75068e08107965, type: 3}
+  - id: 24_modular_wall_corner
+    prefab: {fileID: 1678071596045149952, guid: ba2286cf1edd60444896f8a27889c1d3, type: 3}
+  - id: 25_hr_manager_desk
+    prefab: {fileID: 5703045471625909021, guid: f9c9981e77d5d1f47ba018c37a93fb2f, type: 3}
+  - id: 26_recruitment_desk
+    prefab: {fileID: 3279364995007845594, guid: cfcd5dfe6489ddb4e93aafb9ce679f27, type: 3}
+  - id: 27_general_manager_desk
+    prefab: {fileID: 8337087159374158981, guid: 291a775920272fb4c84782584495e4e7, type: 3}
+  - id: 33_decorative_plant
+    prefab: {fileID: 57408605004441247, guid: a726fc8258512644abec78450b8fa77c, type: 3}
+  - id: 34_floating_diorama_island
+    prefab: {fileID: 1245003618489464, guid: 08a40c576cd426b4faeaf406055ce291, type: 3}
+  - id: 40_road_straight
+    prefab: {fileID: 1381382032054932930, guid: ae82cea5f861655418fb16faec779faa, type: 3}
+  - id: 41_sidewalk_straight
+    prefab: {fileID: 3085267309241318464, guid: 6ce4c88e028ed914fad4eecbb010c571, type: 3}
+  - id: 42_sidewalk_corner
+    prefab: {fileID: 8151737564383019694, guid: 320a2a90b36a7ab4581123040fdfee3b, type: 3}
+  - id: 43_city_building_a
+    prefab: {fileID: 1228162704470630928, guid: 837591c7c12fdb94f9a4cbc908076b8e, type: 3}
+  - id: 44_city_building_b
+    prefab: {fileID: 5656005023142255185, guid: 0753c8a75521102469846e0b418fc607, type: 3}
+  - id: 45_street_lamp
+    prefab: {fileID: 7835253767049318821, guid: 8b8b9b31a787c6a4b85db2a0c4bf90c9, type: 3}
+  - id: 46_city_car
+    prefab: {fileID: 1993805599967672126, guid: b8ac830eea682594e8d19abb118af8a0, type: 3}
+  - id: 50_customer_vest_green
+    prefab: {fileID: 5271205004301623413, guid: a472c991936a0e545927e4f68eb0de7b, type: 3}
+  - id: 51_customer_vest_navy
+    prefab: {fileID: 124815323075453266, guid: e6b9659e37bb83b48bf2f68b6a6987c3, type: 3}
+  - id: 52_customer_sweater
+    prefab: {fileID: 3507143172303507371, guid: 3e2e99c16b62531469ff086134cc7c93, type: 3}
+  - id: 53_worker_teal
+    prefab: {fileID: 6028393035084846214, guid: 8c8176d39c0ef044195cf54fd711bdd1, type: 3}
+  - id: 54_worker_red
+    prefab: {fileID: 1070115393358184505, guid: 39d9eb9a25b7b97449c3fbee3d267c77, type: 3}
+  - id: 55_worker_red_backcap
+    prefab: {fileID: 3368688400464957310, guid: c149b3225e1d657428505a3991511f31, type: 3}
+  - id: 60_cutting_station
+    prefab: {fileID: 3795817982395246360, guid: a0ec21278f4d4d1449c23d094843ed28, type: 3}
+  - id: 61_wrap_station
+    prefab: {fileID: 3270049935449037340, guid: 05f9d3d37f155da44bb5b409455e32a4, type: 3}
+  - id: 62_cashier_counter
+    prefab: {fileID: 1429049574944675996, guid: 14b4b3800100cfc4d9bbc62c336d8ea3, type: 3}
+  - id: 63_conveyor_straight
+    prefab: {fileID: 5993579121741095229, guid: d6c8b985a85fc3148aa47bfbd3798089, type: 3}
+  - id: 64_conveyor_corner
+    prefab: {fileID: 89783591744182666, guid: d10cc8574a435bc49a0282436fdbf1ff, type: 3}
+  - id: 65_manager_desk_stamp
+    prefab: {fileID: 5703045471625909021, guid: f9c9981e77d5d1f47ba018c37a93fb2f, type: 3}
+  - id: 66_manager_desk_pencils
+    prefab: {fileID: 3279364995007845594, guid: cfcd5dfe6489ddb4e93aafb9ce679f27, type: 3}
+  - id: 67_manager_desk_plant
+    prefab: {fileID: 8337087159374158981, guid: 291a775920272fb4c84782584495e4e7, type: 3}
+  - id: 70_dining_table
+    prefab: {fileID: 5315561926349812589, guid: 5c2e070956bb4af4798723009e15f390, type: 3}
+  - id: 71_dining_table_dirty
+    prefab: {fileID: 4584867763042638373, guid: 9bc0a591b364f044cb40ff9da1318016, type: 3}
+  - id: 72_trash_bin
+    prefab: {fileID: 248607796985599781, guid: 5cd6168f0b8d36a46aac398fa2a20c97, type: 3}
+  - id: 73_planter
+    prefab: {fileID: 57408605004441247, guid: a726fc8258512644abec78450b8fa77c, type: 3}
+  - id: 74_wrap_tray_stack
+    prefab: {fileID: 775703644750516873, guid: 8baaee2ed623f65439d698ed3201cc1d, type: 3}
+  - id: 75_meat_tray_stack
+    prefab: {fileID: 2907729233365368898, guid: 18e68236a6f67fa4e9fa0d2d3a725c8f, type: 3}
+  - id: 76_wall_corner
+    prefab: {fileID: 1678071596045149952, guid: ba2286cf1edd60444896f8a27889c1d3, type: 3}
+  - id: 77_wall_straight
+    prefab: {fileID: 5993110356008565854, guid: 200da7bae8d753b47a75068e08107965, type: 3}
+  - id: 78_floor_tiled
+    prefab: {fileID: 461834434764349128, guid: d3276ef79f764eb4885710f90c18dac4, type: 3}
+  - id: 79_floor_plot
+    prefab: {fileID: 1245003618489464, guid: 08a40c576cd426b4faeaf406055ce291, type: 3}
+  - id: 80_entrance
+    prefab: {fileID: 813499311721163432, guid: c5626355b78b7d14d88fe470d287b4f4, type: 3}
+  - id: 81_lock_pad
+    prefab: {fileID: 2329038049587144965, guid: 80a3bb6e001a274408f0abf40fefbc88, type: 3}
+  - id: 82_money_pad
+    prefab: {fileID: 176125237251574770, guid: 4dd562db54e7c2941abfd393a475efc1, type: 3}
+  - id: 83_upgrade_pad
+    prefab: {fileID: 2889471061823570675, guid: cf7169f58d2dfb94e809976c9e90e5cf, type: 3}

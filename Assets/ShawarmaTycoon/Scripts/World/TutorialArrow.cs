@@ -8,18 +8,21 @@ namespace ShawarmaTycoon
         private Transform source;
         private Transform oven;
         private Transform cutting;
-        private Transform wrap;
         private Transform service;
         private int completedCycles;
         private ItemType previousHeldType;
 
-        public void Configure(CarryInventory playerInventory, Transform sourceTarget, Transform ovenTarget, Transform cuttingTarget, Transform wrapTarget, Transform serviceTarget)
+        public void Configure(
+            CarryInventory playerInventory,
+            Transform sourceTarget,
+            Transform ovenTarget,
+            Transform cuttingTarget,
+            Transform serviceTarget)
         {
             inventory = playerInventory;
             source = sourceTarget;
             oven = ovenTarget;
             cutting = cuttingTarget;
-            wrap = wrapTarget;
             service = serviceTarget;
         }
 
@@ -32,11 +35,11 @@ namespace ShawarmaTycoon
                 gameObject.SetActive(false);
                 return;
             }
+
             Transform target = inventory.Count == 0 ? source : inventory.HeldType switch
             {
                 ItemType.RawMeat => oven,
                 ItemType.CookedMeat => cutting,
-                ItemType.SlicedMeat => wrap,
                 ItemType.Wrap => service,
                 _ => source
             };

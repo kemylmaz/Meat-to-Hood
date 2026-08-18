@@ -18,6 +18,11 @@ namespace ShawarmaTycoon
             CoinsChanged?.Invoke(Coins);
         }
 
+        private void OnDestroy()
+        {
+            if (Instance == this) Instance = null;
+        }
+
         public void Configure(int initialCoins)
         {
             startingCoins = Mathf.Max(0, initialCoins);

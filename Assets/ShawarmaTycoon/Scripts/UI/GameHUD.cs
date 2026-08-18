@@ -88,6 +88,7 @@ namespace ShawarmaTycoon.UI
             Joystick = TouchJoystick.Create(SafeArea, CanvasRect);
 
             CoinCounter.Create(SafeArea);
+            ShopProgressBar.Create(SafeArea);
             StatusPanel.Create(SafeArea);
             TasksPanel.Create(SafeArea);
             Objective = ObjectiveBanner.Create(SafeArea);

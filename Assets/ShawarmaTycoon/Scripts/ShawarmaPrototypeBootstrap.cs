@@ -18,41 +18,81 @@ namespace ShawarmaTycoon
         /// </summary>
         private static readonly Vector3 FacingCustomer = new(0f, 180f, 0f);
 
+        /// <summary>Tables the shop opens with, before anything is bought.</summary>
+        private const int FreeTables = 2;
+
+        /// <summary>How many of the ten stand on the shop's own floor.</summary>
+        private const int MainFloorTables = 6;
+
+        /// <summary>
+        /// Where the ten tables go, in the order they are bought. Two rows of
+        /// three across the dining room, then two on each purchasable plot.
+        /// </summary>
+        private static readonly Vector3[] TableSlots =
+        {
+            new(-9f, 0.25f, 1.4f), new(-6.2f, 0.25f, 1.4f), new(-3.4f, 0.25f, 1.4f),
+            new(-9f, 0.25f, -2f), new(-6.2f, 0.25f, -2f), new(-3.4f, 0.25f, -2f),
+            Vector3.zero, Vector3.zero, Vector3.zero, Vector3.zero
+        };
+
         private Transform runtimeRoot;
         private Transform playerTransform;
         private MobilePlayerController playerMotor;
         private CarryInventory inventory;
         private CityLayout cityLayout;
+        private TrafficSystem traffic;
+        private DioramaWorld shopWorld;
 
         private void Awake()
         {
             if (buildOnAwake) BuildPrototype();
         }
 
+        /// <summary>
+        /// Assembles the whole shop. Runs on Awake in a live session, and can be
+        /// run in the editor to put the same world in the Scene view - see
+        /// <see cref="ShawarmaTycoon.EditorTools.ScenePreview"/>. Outside play mode
+        /// it stops at the world: the parts that need MonoBehaviour lifecycle
+        /// callbacks to exist are skipped rather than half-built.
+        /// </summary>
         [ContextMenu("Build Prototype")]
         public void BuildPrototype()
         {
             if (GameObject.Find("Shawarma Prototype Runtime") != null)
                 return;
 
-            ConfigureMobileRuntime();
-            ConfigureCameraAndLighting();
+            GameCatalogs.Initialize();
+            GameConfig gameConfig = GameCatalogs.Game;
+            EconomyConfig economyConfig = GameCatalogs.Economy;
+            RestaurantLayoutConfig layout = GameCatalogs.Layout;
+            DioramaWorldConfig worldConfig = GameCatalogs.World;
+
+            PrototypeRuntimeInstaller.ConfigureApplication(gameConfig);
+            // Skipped in the editor: it moves the scene's own camera and light and
+            // writes the render and quality settings, which would dirty the scene
+            // every time somebody opened a preview to place a prop against.
+            if (Application.isPlaying) ConfigureCameraAndLighting();
 
             GameObject root = new("Shawarma Prototype Runtime");
             runtimeRoot = root.transform;
 
-            GameEconomy economy = root.AddComponent<GameEconomy>();
-            economy.Configure(startingCoins);
-            root.AddComponent<RushHourSystem>();
-            root.AddComponent<ComboSystem>();
-            root.AddComponent<ReputationSystem>();
-            AudioDirector.Ensure(runtimeRoot);
+            // Cleared before anything registers. The tracks hold closures over the
+            // objects that own them, so a rebuild into a live session would
+            // otherwise keep counting the shop it just destroyed.
+            UpgradeProgress.Reset();
 
-            BuildCity();
-            CreatePlayer();
+            PrototypeRuntimeInstaller.Install(root, gameConfig, economyConfig, startingCoins);
 
+            shopWorld = ShopWorldBuilder.Build(runtimeRoot, worldConfig);
+            BuildCity(gameConfig.Features, worldConfig);
+            CreatePlayer(worldConfig);
+
+            // --- kitchen line -------------------------------------------------
+            // Rack, spit, carving board, till. The spit and the board work on
+            // their own once they are fed, so the line is about carrying batches
+            // between four points rather than standing at each one in turn.
             ItemStation meatSource = CreateStation(
-                "ET DEPOSU", new Vector3(-6f, 0.25f, 6.3f), new Vector3(2.5f, 0.9f, 2.0f),
+                shopWorld.KitchenRoot, "ET DEPOSU", layout.MeatSource, new Vector3(2.5f, 0.9f, 2.0f),
                 new Color(0.74f, 0.39f, 0.26f), StationMode.Source,
                 ItemType.None, ItemType.RawMeat, 0.5f, 1, 16, 0.65f);
             DecorateMeatSource(meatSource.transform);
@@ -60,277 +100,290 @@ namespace ShawarmaTycoon
                 meatSource.transform, "04_meat_storage_rack", new Vector3(2.4f, 2.25f, 1.75f),
                 Vector3.zero, new Vector3(0f, 180f, 0f), false,
                 "Counter", "Work Top", "Rack Back", "RawMeat");
-            meatSource.SetVisualLayout(
-                new Vector3(-0.48f, 0.25f, -1.05f), new Vector3(0.48f, 0.25f, -1.05f), 2.9f);
+            ApplyAuthoredStationLayout(meatSource, 2.9f, -1.05f);
 
             ItemStation oven = CreateStation(
-                "OCAK", new Vector3(-3f, 0.25f, 6.3f), new Vector3(2.2f, 0.9f, 1.9f),
+                shopWorld.KitchenRoot, "OCAK", layout.Oven, new Vector3(2.2f, 0.9f, 1.9f),
                 new Color(0.88f, 0.45f, 0.20f), StationMode.Processor,
-                ItemType.RawMeat, ItemType.CookedMeat, 2.2f, 10, 10, 1f);
+                ItemType.RawMeat, ItemType.CookedMeat, 1.4f, 12, 12, 1f);
             DecorateOven(oven.transform);
+            // Fitted rather than placed at its authored 1.16 m. The spit is the
+            // middle of the shop, and next to a 2.4 m rack and a 2.2 m counter the
+            // model as authored read as a microwave.
             MeshyVisuals.TryReplaceDirect(
-                oven.transform, "06_shawarma_rotisserie", new Vector3(1.37f, 2.25f, 1.0f),
-                Vector3.zero, new Vector3(0f, 180f, 0f), false,
+                oven.transform, "06_shawarma_rotisserie", new Vector3(1.9f, 3.2f, 1.4f),
+                Vector3.zero, FacingCustomer, false,
                 "Counter", "Work Top", "Heater Left", "Heater Right", "Doner Spit");
-            oven.SetVisualLayout(
-                new Vector3(-0.34f, 1.27f, -0.42f), new Vector3(0.34f, 1.27f, -0.42f), 2.55f);
-
-            ItemStation cutting = CreateStation(
-                "KESİM", new Vector3(0f, 0.25f, 6.3f), new Vector3(2.2f, 0.9f, 1.9f),
-                new Color(0.65f, 0.70f, 0.67f), StationMode.Processor,
-                ItemType.CookedMeat, ItemType.SlicedMeat, 1.15f, 10, 10, 1f);
-            DecorateCuttingCounter(cutting.transform);
-            MeshyVisuals.TryReplaceDirect(
-                cutting.transform, "08_cutting_station", new Vector3(2.05f, 1.2f, 1.75f),
-                Vector3.zero, new Vector3(0f, 180f, 0f), false,
-                "Counter", "Work Top", "Cutting Board", "Knife");
-            cutting.SetVisualLayout(
-                new Vector3(-0.50f, 1.42f, -0.38f), new Vector3(0.50f, 1.42f, -0.38f), 1.9f);
-            cutting.SetOutputBatchVisual("75_meat_tray_stack", 4,
+            ApplyAuthoredStationLayout(oven, 2.55f, -0.82f);
+            oven.SetOutputBatchVisual("75_meat_tray_stack", 4,
                 new Vector3(0.46f, 0.34f, 0.36f), 0.35f);
 
-            ItemStation wrap = CreateStation(
-                "DÜRÜM", new Vector3(3f, 0.25f, 6.3f), new Vector3(2.2f, 0.9f, 1.9f),
-                new Color(0.91f, 0.70f, 0.30f), StationMode.Processor,
-                ItemType.SlicedMeat, ItemType.Wrap, 0.9f, 10, 10, 1f);
-            DecorateWrapCounter(wrap.transform);
-            MeshyVisuals.TryReplaceDirect(
-                wrap.transform, "10_wrap_preparation_station", new Vector3(2.05f, 1.2f, 1.75f),
-                Vector3.zero, new Vector3(0f, 180f, 0f), false,
-                "Counter", "Work Top", "Lavash", "Greens");
-            wrap.SetVisualLayout(
-                new Vector3(-0.50f, 1.42f, -0.38f), new Vector3(0.50f, 1.42f, -0.38f), 1.9f);
-            wrap.SetOutputBatchVisual("74_wrap_tray_stack", 4,
+            ItemStation cutting = CreateStation(
+                shopWorld.KitchenRoot, "KESİM", layout.Cutting, new Vector3(2.2f, 0.9f, 1.9f),
+                new Color(0.65f, 0.70f, 0.67f), StationMode.Processor,
+                ItemType.CookedMeat, ItemType.Wrap, 1.6f, 12, 12, 1f);
+            DecorateCuttingCounter(cutting.transform);
+            MeshyVisuals.TryReplaceDirectAuthored(
+                cutting.transform, "08_cutting_station",
+                Vector3.zero, FacingCustomer,
+                "Counter", "Work Top", "Cutting Board", "Knife");
+            ApplyAuthoredStationLayout(cutting, 1.9f, -0.75f);
+            cutting.SetOutputBatchVisual("74_wrap_tray_stack", 4,
                 new Vector3(0.46f, 0.44f, 0.36f), 0.45f);
 
             ItemStation service = CreateStation(
-                "SERVİS", new Vector3(6f, 0.25f, 6.3f), new Vector3(2.2f, 0.9f, 1.9f),
+                shopWorld.KitchenRoot, "SERVİS", layout.Service, new Vector3(2.2f, 0.9f, 1.9f),
                 PrototypeVisuals.Teal, StationMode.Service,
                 ItemType.Wrap, ItemType.None, 0.1f, 1, 14, 1f);
-            MeshyVisuals.TryReplaceDirect(
-                service.transform, "12_service_cashier_counter", new Vector3(2.05f, 1.2f, 1.75f),
-                Vector3.zero, new Vector3(0f, 180f, 0f), false,
+            MeshyVisuals.TryReplaceDirectAuthored(
+                service.transform, "12_service_cashier_counter",
+                Vector3.zero, FacingCustomer,
                 "Counter", "Work Top");
-            service.SetVisualLayout(
-                new Vector3(-0.50f, 1.42f, -0.38f), new Vector3(0.50f, 1.42f, -0.38f), 1.9f);
+            Vector3 serviceTray = ApplyAuthoredStationLayout(service, 1.9f, -0.66f);
+            service.SetOutputBatchVisual("74_wrap_tray_stack", 3,
+                new Vector3(0.46f, 0.44f, 0.36f), 0.45f);
+            BuildServingDisplay(service, serviceTray);
+            // The shop opens prepped. The queue arrives within seconds of the
+            // first frame and the line takes a minute and a half to produce
+            // anything, so without this the opening is spent watching.
+            service.Prime(4);
+            cutting.Prime(3);
+            oven.Prime(3);
 
-            GameObject trashBinObject = new("Çöp Kutusu");
-            trashBinObject.transform.SetParent(runtimeRoot, false);
-            trashBinObject.transform.localPosition = new Vector3(-9.4f, 0.25f, 3.2f);
-            PrototypeVisuals.CreatePrimitive("Çöp Gövdesi", PrimitiveType.Cube, trashBinObject.transform,
-                new Vector3(0f, 0.52f, 0f), new Vector3(0.82f, 0.96f, 0.70f), new Color(0.34f, 0.52f, 0.43f),
-                colliderEnabled: true);
-            PrototypeVisuals.CreatePrimitive("Çöp Kapak", PrimitiveType.Cube, trashBinObject.transform,
-                new Vector3(0f, 1.04f, 0f), new Vector3(0.91f, 0.12f, 0.79f), new Color(0.20f, 0.34f, 0.28f));
-            PrototypeVisuals.CreatePrimitive("Çöp Açıklığı", PrimitiveType.Cube, trashBinObject.transform,
-                new Vector3(0f, 0.83f, -0.36f), new Vector3(0.50f, 0.22f, 0.035f), new Color(0.10f, 0.16f, 0.14f));
-            PrototypeVisuals.CreatePrimitive("Ayak Pedalı", PrimitiveType.Cube, trashBinObject.transform,
-                new Vector3(0f, 0.08f, -0.42f), new Vector3(0.32f, 0.08f, 0.22f), new Color(0.88f, 0.68f, 0.26f));
-            TrashBin trashBin = trashBinObject.AddComponent<TrashBin>();
-            trashBin.Configure(playerTransform, inventory);
-            MeshyVisuals.TryReplaceDirect(
-                trashBinObject.transform, "17_trash_bin", new Vector3(0.70f, 1.05f, 0.70f),
-                Vector3.zero, FacingCustomer, false,
-                "Çöp Gövdesi", "Çöp Kapak", "Çöp Açıklığı", "Ayak Pedalı");
-
-            GameObject takeawayRoot = new("Takeaway Counter");
-            takeawayRoot.transform.SetParent(runtimeRoot, false);
-            takeawayRoot.transform.localPosition = new Vector3(-9.45f, 0.25f, -7.05f);
-            TakeawaySystem takeaway = takeawayRoot.AddComponent<TakeawaySystem>();
-            takeaway.Configure(playerTransform, inventory);
-            // Same authored counter as the service station: both are a till the
-            // customer walks up to, and the window was still a bare grey box.
-            // Only the body is replaced - the bag, order light and cash pad on top
-            // of it are gameplay state and stay.
-            if (MeshyVisuals.TryReplaceDirect(
-                    takeawayRoot.transform, "12_service_cashier_counter",
-                    new Vector3(2.05f, 1.20f, 1.60f), Vector3.zero, new Vector3(0f, 180f, 0f),
-                    false, "Takeaway Counter Body", "Takeaway Counter Top"))
-                takeaway.SetCounterTopHeight(1.20f);
-
-            GameObject takeawayUnlockObject = new("Takeaway Unlock Pad");
-            takeawayUnlockObject.transform.SetParent(runtimeRoot, false);
-            takeawayUnlockObject.transform.localPosition = new Vector3(-9.45f, 0.28f, -5.60f);
-            PrototypeVisuals.CreatePrimitive(
-                "Takeaway Upgrade Pad", PrimitiveType.Cylinder, takeawayUnlockObject.transform,
-                Vector3.zero, new Vector3(0.82f, 0.06f, 0.82f), new Color(0.95f, 0.58f, 0.20f));
-            MeshyVisuals.TryReplaceDirect(takeawayUnlockObject.transform, "19_upgrade_pad",
-                new Vector3(1.10f, 0.34f, 1.10f), Vector3.down * 0.03f, Vector3.zero,
-                false, "Takeaway Upgrade Pad");
-            ManagementRoomUnlockPad takeawayUnlock = takeawayUnlockObject.AddComponent<ManagementRoomUnlockPad>();
-            takeawayUnlock.Configure(
-                playerTransform, takeawayRoot, 280, "takeaway.unlocked", "TAKEAWAY");
+            // Where the queue pays. Set beside the till on the shop-floor side, so
+            // it is collected on the way past rather than reached over the counter.
+            GameObject tillObject = new("Kasa Parası");
+            tillObject.transform.SetParent(service.transform, false);
+            tillObject.transform.localPosition = new Vector3(-1.35f, 0f, -0.9f);
+            CashPile till = tillObject.AddComponent<CashPile>();
+            till.Configure(playerTransform);
 
             meatSource.SetWorldLabelVisible(false);
             oven.SetWorldLabelVisible(false);
             cutting.SetWorldLabelVisible(false);
-            wrap.SetWorldLabelVisible(false);
             service.SetWorldLabelVisible(false);
 
-            ConveyorLink rawBelt = CreateConveyor("Et Bandı", meatSource, oven);
-            ConveyorLink ovenBelt = CreateConveyor("Ocak Bandı", oven, cutting);
-            ConveyorLink cutBelt = CreateConveyor("Kesim Bandı", cutting, wrap);
-            ConveyorLink wrapBelt = CreateConveyor("Dürüm Bandı", wrap, service);
+            CreateWorkerPad(shopWorld.KitchenRoot, "Ocak İşçisi",
+                layout.OvenWorkerPad, "station.oven.worker", oven);
+            CreateWorkerPad(shopWorld.KitchenRoot, "Kesim İşçisi",
+                layout.CuttingWorkerPad, "station.cutting.worker", cutting);
 
-            // One management room replaces the three unlockable office wings.
-            // Those wings, and the upgrade pads that used to sit behind them,
-            // were both created inactive and never switched on, so every pad in
-            // here was unreachable in the shipped build.
-            GameObject managementRoot = new("Yönetim Odası");
-            managementRoot.transform.SetParent(runtimeRoot, false);
-            BuildOfficeFloor(managementRoot.transform);
+            // --- belts --------------------------------------------------------
+            ConveyorLink rawBelt = CreateConveyor(
+                shopWorld.KitchenRoot, "Et Bandı", meatSource, oven, layout.MeatSource, layout.Oven);
+            ConveyorLink ovenBelt = CreateConveyor(
+                shopWorld.KitchenRoot, "Ocak Bandı", oven, cutting, layout.Oven, layout.Cutting);
+            ConveyorLink cuttingBelt = CreateConveyor(
+                shopWorld.KitchenRoot, "Kesim Bandı", cutting, service, layout.Cutting, layout.Service);
+            CreateConveyorPad(shopWorld.KitchenRoot, "Et Bandı Pedi",
+                layout.MeatBeltPad, "belt.raw", rawBelt);
+            CreateConveyorPad(shopWorld.KitchenRoot, "Ocak Bandı Pedi",
+                layout.OvenBeltPad, "belt.oven", ovenBelt);
+            CreateConveyorPad(shopWorld.KitchenRoot, "Kesim Bandı Pedi",
+                layout.CuttingBeltPad, "belt.cutting", cuttingBelt);
 
-            // Three offices, each behind its own door and its own price. They used
-            // to stand together in one open room that was there from the first
-            // second, so the whole management side of the game was handed over
-            // before the player had sold anything.
-            ManagementOfficeTerminal hrTerminal = CreateManagementRoom(
-                managementRoot.transform, "İK Odası", "25_hr_manager_desk",
-                -7.4f, "office.hr", "IK", 260);
-            ManagementOfficeTerminal recruitTerminal = CreateManagementRoom(
-                managementRoot.transform, "İşe Alım Odası", "26_recruitment_desk",
-                -2.8f, "office.recruit", "ISE ALIM", 420);
-            ManagementOfficeTerminal gmTerminal = CreateManagementRoom(
-                managementRoot.transform, "GM Odası", "27_general_manager_desk",
-                1.8f, "office.gm", "GM", 650);
+            // --- utilities ----------------------------------------------------
+            GameObject trashBinObject = CreateTrashBin(shopWorld.UtilityRoot, layout.TrashBin);
+            TakeawaySystem driveThru = CreateDriveThruWindow(shopWorld.UtilityRoot, gameConfig, layout);
 
-            // Upgrade pads in front of the desks. Each pad floats a world-space
-            // label, so the two rows are staggered and spaced well apart -
-            // packed tighter the captions overlap into an unreadable pile.
-            // Measured: a well run starting shop takes about 70 coins a minute,
-            // rising to roughly 120 once the line is staffed. This board used to
-            // total 525 - the whole early game was bought out in three minutes.
-            // At the figures below it runs about a quarter of an hour.
-            CreateManagementPad(managementRoot.transform, "Ocak İşçisi", new Vector3(-6.8f, 0.28f, -6.0f), StationUpgradeType.Worker, 90, oven, null);
-            CreateManagementPad(managementRoot.transform, "Kesim İşçisi", new Vector3(-5.1f, 0.28f, -6.0f), StationUpgradeType.Worker, 150, cutting, null);
-            CreateManagementPad(managementRoot.transform, "Dürüm İşçisi", new Vector3(-3.4f, 0.28f, -6.0f), StationUpgradeType.Worker, 210, wrap, null);
-            // Player speed and carry capacity belong to the GM desk alone. They
-            // used to also be sold on two pads here, writing player.* save keys
-            // while the desk wrote gm.* - both drove the same two setters, so
-            // whichever loaded last won and a pad purchase was silently wiped on
-            // the next launch.
-            CreateManagementPad(managementRoot.transform, "Et Bandı", new Vector3(-5.95f, 0.28f, -7.7f), StationUpgradeType.Conveyor, 120, null, rawBelt);
-            CreateManagementPad(managementRoot.transform, "Ocak Bandı", new Vector3(-4.25f, 0.28f, -7.7f), StationUpgradeType.Conveyor, 180, null, ovenBelt);
-            CreateManagementPad(managementRoot.transform, "Kesim Bandı", new Vector3(-2.55f, 0.28f, -7.7f), StationUpgradeType.Conveyor, 240, null, cutBelt);
-            CreateManagementPad(managementRoot.transform, "Dürüm Bandı", new Vector3(-0.85f, 0.28f, -7.7f), StationUpgradeType.Conveyor, 320, null, wrapBelt);
+            // --- drinks, desserts and couriers --------------------------------
+            // All three stand built but switched off; their pads bring them in.
+            // Placeholder shapes for now - the fridge and the courier's scooter
+            // are waiting on authored models.
+            ItemStation drinkCrate = CreateStation(
+                shopWorld.UtilityRoot, "İÇECEK DEPOSU", layout.DrinkCrate,
+                new Vector3(1.9f, 1.0f, 1.2f), new Color(0.30f, 0.44f, 0.62f), StationMode.Source,
+                ItemType.None, ItemType.Drink, 0.5f, 1, 18, 1.1f);
+            DecorateDrinkCrate(drinkCrate.transform);
+            ApplyAuthoredStationLayout(drinkCrate, 1.7f, -0.72f);
 
-            CreatePlanter(managementRoot.transform, new Vector3(1.5f, 0.25f, -4.4f));
-            CreatePlanter(managementRoot.transform, new Vector3(-8.4f, 0.25f, -4.4f));
+            ItemStation fridge = CreateStation(
+                shopWorld.UtilityRoot, "BUZDOLABI", layout.Fridge,
+                new Vector3(1.5f, 1.0f, 1.0f), new Color(0.86f, 0.90f, 0.93f), StationMode.Service,
+                ItemType.Drink, ItemType.None, 0.1f, 1, 12, 1f);
+            DecorateFridge(fridge.transform);
+            ApplyAuthoredStationLayout(fridge, 2.4f, -0.7f);
+            fridge.SetEmptyWarning("İÇECEK BİTTİ");
 
+            ItemStation dessertOven = CreateStation(
+                shopWorld.UtilityRoot, "TATLI FIRINI", layout.DessertOven,
+                new Vector3(1.7f, 1.0f, 1.1f), new Color(0.80f, 0.55f, 0.38f), StationMode.Source,
+                ItemType.None, ItemType.Dessert, 0.5f, 1, 8, 4.2f);
+            DecorateDessertOven(dessertOven.transform);
+            ApplyAuthoredStationLayout(dessertOven, 2.2f, -0.7f);
 
-            // Dining room sits symmetrically in the open middle of the lot, clear
-            // of the kitchen line at z = 6.3, the office strip around z = -4 and
-            // the walk-in path from the entrance to the queue.
-            List<CustomerTable> tables = new()
-            {
-                CreateTable(runtimeRoot, "Masa 1", new Vector3(-3.4f, 0.25f, 1.3f)),
-                CreateTable(runtimeRoot, "Masa 2", new Vector3(3.4f, 0.25f, 1.3f))
-            };
+            drinkCrate.SetWorldLabelVisible(false);
+            fridge.SetWorldLabelVisible(false);
+            dessertOven.SetWorldLabelVisible(false);
 
-            // Both wings are one authored plot each, so their footprints match the
-            // model exactly and the two squares butt up against the lot and each
-            // other with no seam.
-            Vector3 plotScale = new(PlotSpan, 0.5f, PlotSpan);
-            Vector3 plotOne = new(12f + PlotSpan * 0.5f, 0f, -3f);
-            Vector3 plotTwo = new(plotOne.x, 0f, plotOne.z + PlotSpan);
+            GameObject drinksRoot = new("İçecek Hattı");
+            drinksRoot.transform.SetParent(shopWorld.UtilityRoot, false);
+            drinkCrate.transform.SetParent(drinksRoot.transform, true);
+            fridge.transform.SetParent(drinksRoot.transform, true);
+            drinksRoot.SetActive(false);
+            dessertOven.gameObject.SetActive(false);
 
-            List<GameObject> expansionModules = new();
-            GameObject moduleOne = CreateExpansionModule("Genişleme 1", plotOne, plotScale);
-            CustomerTable tableThree = CreateTable(moduleOne.transform, "Masa 3", new Vector3(-1.4f, 0.25f, 0f));
-            CustomerTable tableFour = CreateTable(moduleOne.transform, "Masa 4", new Vector3(1.4f, 0.25f, 0f));
-            expansionModules.Add(moduleOne);
-            tables.Add(tableThree);
-            tables.Add(tableFour);
+            CourierStation courier = CreateCourierBay(shopWorld.UtilityRoot, layout);
 
-            GameObject moduleTwo = CreateExpansionModule("Genişleme 2", plotTwo, plotScale);
-            CustomerTable tableFive = CreateTable(moduleTwo.transform, "Masa 5", new Vector3(-1.4f, 0.25f, 0f));
-            CustomerTable tableSix = CreateTable(moduleTwo.transform, "Masa 6", new Vector3(1.4f, 0.25f, 0f));
-            expansionModules.Add(moduleTwo);
-            tables.Add(tableFive);
-            tables.Add(tableSix);
+            // --- offices ------------------------------------------------------
+            ManagementMenuHUD managementHud = root.AddComponent<ManagementMenuHUD>();
+            GameObject managementRoot = new("Yönetim Odaları");
+            managementRoot.transform.SetParent(shopWorld.ManagementRoot, false);
 
-            GameObject previewOne = CreateLockedExpansionPlot(
-                "Locked Dining Wing", plotOne + Vector3.up * 0.03f, plotScale);
-            GameObject previewTwo = CreateLockedExpansionPlot(
-                "Locked Office Wing", plotTwo + Vector3.up * 0.03f, plotScale);
+            // Two rooms, built into the south-west corner against the perimeter
+            // wall, each properly closed with a doorway onto the dining room. They
+            // stand from the first second but empty; the money pad inside puts the
+            // desk and the clerk in. Recruiting moved onto the HR desk, which is
+            // where hiring belongs anyway - three rooms for two jobs was one door
+            // too many to walk through.
+            CreateOffice(managementRoot.transform, "İK Odası", "25_hr_manager_desk",
+                OfficeWestX, ManagementMenu.HumanResources, "PERSONEL", "office.hr",
+                ShopPrices.HumanResourcesOffice, managementHud);
+            CreateOffice(managementRoot.transform, "GM Odası", "27_general_manager_desk",
+                OfficeWestX + OfficeWidth, ManagementMenu.GeneralManager, "GM",
+                "office.gm", ShopPrices.GeneralManagerOffice, managementHud);
 
-            moduleOne.SetActive(false);
-            moduleTwo.SetActive(false);
+            CreatePlanter(managementRoot.transform, new Vector3(2.6f, 0.25f, -7.4f));
+            CreatePlanter(managementRoot.transform, new Vector3(6.2f, 0.25f, -7.4f));
 
+            // --- dining -------------------------------------------------------
+            // Two tables to open with, then one at a time up to ten. Seating is
+            // the measured bottleneck on the whole shop, so it is the thing the
+            // player spends on all the way through rather than a pair of wings
+            // bought once and forgotten.
+            IReadOnlyList<DioramaModule> expansionModules = shopWorld.ExpansionModules;
             DioramaExpansion expansion = root.AddComponent<DioramaExpansion>();
-            float plotEdge = plotOne.x + PlotSpan * 0.5f - 0.6f;
-            expansion.Configure(playerMotor, expansionModules, new[] { previewOne, previewTwo },
-                new[] { plotEdge, plotEdge });
+            expansion.Configure(expansionModules);
 
-            GameObject upgradeRoot = new("Masa Genişletme Alanı");
-            upgradeRoot.transform.SetParent(runtimeRoot, false);
-            upgradeRoot.transform.localPosition = new Vector3(10.25f, 0.27f, 1.0f);
-            PrototypeVisuals.CreatePrimitive(
-                "Upgrade Pad", PrimitiveType.Cylinder, upgradeRoot.transform,
-                Vector3.zero, new Vector3(1.05f, 0.05f, 1.05f), PrototypeVisuals.Green);
-            MeshyVisuals.TryReplaceDirect(upgradeRoot.transform, "19_upgrade_pad",
-                new Vector3(1.30f, 0.40f, 1.30f), Vector3.down * 0.03f, Vector3.zero,
-                false, "Upgrade Pad");
-            UpgradePad upgradePad = upgradeRoot.AddComponent<UpgradePad>();
-            upgradePad.Configure(playerTransform, expansion, 140);
+            List<CustomerTable> tables = new();
+            List<GameObject> boughtTables = new();
+            for (int i = 0; i < TableSlots.Length; i++)
+            {
+                int slot = i;
+                Transform parent = shopWorld.DiningRoot;
+                Vector3 position = TableSlots[i];
+                // The last four stand on the purchasable plots, so buying that
+                // table is also what makes the ground under it appear.
+                if (i >= MainFloorTables)
+                {
+                    int module = (i - MainFloorTables) / 2;
+                    if (module >= expansionModules.Count) break;
+                    parent = expansionModules[module].ContentRoot;
+                    position = new Vector3((i - MainFloorTables) % 2 == 0 ? -1.4f : 1.4f, 0.25f, 0f);
+                }
 
-            // Pedestrians come in from the side street at the front corner; the
-            // main road behind the kitchen is for traffic and the future
-            // drive-through window.
-            Transform entry = CreateMarker("Müşteri Girişi", new Vector3(9.6f, 0.25f, -8.0f));
-            Transform exit = CreateMarker("Müşteri Çıkışı", new Vector3(10.8f, 0.25f, -7.8f));
-            Transform queueFront = CreateMarker("Kuyruk Başı", new Vector3(6f, 0.25f, 4.5f));
+                CustomerTable table = CreateTable(parent, $"Masa {slot + 1}", position);
+                tables.Add(table);
+                if (slot >= FreeTables) boughtTables.Add(table.gameObject);
+            }
+
+            for (int i = 0; i < boughtTables.Count; i++) boughtTables[i].SetActive(false);
+
+            CreatePurchasePad(
+                shopWorld.UtilityRoot, "Masa Ekle", layout.TablePad, "tables",
+                ShopPrices.Table,
+                (level, _) =>
+                {
+                    // Level n adds the nth bought table. The plots hold the last
+                    // four, so they are unlocked as the table that stands on them
+                    // is paid for.
+                    int index = level - 1;
+                    if (index < 0 || index >= boughtTables.Count) return;
+                    int slot = FreeTables + index;
+                    if (slot >= MainFloorTables && (slot - MainFloorTables) % 2 == 0)
+                        expansion.UnlockNext();
+                    boughtTables[index].SetActive(true);
+                });
+
+            // --- customers ----------------------------------------------------
+            Transform entry = CreateMarker(shopWorld.CustomerFlowRoot, "Müşteri Girişi", layout.CustomerEntry);
+            Transform exit = CreateMarker(shopWorld.CustomerFlowRoot, "Müşteri Çıkışı", layout.CustomerExit);
+            Transform queueFront = CreateMarker(shopWorld.CustomerFlowRoot, "Kuyruk Başı", layout.QueueFront);
 
             GameObject customerRoot = new("Müşteriler");
-            customerRoot.transform.SetParent(runtimeRoot, false);
-            CreateCustomerEntrance(entry.position);
+            customerRoot.transform.SetParent(shopWorld.CustomerFlowRoot, false);
             CustomerManager customerManager = customerRoot.AddComponent<CustomerManager>();
-            customerManager.Configure(service, entry, exit, queueFront, Vector3.back, tables);
+            customerManager.Configure(service, till, entry, exit,
+                shopWorld.EntranceAnchor, queueFront, Vector3.back, tables);
+            customerManager.RegisterCounter(ItemType.Drink, fridge);
+            customerManager.RegisterCounter(ItemType.Dessert, dessertOven);
+            courier.Configure(playerTransform, inventory, customerManager, courierCash);
 
-            FloorSpillSystem floorSpills = root.AddComponent<FloorSpillSystem>();
-            floorSpills.Configure(playerTransform, tables);
+            CreatePurchasePad(shopWorld.UtilityRoot, "Buzdolabı Pedi",
+                layout.FridgePad, "shop.fridge", new[] { ShopPrices.Fridge },
+                (_, __) => drinksRoot.SetActive(true));
+            CreatePurchasePad(shopWorld.UtilityRoot, "Tatlı Fırını Pedi",
+                layout.DessertPad, "shop.dessert", new[] { ShopPrices.DessertOven },
+                (_, __) => dessertOven.gameObject.SetActive(true));
+            CreatePurchasePad(shopWorld.UtilityRoot, "Kurye Pedi",
+                layout.CourierPad, "shop.courier", new[] { ShopPrices.Courier },
+                (_, __) => courier.transform.parent.gameObject.SetActive(true));
 
+            FloorSpillSystem floorSpills = null;
+            if (gameConfig.Features.FloorSpills)
+            {
+                floorSpills = root.AddComponent<FloorSpillSystem>();
+                floorSpills.Configure(playerTransform, tables);
+            }
+
+            // --- staff and management ----------------------------------------
             HumanResourcesSystem humanResources = root.AddComponent<HumanResourcesSystem>();
-            humanResources.Configure(playerTransform, new[] { rawBelt, ovenBelt, cutBelt, wrapBelt });
+            humanResources.Configure(playerTransform, new[] { rawBelt, ovenBelt, cuttingBelt });
             PlayerUpgradeSystem playerUpgrades = root.AddComponent<PlayerUpgradeSystem>();
             playerUpgrades.Configure(playerTransform, playerMotor, inventory);
             RecruitmentSystem recruitment = root.AddComponent<RecruitmentSystem>();
-            recruitment.Configure(customerManager, wrap, service, takeaway, floorSpills,
-                runtimeRoot, trashBinObject.transform);
-            ManagementMenuHUD managementHud = root.AddComponent<ManagementMenuHUD>();
+            recruitment.Configure(
+                customerManager, cutting, service, driveThru, till, floorSpills,
+                shopWorld.BaseModule.ContentRoot, trashBinObject.transform,
+                StaffPosts(layout, driveThru));
             managementHud.Configure(humanResources, playerUpgrades, recruitment);
-            hrTerminal.Configure(playerTransform, managementHud, ManagementMenu.HumanResources, "HR UPGRADE");
-            gmTerminal.Configure(playerTransform, managementHud, ManagementMenu.GeneralManager, "GM UPGRADE");
-            recruitTerminal.Configure(playerTransform, managementHud, ManagementMenu.Recruiting, "RECRUIT");
 
-            UI.GameHUD hud = UI.GameHUD.Ensure(runtimeRoot);
-            hud.Objective.Bind(inventory);
-            hud.Objective.BindTables(tables);
-            hud.Objective.BindStations(new[] { oven, cutting, wrap, service });
-            playerMotor.SetJoystick(hud.Joystick);
-            root.AddComponent<GameSessionPersistence>();
+            // The HUD builds its own panels from Awake, so outside play mode there
+            // is nothing to bind to. An editor preview gets the world and no
+            // interface, which is what you want to place props against anyway.
+            if (Application.isPlaying)
+            {
+                UI.GameHUD hud = UI.GameHUD.Ensure(runtimeRoot);
+                hud.Objective.Bind(inventory);
+                hud.Objective.BindTables(tables);
+                hud.Objective.BindStations(new[] { oven, cutting, service });
+                playerMotor.SetJoystick(hud.Joystick);
+            }
 
-            GameObject tutorial = new("Öğretici Ok");
-            tutorial.transform.SetParent(runtimeRoot, false);
-            PrototypeVisuals.CreatePrimitive("Ok Gövdesi", PrimitiveType.Cylinder, tutorial.transform, Vector3.zero,
-                new Vector3(0.20f, 0.52f, 0.20f), new Color(1f, 0.82f, 0.16f));
-            PrototypeVisuals.CreatePrimitive("Ok Ucu", PrimitiveType.Sphere, tutorial.transform, Vector3.down * 0.38f,
-                new Vector3(0.46f, 0.24f, 0.46f), new Color(1f, 0.82f, 0.16f));
-            TutorialArrow tutorialArrow = tutorial.AddComponent<TutorialArrow>();
-            tutorialArrow.Configure(inventory, meatSource.transform, oven.transform, cutting.transform, wrap.transform, service.transform);
+            CreateTutorialArrow(meatSource, oven, cutting, service);
 
-            Debug.Log("[ShawarmaTycoon] Prototype ready: source → oven → cutting → wrap → service → tables → cleaning.");
+            // Things that go wrong, so an automated shop still needs somebody in
+            // it. Held back until at least one belt is running - see the system.
+            ShopEventSystem events = root.AddComponent<ShopEventSystem>();
+            events.Configure(playerTransform, new[] { oven, cutting });
+
+            CreateDecorations(shopWorld.DiningRoot, layout);
+            DressKitchenWall(shopWorld.KitchenRoot, layout);
+            AnimateStations(oven, cutting, dessertOven);
+
+            Debug.Log("[ShawarmaTycoon] Prototype ready: rack → spit → carving board → till, with a drive-through on the street side.");
         }
 
-        private static void ConfigureMobileRuntime()
+        /// <summary>
+        /// Where each hire idles between jobs, in the order of
+        /// <see cref="RecruitmentSystem.AllRoles"/>. Behind the counter they work
+        /// at, rather than the three fixed spots in the middle of the floor the
+        /// old roster used.
+        /// </summary>
+        private static Vector3[] StaffPosts(RestaurantLayoutConfig layout, TakeawaySystem driveThru)
         {
-            Application.targetFrameRate = 60;
-            Application.runInBackground = true;
-            QualitySettings.vSyncCount = 0;
-#if !UNITY_EDITOR
-            Screen.orientation = ScreenOrientation.Portrait;
-            Screen.sleepTimeout = SleepTimeout.NeverSleep;
-#endif
+            Vector3 window = driveThru != null ? driveThru.transform.localPosition : layout.DriveThruCounter;
+            return new[]
+            {
+                layout.Service + new Vector3(-1.3f, 0f, 0.95f),
+                window + new Vector3(0.9f, 0f, -1.1f),
+                new Vector3((layout.Cutting.x + window.x) * 0.5f, layout.Cutting.y, layout.Cutting.z - 2.2f),
+                // The bussers wait at either end of the dining room's first row,
+                // read off the table slots rather than a table that may not have
+                // been bought yet.
+                TableSlots[0] + new Vector3(-2.1f, 0f, 0f),
+                TableSlots[2] + new Vector3(2.1f, 0f, 0f)
+            };
         }
 
         private static void ConfigureCameraAndLighting()
@@ -371,149 +424,33 @@ namespace ShawarmaTycoon
         }
 
         /// <summary>
-        /// The restaurant now sits on a real street corner instead of a floating
-        /// diorama, which is what makes drive-by traffic possible at all.
+        /// The street the shop stands on. Its measurements come from the lot, so
+        /// the pavement meets the kerb and the driveway runs along the back wall
+        /// wherever the lot is sized to.
         /// </summary>
-        private void BuildCity()
+        private void BuildCity(GameFeatureFlags features, DioramaWorldConfig worldConfig)
         {
-            cityLayout = new CityLayout();
+            cityLayout = new CityLayout
+            {
+                LotWidth = worldConfig.CoreSize.x,
+                LotDepth = worldConfig.CoreSize.y,
+                CenterX = worldConfig.CorePosition.x,
+                SurfaceY = worldConfig.DeckTopY
+            };
+
+            if (!features.CityDecor) return;
             CityBlock.Build(runtimeRoot, cityLayout);
 
-            // Low railings mark the lot edge without hiding the street behind it.
-            GameObject backRail = CreateBoundaryRail(
-                new Vector3(0f, 0.52f, WallBackZ), new Vector3(24f, 0.55f, 0.20f));
-            GameObject sideRail = CreateBoundaryRail(
-                new Vector3(WallSideX, 0.52f, 0f), new Vector3(0.20f, 0.55f, 17f));
-
-            if (BuildLotWalls())
-            {
-                // The authored wall stands in for the railing. The primitive stays
-                // alive as an invisible blocker so the player still cannot walk
-                // off the lot - the model's own colliders are switched off.
-                backRail.GetComponent<Renderer>().enabled = false;
-                sideRail.GetComponent<Renderer>().enabled = false;
-            }
-
-            TrafficSystem traffic = runtimeRoot.gameObject.AddComponent<TrafficSystem>();
+            if (!features.Traffic) return;
+            traffic = runtimeRoot.gameObject.AddComponent<TrafficSystem>();
             traffic.Configure(cityLayout);
         }
 
-        /// <summary>Lot edges the perimeter wall runs along.</summary>
-        private const float WallBackZ = 8.35f;
-        private const float WallSideX = -11.85f;
-
-        /// <summary>
-        /// Wall module pitch. The model measures 3.09 across because its skirting
-        /// overhangs the body on both sides; the bodies themselves are 3.00, so
-        /// tiling on bounds width would open a 9 cm crack between every pair.
-        /// </summary>
-        private const float WallPitch = 3.00f;
-
-        /// <summary>How far each corner run sits in from the corner piece origin.</summary>
-        private const float WallArm = 1.33f;
-
-        /// <summary>Wall base, level with the lot surface.</summary>
-        private const float WallBaseY = 0.24f;
-
-        /// <summary>
-        /// Cream perimeter wall along the two lot edges that face away from the
-        /// camera. The near edges are deliberately left open: the rig sits at
-        /// +X / -Z, so a wall there would stand between the camera and the
-        /// management pads instead of behind them.
-        /// </summary>
-        private bool BuildLotWalls()
-        {
-            if (!CityKit.Has("76_wall_corner") || !CityKit.Has("77_wall_straight"))
-                return false;
-
-            GameObject walls = new("Arsa Duvarı");
-            walls.transform.SetParent(runtimeRoot, false);
-
-            // The corner model carries its two runs on +X and +Z, so a quarter
-            // turn anti-clockwise lands them on the lot's -X and +Z edges.
-            CityKit.Spawn("76_wall_corner", walls.transform,
-                new Vector3(WallSideX + WallArm, WallBaseY, WallBackZ - WallArm), -90f);
-
-            // Both runs start one module in, where the corner's own arms end.
-            TileWall(walls.transform, WallSideX + WallPitch, 12f, true, WallBackZ);
-            TileWall(walls.transform, WallBackZ - WallPitch, -8.5f, false, WallSideX);
-            return true;
-        }
-
-        /// <summary>
-        /// Repeats the straight wall between two points on one axis.
-        /// <see cref="CityKit.Tile"/> spaces pieces by their bounds width, which
-        /// for this model is the skirting, not the body - hence the explicit pitch.
-        /// </summary>
-        private static void TileWall(
-            Transform parent, float from, float to, bool alongX, float fixedCoordinate)
-        {
-            int count = Mathf.Max(1, Mathf.RoundToInt(Mathf.Abs(to - from) / WallPitch));
-            float step = (to > from ? WallPitch : -WallPitch);
-            float first = (from + to) * 0.5f - step * (count - 1) * 0.5f;
-
-            for (int i = 0; i < count; i++)
-            {
-                float p = first + step * i;
-                Vector3 position = alongX
-                    ? new Vector3(p, WallBaseY, fixedCoordinate)
-                    : new Vector3(fixedCoordinate, WallBaseY, p);
-                CityKit.Spawn("77_wall_straight", parent, position, alongX ? 0f : 90f);
-            }
-        }
-
-        private void CreateIslandGeometry(Transform parent, Vector3 topScale)
-        {
-            PrototypeVisuals.CreatePrimitive(
-                "Lot Floor", PrimitiveType.Cube, parent,
-                Vector3.zero, topScale, PrototypeVisuals.IslandTop, colliderEnabled: true);
-            PrototypeVisuals.CreatePrimitive(
-                "Lot Kerb", PrimitiveType.Cube, parent,
-                new Vector3(0f, 0.14f, 0f),
-                new Vector3(topScale.x + 0.36f, 0.20f, topScale.z + 0.36f),
-                PrototypeVisuals.IslandSide);
-
-            CreateFloorGrid(parent, topScale);
-        }
-
-        private static void CreateFloorGrid(Transform parent, Vector3 floorSize)
-        {
-            const float spacing = 1.5f;
-            Color grout = new(0.73f, 0.55f, 0.41f);
-            float halfWidth = floorSize.x * 0.5f;
-            float halfDepth = floorSize.z * 0.5f;
-
-            for (float x = -halfWidth + spacing; x < halfWidth; x += spacing)
-            {
-                PrototypeVisuals.CreatePrimitive(
-                    "Floor Grout X", PrimitiveType.Cube, parent,
-                    new Vector3(x, floorSize.y * 0.5f + 0.006f, 0f),
-                    new Vector3(0.025f, 0.012f, floorSize.z - 0.08f), grout);
-            }
-
-            for (float z = -halfDepth + spacing; z < halfDepth; z += spacing)
-            {
-                PrototypeVisuals.CreatePrimitive(
-                    "Floor Grout Z", PrimitiveType.Cube, parent,
-                    new Vector3(0f, floorSize.y * 0.5f + 0.006f, z),
-                    new Vector3(floorSize.x - 0.08f, 0.012f, 0.025f), grout);
-            }
-        }
-
-        private GameObject CreateBoundaryRail(Vector3 position, Vector3 scale)
-        {
-            GameObject rail = PrototypeVisuals.CreatePrimitive(
-                "Island Rail", PrimitiveType.Cube, runtimeRoot,
-                position, scale, new Color(0.62f, 0.34f, 0.24f), colliderEnabled: true);
-            rail.isStatic = true;
-            return rail;
-        }
-
-        private void CreatePlayer()
+        private void CreatePlayer(DioramaWorldConfig worldConfig)
         {
             GameObject player = new("Player");
             player.transform.SetParent(runtimeRoot, false);
-            player.transform.localPosition = new Vector3(-6.0f, 0.26f, 2.2f);
+            player.transform.localPosition = worldConfig.PlayerSpawn;
             playerTransform = player.transform;
 
             PrototypeVisuals.CreatePrimitive(
@@ -532,13 +469,15 @@ namespace ShawarmaTycoon
             controller.stepOffset = 0.25f;
 
             playerMotor = player.AddComponent<MobilePlayerController>();
-            playerMotor.Configure(4.6f, new Vector2(-11.4f, -7.7f), new Vector2(11.4f, 7.7f));
-            MobileCameraRig cameraRig = Camera.main != null ? Camera.main.GetComponent<MobileCameraRig>() : null;
+            playerMotor.Configure(4.6f, shopWorld.WalkableRegistry, worldConfig.EdgeSafetyMargin);
+            // Only in a live session: the rig is put on the camera and given its
+            // camera by ConfigureCameraAndLighting, which an editor preview skips
+            // so it does not move the scene's own camera about.
+            MobileCameraRig cameraRig = Application.isPlaying && Camera.main != null
+                ? Camera.main.GetComponent<MobileCameraRig>()
+                : null;
             if (cameraRig != null)
-            {
                 cameraRig.SetFollowTarget(player.transform);
-                cameraRig.SetFollowBounds(new Vector2(-10.5f, 19f), new Vector2(-7.5f, 7.5f));
-            }
 
             inventory = player.AddComponent<CarryInventory>();
             // Small enough that the natural batch flows through the line quickly.
@@ -547,9 +486,9 @@ namespace ShawarmaTycoon
             // parked at the oven and the best part of a minute before the first
             // wrap reached the counter. The capacity upgrade grows this.
             inventory.Configure(6);
-            if (MeshyVisuals.TryReplaceDirect(
-                    player.transform, "01_player_character", new Vector3(0.75f, 1.70f, 0.85f),
-                    Vector3.zero, Vector3.zero, false, "Body", "Apron") &&
+            if (MeshyVisuals.TryReplaceDirectAuthored(
+                    player.transform, "01_player_character",
+                    Vector3.zero, Vector3.zero, "Body", "Apron") &&
                 MeshyVisuals.TryFindAnchor(player.transform, "CARRY_ANCHOR", out Transform carryAnchor))
             {
                 inventory.SetStackAnchor(carryAnchor);
@@ -557,6 +496,7 @@ namespace ShawarmaTycoon
         }
 
         private ItemStation CreateStation(
+            Transform parent,
             string stationName,
             Vector3 position,
             Vector3 bodyScale,
@@ -570,7 +510,7 @@ namespace ShawarmaTycoon
             float refillInterval)
         {
             GameObject stationObject = new(stationName);
-            stationObject.transform.SetParent(runtimeRoot, false);
+            stationObject.transform.SetParent(parent, false);
             stationObject.transform.localPosition = position;
 
             PrototypeVisuals.CreatePrimitive(
@@ -589,152 +529,719 @@ namespace ShawarmaTycoon
             return station;
         }
 
-        private ConveyorLink CreateConveyor(string beltName, ItemStation from, ItemStation to)
+        /// <summary>
+        /// Glass case over the finished wraps on the serving counter. The counter
+        /// held a bare pile of food where a shop front should be; the frame is
+        /// open on purpose so the stack inside stays the thing you read.
+        /// </summary>
+        private static void BuildServingDisplay(ItemStation service, Vector3 trayLocalPosition)
         {
-            Vector3 start = from.transform.position;
-            Vector3 end = to.transform.position;
-            float length = Mathf.Max(0.7f, Vector3.Distance(start, end) - 1.5f);
+            GameObject display = new("Vitrin");
+            display.transform.SetParent(service.transform, false);
+            display.transform.localPosition = trayLocalPosition;
 
-            // The authored belt is a floor standing unit with its own legs, so
-            // it sits on the lot rather than floating at counter height.
+            Color frame = new(0.86f, 0.90f, 0.93f);
+            Color rail = new(0.55f, 0.62f, 0.66f);
+            const float halfX = 0.44f;
+            const float halfZ = 0.34f;
+            const float height = 0.72f;
+
+            foreach (float x in new[] { -halfX, halfX })
+            foreach (float z in new[] { -halfZ, halfZ })
+                PrototypeVisuals.CreatePrimitive("Vitrin Direği", PrimitiveType.Cube,
+                    display.transform, new Vector3(x, height * 0.5f, z),
+                    new Vector3(0.035f, height, 0.035f), rail);
+
+            PrototypeVisuals.CreatePrimitive("Vitrin Tablası", PrimitiveType.Cube,
+                display.transform, new Vector3(0f, -0.02f, 0f),
+                new Vector3(halfX * 2f + 0.08f, 0.04f, halfZ * 2f + 0.08f), frame);
+            PrototypeVisuals.CreatePrimitive("Vitrin Tepesi", PrimitiveType.Cube,
+                display.transform, new Vector3(0f, height, 0f),
+                new Vector3(halfX * 2f + 0.08f, 0.04f, halfZ * 2f + 0.08f), frame);
+            PrototypeVisuals.CreatePrimitive("Vitrin Kaşı", PrimitiveType.Cube,
+                display.transform, new Vector3(0f, height + 0.10f, -halfZ),
+                new Vector3(halfX * 2f + 0.12f, 0.16f, 0.05f), new Color(0.92f, 0.44f, 0.26f));
+        }
+
+        /// <summary>
+        /// A belt seated in the gap between the two counters it links, at the
+        /// kitchen line rather than a metre in front of it. The old placement put
+        /// every belt on the customer side of the counters, in the walk the player
+        /// uses to get between them.
+        ///
+        /// The belt starts switched off and invisible; its pad builds it.
+        /// </summary>
+        private ConveyorLink CreateConveyor(
+            Transform parent,
+            string beltName,
+            ItemStation from,
+            ItemStation to,
+            Vector3 fromPosition,
+            Vector3 toPosition)
+        {
             GameObject belt = new(beltName);
-            belt.transform.SetParent(runtimeRoot, false);
-            // Station roots already sit on the lot surface, so the belt shares
-            // their height and the model stands on the floor rather than
-            // hovering at counter level.
-            belt.transform.position = (start + end) * 0.5f + Vector3.back * 0.78f;
+            belt.transform.SetParent(parent, false);
+            belt.transform.localPosition = new Vector3(
+                (fromPosition.x + toPosition.x) * 0.5f, fromPosition.y, fromPosition.z);
 
-            PrototypeVisuals.CreatePrimitive("Bant", PrimitiveType.Cube, belt.transform,
-                Vector3.up * 0.78f, new Vector3(length, 0.14f, 0.56f),
+            GameObject visual = new("Bant Görseli");
+            visual.transform.SetParent(belt.transform, false);
+            float gap = Mathf.Abs(toPosition.x - fromPosition.x);
+            PrototypeVisuals.CreatePrimitive("Bant", PrimitiveType.Cube, visual.transform,
+                Vector3.up * 0.38f, new Vector3(Mathf.Max(0.7f, gap - 1.9f), 0.14f, 0.56f),
                 new Color(0.35f, 0.32f, 0.30f));
-            MeshyVisuals.TryReplaceDirect(
-                belt.transform, "13_conveyor_straight",
-                new Vector3(length + 0.55f, 0.86f, 0.95f), Vector3.zero, Vector3.zero,
-                false, "Bant");
+            MeshyVisuals.TryReplaceDirectAuthored(
+                visual.transform, "13_conveyor_straight", Vector3.zero, Vector3.zero, "Bant");
 
             ConveyorLink link = belt.AddComponent<ConveyorLink>();
-            link.Configure(from, to);
+            link.Configure(from, to, visual.transform);
             return link;
         }
 
-        /// <summary>
-        /// One authored manager desk. The model already carries its own corner
-        /// walls, so the room is just three of these in a row - no separate
-        /// wall shell needed.
-        /// </summary>
-        /// <summary>One wall run of an office, with the blocker that makes it solid.</summary>
-        private static void AddRoomWall(Transform room, Vector3 position, bool alongZ)
+        private void CreateConveyorPad(
+            Transform parent, string padName, Vector3 position, string saveKey, ConveyorLink belt)
         {
-            CityKit.Spawn("77_wall_straight", room, position, alongZ ? 90f : 0f);
-
-            GameObject blocker = new("Wall Blocker");
-            blocker.transform.SetParent(room, false);
-            blocker.transform.localPosition = position + Vector3.up * 0.76f;
-            BoxCollider box = blocker.AddComponent<BoxCollider>();
-            box.size = alongZ
-                ? new Vector3(0.34f, 1.52f, WallPitch)
-                : new Vector3(WallPitch, 1.52f, 0.34f);
+            CreatePurchasePad(parent, padName, position, saveKey,
+                ShopPrices.Belt, (level, _) => belt.SetLevel(level));
         }
 
-        /// <summary>Office footprint. Rooms sit north of the upgrade yard.</summary>
-        private const float RoomWidth = 4.2f;
-        private const float RoomDepth = 3.4f;
-        private const float RoomCentreZ = -3.2f;
+        /// <summary>
+        /// A hire for one station. The station runs unattended either way; what
+        /// the worker buys is speed, and a figure standing at it so a staffed
+        /// kitchen does not look exactly like an empty one.
+        /// </summary>
+        private void CreateWorkerPad(
+            Transform parent, string padName, Vector3 position, string saveKey, ItemStation station)
+        {
+            CreatePurchasePad(parent, padName, position, saveKey,
+                ShopPrices.StationWorker,
+                (level, _) =>
+                {
+                    station.SetWorkerLevel(level);
+                    GameProgress.RegisterWorker(saveKey);
+                });
+        }
+
+        private PurchasePad CreatePurchasePad(
+            Transform parent,
+            string padName,
+            Vector3 position,
+            string saveKey,
+            int[] costs,
+            System.Action<int, bool> onLevel,
+            string padAsset = "19_upgrade_pad")
+        {
+            GameObject pad = new(padName);
+            pad.transform.SetParent(parent, false);
+            pad.transform.localPosition = position;
+            PurchasePad purchase = pad.AddComponent<PurchasePad>();
+            purchase.Configure(playerTransform, saveKey, costs, onLevel, padAsset);
+            return purchase;
+        }
+
+        /// <summary>Cash the courier bay pays into. Assigned when the bay is built.</summary>
+        private CashPile courierCash;
 
         /// <summary>
-        /// One locked office: three walls, a desk and an unlock pad of its own.
-        ///
-        /// The door gap is in the north wall, which is the side the player walks
-        /// in from. The south side is left open on purpose - it faces the camera,
-        /// and a wall there would hide the desk it is meant to frame.
+        /// The courier bay: a counter with an order board and a scooter parked
+        /// outside the fence waiting for the bag. Both shapes are placeholders -
+        /// the scooter is being modelled - so everything here is primitives that
+        /// can be swapped for one authored prefab later.
         /// </summary>
-        private ManagementOfficeTerminal CreateManagementRoom(
-            Transform parent, string roomName, string deskAsset,
-            float centreX, string saveKey, string padTitle, int cost)
+        private CourierStation CreateCourierBay(Transform parent, RestaurantLayoutConfig layout)
+        {
+            GameObject bay = new("Kurye Noktası");
+            bay.transform.SetParent(parent, false);
+
+            GameObject counter = new("Kurye Tezgahı");
+            counter.transform.SetParent(bay.transform, false);
+            counter.transform.localPosition = layout.CourierCounter;
+
+            PrototypeVisuals.CreatePrimitive("Gövde", PrimitiveType.Cube, counter.transform,
+                new Vector3(0f, 0.45f, 0f), new Vector3(1.7f, 0.90f, 1.0f),
+                new Color(0.90f, 0.52f, 0.22f), colliderEnabled: true);
+            PrototypeVisuals.CreatePrimitive("Tezgah Üstü", PrimitiveType.Cube, counter.transform,
+                new Vector3(0f, 0.94f, 0f), new Vector3(1.8f, 0.12f, 1.1f), PrototypeVisuals.Cream);
+            PrototypeVisuals.CreatePrimitive("Paket Kutusu", PrimitiveType.Cube, counter.transform,
+                new Vector3(-0.45f, 1.15f, 0f), new Vector3(0.5f, 0.30f, 0.4f),
+                new Color(0.78f, 0.62f, 0.40f));
+
+            // A packing bench with bags waiting on it. The bags are what the bay
+            // is for, so they stand in for the box the primitive used.
+            if (MeshyVisuals.TryReplaceDirectAuthored(
+                    counter.transform, "162_shop_kitchen_table_large",
+                    Vector3.zero, FacingCustomer, "Gövde", "Tezgah Üstü", "Paket Kutusu"))
+            {
+                MeshyVisuals.TryAttachAuthored(counter.transform, "244_food_bag",
+                    new Vector3(-0.5f, 0.92f, 0.05f), new Vector3(0f, 25f, 0f));
+                MeshyVisuals.TryAttachAuthored(counter.transform, "245_food_bag_flat",
+                    new Vector3(0.42f, 0.92f, 0.12f), new Vector3(0f, -15f, 0f));
+                MeshyVisuals.TryAttachAuthored(counter.transform, "247_food_styrofoam",
+                    new Vector3(0.1f, 0.92f, -0.28f), new Vector3(0f, 8f, 0f));
+            }
+
+            courierCash = counter.AddComponent<CashPile>();
+            courierCash.Configure(playerTransform);
+            // The pile is drawn beside the counter rather than under it, so the
+            // player can see the takings without walking behind the bay.
+            foreach (Transform child in counter.transform)
+                if (child.name == "Cash Pad" || child.name == "Cash Stack")
+                    child.localPosition = new Vector3(1.15f, child.localPosition.y, -0.35f);
+
+            CourierStation station = counter.AddComponent<CourierStation>();
+            station.SetScooter(BuildScooter(bay.transform,
+                layout.CourierCounter + new Vector3(0.2f, 0f, -2.9f)));
+
+            bay.SetActive(false);
+            return station;
+        }
+
+        /// <summary>Placeholder scooter, standing in until the model arrives.</summary>
+        private static GameObject BuildScooter(Transform parent, Vector3 position)
+        {
+            GameObject scooter = new("Kurye Motoru");
+            scooter.transform.SetParent(parent, false);
+            scooter.transform.localPosition = position;
+            scooter.transform.localEulerAngles = new Vector3(0f, 90f, 0f);
+
+            Color body = new(0.86f, 0.26f, 0.22f);
+            Color trim = new(0.24f, 0.25f, 0.28f);
+            PrototypeVisuals.CreatePrimitive("Gövde", PrimitiveType.Cube, scooter.transform,
+                new Vector3(0f, 0.52f, 0f), new Vector3(0.38f, 0.30f, 1.15f), body);
+            PrototypeVisuals.CreatePrimitive("Sele", PrimitiveType.Cube, scooter.transform,
+                new Vector3(0f, 0.72f, -0.15f), new Vector3(0.32f, 0.14f, 0.50f), trim);
+            PrototypeVisuals.CreatePrimitive("Kasa", PrimitiveType.Cube, scooter.transform,
+                new Vector3(0f, 0.86f, -0.52f), new Vector3(0.44f, 0.42f, 0.44f),
+                new Color(0.94f, 0.74f, 0.28f));
+            PrototypeVisuals.CreatePrimitive("Gidon", PrimitiveType.Cube, scooter.transform,
+                new Vector3(0f, 0.92f, 0.48f), new Vector3(0.56f, 0.07f, 0.07f), trim);
+            PrototypeVisuals.CreatePrimitive("Ön Direk", PrimitiveType.Cube, scooter.transform,
+                new Vector3(0f, 0.70f, 0.48f), new Vector3(0.10f, 0.46f, 0.10f), trim);
+            foreach (float z in new[] { 0.52f, -0.50f })
+                PrototypeVisuals.CreatePrimitive("Tekerlek", PrimitiveType.Cylinder, scooter.transform,
+                    new Vector3(0f, 0.26f, z), new Vector3(0.26f, 0.06f, 0.26f), trim,
+                    new Vector3(0f, 0f, 90f));
+            return scooter;
+        }
+
+        /// <summary>
+        /// Gives the kitchen a pulse. Everything here is presentation only - the
+        /// spit turning does not cook anything - but a shop where nothing moves
+        /// reads as a screenshot however busy the numbers are.
+        /// </summary>
+        private static void AnimateStations(
+            ItemStation oven, ItemStation cutting, ItemStation dessertOven)
+        {
+            // The spit turns if the model has one that can turn on its own. The
+            // authored rotisserie exports as a single merged mesh, so until it is
+            // re-exported with a named SPIT part the whole cabinet rocks instead.
+            System.Func<bool> ovenRunning = () => oven.InputCount > 0 && !oven.IsBroken;
+            Transform spit = FindPart(oven.transform, "SPIT");
+            if (spit != null) spit.gameObject.AddComponent<SpinningPart>().Configure(48f, Vector3.up);
+            else AddWorkingShake(oven.transform, ovenRunning, 1.4f);
+
+            SmokeStack ovenSmoke = SmokeStack.Attach(
+                oven.transform, new Vector3(0f, 2.35f, 0.15f), new Color(0.84f, 0.82f, 0.80f), 1.1f);
+            ovenSmoke.IsActive = () => oven.InputCount > 0 && !oven.IsBroken;
+
+            HeatGlow ovenGlow = HeatGlow.Attach(
+                oven.transform, new Vector3(0f, 0.62f, -0.18f), new Vector3(0.9f, 0.06f, 0.5f));
+            ovenGlow.IsActive = () => oven.InputCount > 0 && !oven.IsBroken;
+
+            if (dessertOven != null)
+            {
+                SmokeStack bakerySmoke = SmokeStack.Attach(
+                    dessertOven.transform, new Vector3(0.62f, 2.1f, 0.15f),
+                    new Color(0.88f, 0.86f, 0.83f), 1.6f);
+                bakerySmoke.IsActive = () => dessertOven.OutputCount < 8;
+            }
+
+            // Same story on the carving board: a named BLADE would rock on its
+            // own, otherwise the counter does.
+            System.Func<bool> cuttingRunning = () => cutting.InputCount > 0 && !cutting.IsBroken;
+            Transform blade = FindPart(cutting.transform, "BLADE");
+            if (blade != null)
+                blade.gameObject.AddComponent<ChoppingKnife>().IsActive = cuttingRunning;
+            else AddWorkingShake(cutting.transform, cuttingRunning, 1.9f);
+        }
+
+        /// <summary>
+        /// Rocks a station's visuals, leaving its gameplay transform alone. The
+        /// stacks, trays and interaction radius all hang off the station itself,
+        /// so shaking that would shake the food off the counter with it.
+        /// </summary>
+        private static void AddWorkingShake(
+            Transform station, System.Func<bool> isRunning, float degrees)
+        {
+            for (int i = 0; i < station.childCount; i++)
+            {
+                Transform child = station.GetChild(i);
+                if (!child.name.EndsWith(" Visual")) continue;
+                WorkingShake shake = child.gameObject.AddComponent<WorkingShake>();
+                shake.IsActive = isRunning;
+                return;
+            }
+        }
+
+        /// <summary>Depth-first search for a named part inside a station's visuals.</summary>
+        private static Transform FindPart(Transform root, string name)
+        {
+            return MeshyVisuals.TryFindAnchor(root, name, out Transform found) ? found : null;
+        }
+
+        /// <summary>
+        /// Four spots around the dining room that can be dressed. Each one lifts
+        /// the shop's standing for good, and standing is what the tip is.
+        /// </summary>
+        private void CreateDecorations(Transform parent, RestaurantLayoutConfig layout)
+        {
+            GameObject root = new("Dekorasyon");
+            root.transform.SetParent(parent, false);
+
+            Vector3[] spots =
+            {
+                new(-10.4f, 0.25f, 3.4f), new(-10.4f, 0.25f, -3.6f),
+                new(1.4f, 0.25f, 3.2f), new(1.4f, 0.25f, -3.4f)
+            };
+
+            List<GameObject> props = new();
+            for (int i = 0; i < spots.Length; i++)
+                props.Add(BuildDecoration(root.transform, spots[i], i));
+            for (int i = 0; i < props.Count; i++) props[i].SetActive(false);
+
+            CreatePurchasePad(parent, "Dekorasyon Pedi", layout.DecorationPad, "decor",
+                ShopPrices.Decoration,
+                (level, _) =>
+                {
+                    int index = level - 1;
+                    if (index < 0 || index >= props.Count) return;
+                    props[index].SetActive(true);
+                    ReputationSystem.Instance?.AddStandingFloor(ShopPrices.DecorationStanding);
+                });
+        }
+
+        /// <summary>
+        /// One purchasable piece of dressing. Each is a single model where the
+        /// pack has one, with the original primitive group behind it, so the pad
+        /// and the standing it buys never depend on the art being there.
+        /// </summary>
+        private static GameObject BuildDecoration(Transform parent, Vector3 position, int variant)
+        {
+            GameObject prop = new("Dekor " + (variant + 1));
+            prop.transform.SetParent(parent, false);
+            prop.transform.localPosition = position;
+
+            // A lamp, the menu board, a bench seat for people waiting, and a rug.
+            string[] models = { "213_decor_floor_lamp", "154_shop_menu", "214_decor_couch", "210_decor_carpet" };
+            string model = models[Mathf.Clamp(variant, 0, models.Length - 1)];
+            if (MeshyVisuals.TryAttachAuthored(prop.transform, model, Vector3.zero, FacingCustomer) != null)
+            {
+                // The menu board keeps the lit panel the primitive sign had.
+                if (variant == 1)
+                    HeatGlow.Attach(prop.transform, new Vector3(0f, 0.78f, -0.23f),
+                        new Vector3(0.5f, 0.62f, 0.04f));
+                return prop;
+            }
+
+            switch (variant)
+            {
+                case 0: // a tall planter
+                    PrototypeVisuals.CreatePrimitive("Saksı", PrimitiveType.Cylinder, prop.transform,
+                        new Vector3(0f, 0.28f, 0f), new Vector3(0.5f, 0.28f, 0.5f),
+                        new Color(0.80f, 0.44f, 0.30f));
+                    PrototypeVisuals.CreatePrimitive("Gövde", PrimitiveType.Cylinder, prop.transform,
+                        new Vector3(0f, 0.85f, 0f), new Vector3(0.12f, 0.36f, 0.12f),
+                        new Color(0.42f, 0.34f, 0.24f));
+                    PrototypeVisuals.CreatePrimitive("Yaprak", PrimitiveType.Sphere, prop.transform,
+                        new Vector3(0f, 1.35f, 0f), new Vector3(0.90f, 0.70f, 0.90f),
+                        new Color(0.30f, 0.60f, 0.34f));
+                    break;
+                case 1: // a framed picture on a stand
+                    PrototypeVisuals.CreatePrimitive("Ayak", PrimitiveType.Cube, prop.transform,
+                        new Vector3(0f, 0.45f, 0f), new Vector3(0.10f, 0.90f, 0.10f),
+                        new Color(0.36f, 0.28f, 0.22f));
+                    PrototypeVisuals.CreatePrimitive("Çerçeve", PrimitiveType.Cube, prop.transform,
+                        new Vector3(0f, 1.25f, 0f), new Vector3(0.92f, 0.68f, 0.07f),
+                        new Color(0.36f, 0.28f, 0.22f));
+                    PrototypeVisuals.CreatePrimitive("Resim", PrimitiveType.Cube, prop.transform,
+                        new Vector3(0f, 1.25f, -0.05f), new Vector3(0.78f, 0.54f, 0.04f),
+                        new Color(0.94f, 0.76f, 0.42f));
+                    break;
+                case 2: // a neon sign
+                    PrototypeVisuals.CreatePrimitive("Direk", PrimitiveType.Cylinder, prop.transform,
+                        new Vector3(0f, 0.70f, 0f), new Vector3(0.10f, 0.70f, 0.10f),
+                        new Color(0.30f, 0.32f, 0.34f));
+                    PrototypeVisuals.CreatePrimitive("Tabela", PrimitiveType.Cube, prop.transform,
+                        new Vector3(0f, 1.58f, 0f), new Vector3(1.10f, 0.52f, 0.09f),
+                        new Color(0.20f, 0.22f, 0.26f));
+                    HeatGlow.Attach(prop.transform, new Vector3(0f, 1.58f, -0.07f),
+                        new Vector3(0.86f, 0.30f, 0.05f));
+                    break;
+                default: // a rug
+                    PrototypeVisuals.CreatePrimitive("Halı", PrimitiveType.Cube, prop.transform,
+                        new Vector3(0f, 0.02f, 0f), new Vector3(2.4f, 0.03f, 1.7f),
+                        new Color(0.72f, 0.32f, 0.28f));
+                    PrototypeVisuals.CreatePrimitive("Halı Deseni", PrimitiveType.Cube, prop.transform,
+                        new Vector3(0f, 0.035f, 0f), new Vector3(1.9f, 0.03f, 1.25f),
+                        new Color(0.90f, 0.72f, 0.44f));
+                    break;
+            }
+            return prop;
+        }
+
+        /// <summary>
+        /// The stockroom pallet the fridge is refilled from: crates on the floor
+        /// with loose cups on top, so it reads as stock rather than as a counter.
+        /// </summary>
+        private static void DecorateDrinkCrate(Transform station)
+        {
+            if (MeshyVisuals.IsAvailable(ShopCrate))
+            {
+                for (int i = 0; i < 3; i++)
+                    MeshyVisuals.TryAttachAuthored(station, ShopCrate,
+                        new Vector3(-0.5f + i % 2 * 0.78f, i > 1 ? 0.3f : 0f, i > 1 ? 0.1f : 0f),
+                        new Vector3(0f, i * 12f, 0f));
+                for (int i = 0; i < 4; i++)
+                    PrototypeVisuals.CreateItemVisual(ItemType.Drink, station,
+                        new Vector3(-0.45f + i * 0.3f, 0.68f, -0.28f), 1.1f);
+                MeshyVisuals.HideDirectRenderers(station, "Counter", "Work Top");
+                return;
+            }
+
+            PrototypeVisuals.CreatePrimitive("Palet", PrimitiveType.Cube, station,
+                new Vector3(0f, 0.08f, 0f), new Vector3(1.9f, 0.16f, 1.2f),
+                new Color(0.62f, 0.45f, 0.30f));
+            for (int row = 0; row < 2; row++)
+            for (int column = 0; column < 4; column++)
+                PrototypeVisuals.CreateItemVisual(ItemType.Drink, station,
+                    new Vector3(-0.6f + column * 0.4f, 0.95f + row * 0.30f, 0.1f), 1.1f);
+        }
+
+        private static void DecorateFridge(Transform station)
+        {
+            if (MeshyVisuals.TryReplaceDirectAuthored(
+                    station, "190_kitchen_fridge", Vector3.zero, FacingCustomer,
+                    "Counter", "Work Top"))
+                return;
+
+            PrototypeVisuals.CreatePrimitive("Dolap Gövdesi", PrimitiveType.Cube, station,
+                new Vector3(0f, 1.05f, 0.12f), new Vector3(1.5f, 2.10f, 0.85f),
+                new Color(0.88f, 0.91f, 0.94f), colliderEnabled: true);
+            PrototypeVisuals.CreatePrimitive("Cam", PrimitiveType.Cube, station,
+                new Vector3(0f, 1.20f, -0.32f), new Vector3(1.24f, 1.55f, 0.06f),
+                new Color(0.62f, 0.82f, 0.90f));
+            PrototypeVisuals.CreatePrimitive("Kasa Üstü", PrimitiveType.Cube, station,
+                new Vector3(0f, 2.16f, 0.12f), new Vector3(1.6f, 0.14f, 0.95f),
+                new Color(0.36f, 0.55f, 0.70f));
+            for (int shelf = 0; shelf < 3; shelf++)
+                PrototypeVisuals.CreatePrimitive("Raf", PrimitiveType.Cube, station,
+                    new Vector3(0f, 0.66f + shelf * 0.46f, -0.1f),
+                    new Vector3(1.20f, 0.05f, 0.45f), new Color(0.74f, 0.78f, 0.81f));
+        }
+
+        /// <summary>
+        /// The bakery: an oven under an extractor hood, with a tray of what it
+        /// sells left out on the counter beside it.
+        /// </summary>
+        private static void DecorateDessertOven(Transform station)
+        {
+            if (MeshyVisuals.TryReplaceDirectAuthored(
+                    station, "151_shop_oven", new Vector3(0f, 0f, 0.2f), FacingCustomer,
+                    "Counter", "Work Top"))
+            {
+                MeshyVisuals.TryAttachAuthored(station, "191_kitchen_hood",
+                    new Vector3(0f, 2.05f, 0.35f), FacingCustomer);
+                for (int i = 0; i < 3; i++)
+                    PrototypeVisuals.CreateItemVisual(ItemType.Dessert, station,
+                        new Vector3(-0.32f + i * 0.32f, 1.62f, 0.2f), 0.7f);
+                return;
+            }
+
+            PrototypeVisuals.CreatePrimitive("Fırın Gövdesi", PrimitiveType.Cube, station,
+                new Vector3(0f, 0.80f, 0.15f), new Vector3(1.7f, 1.60f, 0.90f),
+                new Color(0.78f, 0.52f, 0.36f), colliderEnabled: true);
+            PrototypeVisuals.CreatePrimitive("Fırın Kapağı", PrimitiveType.Cube, station,
+                new Vector3(0f, 0.95f, -0.32f), new Vector3(1.20f, 0.70f, 0.08f),
+                new Color(0.30f, 0.24f, 0.22f));
+            PrototypeVisuals.CreatePrimitive("Baca", PrimitiveType.Cylinder, station,
+                new Vector3(0.62f, 1.85f, 0.15f), new Vector3(0.22f, 0.35f, 0.22f),
+                new Color(0.42f, 0.34f, 0.30f));
+            PrototypeVisuals.CreatePrimitive("Üst Tabla", PrimitiveType.Cube, station,
+                new Vector3(0f, 1.64f, 0.15f), new Vector3(1.8f, 0.12f, 1.0f),
+                PrototypeVisuals.Cream);
+        }
+
+        private const string ShopCrate = "166_shop_crate";
+
+        /// <summary>
+        /// Dresses the wall the kitchen line backs onto: shelves and a knife rack
+        /// over the counters, and the stock the line runs on stacked in the corner
+        /// past the rack.
+        ///
+        /// It all hangs off the kitchen root rather than off the stations. A
+        /// station's own children are load-bearing - the trays, the label height
+        /// and the visual the working shake picks up all read from them - and a
+        /// jar of pickles is not worth putting inside that.
+        /// </summary>
+        private void DressKitchenWall(Transform kitchenRoot, RestaurantLayoutConfig layout)
+        {
+            if (!MeshyVisuals.IsAvailable("198_kitchen_wall_shelf_hooks")) return;
+
+            GameObject dressing = new("Mutfak Duvarı");
+            dressing.transform.SetParent(kitchenRoot, false);
+            Transform parent = dressing.transform;
+
+            float wallZ = shopWorld.BackWallZ - 0.14f;
+            float floorY = layout.Oven.y;
+
+            // Hung in the top half of the wall. The perimeter runs 1.47 m, so
+            // anything mounted at head height ends up over the top of it, hanging
+            // in the air above the street.
+            MeshyVisuals.TryAttachAuthored(parent, "198_kitchen_wall_shelf_hooks",
+                new Vector3(layout.MeatSource.x, floorY + 0.9f, wallZ), FacingCustomer);
+            MeshyVisuals.TryAttachAuthored(parent, "197_kitchen_wall_shelf",
+                new Vector3(layout.Cutting.x, floorY + 1.05f, wallZ), FacingCustomer);
+            MeshyVisuals.TryAttachAuthored(parent, "199_kitchen_knife_rack",
+                new Vector3(layout.Cutting.x + 1.5f, floorY + 1.0f, wallZ), FacingCustomer);
+
+            // The rack's own stock, in the north-west corner. West of the
+            // drive-through window rather than beside the rack: the window is set
+            // in this same wall and the delivery would be stacked in it.
+            float storeX = layout.TrashBin.x;
+            MeshyVisuals.TryAttachAuthored(parent, "168_shop_crate_ham",
+                new Vector3(storeX, floorY, wallZ - 0.5f), new Vector3(0f, 8f, 0f));
+            MeshyVisuals.TryAttachAuthored(parent, "167_shop_crate_buns",
+                new Vector3(storeX + 0.82f, floorY, wallZ - 0.45f), new Vector3(0f, -6f, 0f));
+            MeshyVisuals.TryAttachAuthored(parent, ShopCrate,
+                new Vector3(storeX + 0.1f, floorY + 0.3f, wallZ - 0.52f), new Vector3(0f, 15f, 0f));
+            MeshyVisuals.TryAttachAuthored(parent, "255_food_barrel",
+                new Vector3(storeX + 1.75f, floorY, wallZ - 0.55f), Vector3.zero);
+        }
+
+        private GameObject CreateTrashBin(Transform parent, Vector3 position)
+        {
+            GameObject trashBinObject = new("Çöp Kutusu");
+            trashBinObject.transform.SetParent(parent, false);
+            trashBinObject.transform.localPosition = position;
+            PrototypeVisuals.CreatePrimitive("Çöp Gövdesi", PrimitiveType.Cube, trashBinObject.transform,
+                new Vector3(0f, 0.52f, 0f), new Vector3(0.82f, 0.96f, 0.70f), new Color(0.34f, 0.52f, 0.43f),
+                colliderEnabled: true);
+            PrototypeVisuals.CreatePrimitive("Çöp Kapak", PrimitiveType.Cube, trashBinObject.transform,
+                new Vector3(0f, 1.04f, 0f), new Vector3(0.91f, 0.12f, 0.79f), new Color(0.20f, 0.34f, 0.28f));
+            PrototypeVisuals.CreatePrimitive("Çöp Açıklığı", PrimitiveType.Cube, trashBinObject.transform,
+                new Vector3(0f, 0.83f, -0.36f), new Vector3(0.50f, 0.22f, 0.035f), new Color(0.10f, 0.16f, 0.14f));
+            PrototypeVisuals.CreatePrimitive("Ayak Pedalı", PrimitiveType.Cube, trashBinObject.transform,
+                new Vector3(0f, 0.08f, -0.42f), new Vector3(0.32f, 0.08f, 0.22f), new Color(0.88f, 0.68f, 0.26f));
+            TrashBin trashBin = trashBinObject.AddComponent<TrashBin>();
+            trashBin.Configure(playerTransform, inventory);
+            MeshyVisuals.TryReplaceDirectAuthored(
+                trashBinObject.transform, "17_trash_bin",
+                Vector3.zero, FacingCustomer,
+                "Çöp Gövdesi", "Çöp Kapak", "Çöp Açıklığı", "Ayak Pedalı");
+            return trashBinObject;
+        }
+
+        /// <summary>
+        /// The drive-through window, set in the opening left in the back wall and
+        /// facing the driveway. It stays shut until its pad is paid; opening it is
+        /// also what lets a car into the lane outside, so the shop never has cars
+        /// driving past a window that cannot serve them.
+        /// </summary>
+        private TakeawaySystem CreateDriveThruWindow(
+            Transform parent, GameConfig gameConfig, RestaurantLayoutConfig layout)
+        {
+            GameObject windowRoot = new("Drive-Thru Penceresi");
+            windowRoot.transform.SetParent(parent, false);
+            windowRoot.transform.localPosition = new Vector3(
+                shopWorld.DriveThruWindowX, layout.DriveThruCounter.y,
+                shopWorld.BackWallZ - 0.78f);
+
+            TakeawaySystem window = windowRoot.AddComponent<TakeawaySystem>();
+            window.Configure(playerTransform, inventory);
+            // Turned to face the shop, like every other counter. The camera only
+            // ever sees the -Z faces, so a counter facing the driveway showed the
+            // player its blank back; what marks this one as a drive-through is the
+            // opening in the wall behind it and the lane on the other side.
+            if (MeshyVisuals.TryReplaceDirectAuthored(
+                    windowRoot.transform, "12_service_cashier_counter",
+                    Vector3.zero, FacingCustomer,
+                    "Takeaway Counter Body", "Takeaway Counter Top"))
+                window.SetCounterTopHeight(1.51f);
+            window.SetStaffSide(-1f);
+            // Shut until bought. This has to happen before the pad is wired: a
+            // saved purchase reopens the window from inside Configure, and hiding
+            // it afterwards would close a drive-through the player already owns.
+            windowRoot.SetActive(false);
+
+            GameObject unlockPad = new("Drive-Thru Pedi");
+            unlockPad.transform.SetParent(parent, false);
+            unlockPad.transform.localPosition = new Vector3(
+                shopWorld.DriveThruWindowX, layout.DriveThruUnlockPad.y,
+                shopWorld.BackWallZ - 2.9f);
+
+            if (!gameConfig.Features.Takeaway)
+            {
+                unlockPad.SetActive(false);
+                return window;
+            }
+
+            unlockPad.AddComponent<PurchasePad>().Configure(
+                playerTransform, "drivethru.unlocked", new[] { ShopPrices.DriveThru },
+                (_, __) => OpenDriveThru(window), "18_money_collection_pad");
+            return window;
+        }
+
+        private void OpenDriveThru(TakeawaySystem window)
+        {
+            // The wall comes down and the window goes in. Until now the back of
+            // the shop was solid, which is what a shop without a drive-through
+            // looks like.
+            shopWorld.OpenDriveThruBay();
+            window.gameObject.SetActive(true);
+            if (traffic == null || cityLayout == null) return;
+            traffic.OpenServiceLane(window, shopWorld.DriveThruWindowX);
+            CityBlock.BuildDriveway(runtimeRoot, cityLayout, shopWorld.DriveThruWindowX);
+        }
+
+        /// <summary>
+        /// The office block, hard into the lot's south-west corner. Two rooms
+        /// sharing the wall between them, using the lot's own west wall as the far
+        /// side of the first.
+        /// </summary>
+        private const float OfficeWestX = -10.9f;
+        private const float OfficeWidth = 6f;
+        private const float OfficeSouthZ = -8.1f;
+        private const float OfficeNorthZ = -4.1f;
+
+        /// <summary>Wall base, level with the lot surface.</summary>
+        private const float WallBaseY = 0.20f;
+
+        /// <summary>
+        /// One closed office: south wall, east wall, and a north wall with a 3 m
+        /// doorway onto the dining room. The desk stands against the west side
+        /// facing east, which is both the way the camera looks and the side the
+        /// player walks up to it from.
+        ///
+        /// The rooms used to be three loose wall runs sitting mid-floor on a
+        /// staircase of offsets, which read as a pile of walls rather than rooms.
+        /// </summary>
+        private void CreateOffice(
+            Transform parent, string roomName, string deskAsset, float westX,
+            ManagementMenu menu, string title, string saveKey, int cost, ManagementMenuHUD hud)
         {
             GameObject room = new(roomName);
             room.transform.SetParent(parent, false);
 
-            float north = RoomCentreZ + RoomDepth * 0.5f;
-            float halfWidth = RoomWidth * 0.5f;
+            float eastX = westX + OfficeWidth;
+            float centreZ = (OfficeSouthZ + OfficeNorthZ) * 0.5f;
+            float doorWestX = eastX - DoorWidth;
 
-            // Back wall pushed west of centre, leaving the eastern end open as the
-            // doorway. Each run gets a blocker of its own: the models arrive with
-            // their colliders switched off, so without one the walls are a picture
-            // and the door is not a door.
-            AddRoomWall(room.transform, new Vector3(centreX - 0.6f, WallBaseY, north), false);
-            AddRoomWall(room.transform, new Vector3(centreX - halfWidth, WallBaseY, RoomCentreZ), true);
-            AddRoomWall(room.transform, new Vector3(centreX + halfWidth, WallBaseY, RoomCentreZ), true);
+            // Runs are laid corner to corner and panelled to fit, so a side never
+            // ends in a stub of wall standing beside the room. Each yaw turns the
+            // panel's finished +Z face into the room.
+            AddRoomWall(room.transform,
+                new Vector3(westX, WallBaseY, OfficeSouthZ),
+                new Vector3(eastX, WallBaseY, OfficeSouthZ), false, 0f);
+            AddRoomWall(room.transform,
+                new Vector3(eastX, WallBaseY, OfficeSouthZ),
+                new Vector3(eastX, WallBaseY, OfficeNorthZ), true, -90f);
 
-            ManagementOfficeTerminal terminal = CreateManagerDesk(
-                room.transform, roomName + " Masası", deskAsset,
-                new Vector3(centreX, 0.25f, RoomCentreZ + 0.7f));
+            // North wall: panelled from the west corner up to the door, then the
+            // door in the last stretch.
+            AddRoomWall(room.transform,
+                new Vector3(westX, WallBaseY, OfficeNorthZ),
+                new Vector3(doorWestX, WallBaseY, OfficeNorthZ), false, 180f);
+            AddDoorway(room.transform,
+                new Vector3((doorWestX + eastX) * 0.5f, WallBaseY, OfficeNorthZ), DoorWidth);
 
-            GameObject padObject = new(roomName + " Kilidi");
-            padObject.transform.SetParent(parent, false);
-            padObject.transform.localPosition = new Vector3(centreX + 1.5f, 0.28f, north + 0.9f);
-            PrototypeVisuals.CreatePrimitive(
-                "Room Unlock Pad", PrimitiveType.Cylinder, padObject.transform,
-                Vector3.zero, new Vector3(0.82f, 0.06f, 0.82f), new Color(0.95f, 0.58f, 0.20f));
-            MeshyVisuals.TryReplaceDirect(padObject.transform, "20_locked_expansion_pad",
-                new Vector3(1.10f, 0.60f, 1.10f), Vector3.zero, Vector3.zero,
-                false, "Room Unlock Pad");
-            padObject.AddComponent<ManagementRoomUnlockPad>()
-                .Configure(playerTransform, room, cost, saveKey, padTitle);
+            ManagementOffice office = room.AddComponent<ManagementOffice>();
+            office.Configure(playerTransform, hud, menu, deskAsset, title,
+                new Vector3(westX + 1.3f, 0.25f, centreZ), 90f);
 
-            return terminal;
+            CreatePurchasePad(parent, roomName + " Pedi",
+                new Vector3(eastX - 1.6f, 0.28f, centreZ), saveKey,
+                new[] { cost }, (_, __) => office.Furnish(), "18_money_collection_pad");
         }
 
-        private ManagementOfficeTerminal CreateManagerDesk(
-            Transform parent, string title, string assetId, Vector3 position)
-        {
-            GameObject desk = new(title);
-            desk.transform.SetParent(parent, false);
-            desk.transform.localPosition = position;
+        /// <summary>Clear width of an office door.</summary>
+        private const float DoorWidth = 1.7f;
 
-            if (MeshyVisuals.TryAttach(desk.transform, assetId,
-                    new Vector3(2.75f, 1.92f, 2.07f), Vector3.zero, FacingCustomer) == null)
-            {
-                PrototypeVisuals.CreatePrimitive("Desk Fallback", PrimitiveType.Cube,
-                    desk.transform, new Vector3(0f, 0.45f, 0.2f),
-                    new Vector3(1.7f, 0.85f, 0.7f), PrototypeVisuals.Cream);
-            }
-
-            // Trigger volume sits where the player walks up to the desk.
-            GameObject terminal = new("Terminal");
-            terminal.transform.SetParent(desk.transform, false);
-            terminal.transform.localPosition = new Vector3(0f, 0f, -1.15f);
-            return terminal.AddComponent<ManagementOfficeTerminal>();
-        }
+        // The kit's own wall palette, so the door frame built from primitives sits
+        // against the panels beside it without reading as a patch.
+        private static readonly Color WallPanel = new(0.941f, 0.902f, 0.824f);
+        private static readonly Color WallCap = new(0.353f, 0.251f, 0.196f);
 
         /// <summary>
-        /// Tiled floor marking out the management room. The desks already carry
-        /// their own back walls, so the room only needed a surface to stand on to
-        /// read as a room rather than a strip of open lot.
-        ///
-        /// The model is laid so its terracotta tiles clear the lot by a bare
-        /// centimetre - enough to avoid z-fighting, little enough that the desks
-        /// and pads standing at the lot surface do not look sunk - with the cream
-        /// base band buried inside the lot slab.
+        /// One side of an office, panelled with the same tiled kit as the shop's
+        /// own walls. Panels are spaced to divide the side exactly rather than at
+        /// their nominal 1.41 m, so a 6 m run of 1.41 m panels overlaps slightly
+        /// instead of leaving a stub of bare floor at one end.
         /// </summary>
-        private void BuildOfficeFloor(Transform parent)
+        private static void AddRoomWall(
+            Transform room, Vector3 from, Vector3 to, bool alongZ, float yaw)
         {
-            if (!CityKit.Has("78_floor_tiled")) return;
+            float span = Vector3.Distance(from, to);
+            int count = Mathf.Max(1, Mathf.RoundToInt(span / RoomWallModule));
+            for (int i = 0; i < count; i++)
+            {
+                Vector3 position = Vector3.Lerp(from, to, (i + 0.5f) / count);
+                CityKit.Spawn(RoomWall, room, position, yaw);
+                AddWallBlocker(room, position,
+                    alongZ ? span / count : RoomWallThickness,
+                    alongZ ? RoomWallThickness : span / count);
+            }
+        }
 
-            // Tiles are laid on the 3.00 tile field, not the 3.28 base slab.
-            // Spacing on the slab would leave a 28 cm tan channel along every
-            // module join; on the field the grout stays even right across it,
-            // and the overlapping slabs are buried out of sight anyway.
-            const float pitch = 3.00f;
-            Vector3 center = new(-3.45f, 0.012f, -5.2f);
+        private const string RoomWall = "265_wall_plain_straight";
+        private const float RoomWallModule = 1.41f;
+        private const float RoomWallThickness = 0.36f;
+        private const float RoomWallHeight = 2.82f;
 
-            // Four by two covers the desk row, both pad rows and the planters
-            // without spilling over the lot's south edge at z = -8.5.
-            for (int i = 0; i < 4; i++)
-                for (int j = 0; j < 2; j++)
-                    CityKit.Spawn("78_floor_tiled", parent, new Vector3(
-                        center.x + pitch * (i - 1.5f), center.y,
-                        center.z + pitch * (j - 0.5f)));
+        /// <summary>
+        /// A framed door standing open. The opening stays walkable - the leaf is
+        /// swung back against the wall and nothing here blocks the way through.
+        /// </summary>
+        private static void AddDoorway(Transform room, Vector3 centre, float width)
+        {
+            GameObject door = new("Kapı");
+            door.transform.SetParent(room, false);
+            door.transform.localPosition = centre;
+
+            float half = width * 0.5f;
+            foreach (float x in new[] { -half, half })
+                PrototypeVisuals.CreatePrimitive("Söve", PrimitiveType.Cube, door.transform,
+                    new Vector3(x, RoomWallHeight * 0.5f, 0f),
+                    new Vector3(0.16f, RoomWallHeight, 0.34f), WallCap);
+            PrototypeVisuals.CreatePrimitive("Lento", PrimitiveType.Cube, door.transform,
+                new Vector3(0f, RoomWallHeight - 0.32f, 0f),
+                new Vector3(width + 0.16f, 0.64f, 0.37f), WallPanel);
+
+            // Hinged on the west jamb and swung into the room, so the doorway it
+            // frames stays clear.
+            GameObject leaf = new("Kanat");
+            leaf.transform.SetParent(door.transform, false);
+            leaf.transform.localPosition = new Vector3(-half + 0.08f, 0f, 0f);
+            leaf.transform.localEulerAngles = new Vector3(0f, -108f, 0f);
+            if (MeshyVisuals.TryAttachAuthored(leaf.transform, "186_shop_door_glazed",
+                    new Vector3(0f, 0f, width * 0.46f), new Vector3(0f, 90f, 0f)) != null)
+                return;
+
+            PrototypeVisuals.CreatePrimitive("Kanat Gövdesi", PrimitiveType.Cube, leaf.transform,
+                new Vector3(0f, 0.70f, width * 0.46f), new Vector3(0.09f, 1.34f, width * 0.9f),
+                new Color(0.78f, 0.36f, 0.24f));
+            PrototypeVisuals.CreatePrimitive("Kol", PrimitiveType.Cube, leaf.transform,
+                new Vector3(-0.07f, 0.78f, width * 0.82f), new Vector3(0.07f, 0.07f, 0.20f),
+                new Color(0.93f, 0.82f, 0.42f));
+        }
+
+        private static void AddWallBlocker(Transform room, Vector3 position, float depthZ, float widthX)
+        {
+            GameObject blocker = new("Wall Blocker");
+            blocker.transform.SetParent(room, false);
+            blocker.transform.localPosition = position + Vector3.up * (RoomWallHeight * 0.5f);
+            blocker.AddComponent<BoxCollider>().size = new Vector3(
+                Mathf.Max(RoomWallThickness, widthX), RoomWallHeight,
+                Mathf.Max(RoomWallThickness, depthZ));
         }
 
         private void CreatePlanter(Transform parent, Vector3 position)
@@ -742,25 +1249,84 @@ namespace ShawarmaTycoon
             GameObject planter = new("Saksı");
             planter.transform.SetParent(parent, false);
             planter.transform.localPosition = position;
-            if (MeshyVisuals.TryAttach(planter.transform, "33_decorative_plant",
-                    new Vector3(1.0f, 1.2f, 1.0f), Vector3.zero, Vector3.zero) == null)
+            if (MeshyVisuals.TryAttachAuthored(
+                    planter.transform, "33_decorative_plant", Vector3.zero, Vector3.zero) == null)
                 PrototypeVisuals.CreatePrimitive("Planter Fallback", PrimitiveType.Cylinder,
                     planter.transform, new Vector3(0f, 0.3f, 0f),
                     new Vector3(0.5f, 0.3f, 0.5f), new Color(0.78f, 0.45f, 0.32f));
         }
 
-        private void CreateManagementPad(Transform parent, string name, Vector3 position, StationUpgradeType type, int cost, ItemStation station, ConveyorLink conveyor)
+        /// <summary>
+        /// Moves a station's two stacks onto trays at the front of its counter and
+        /// returns where the finished goods now sit.
+        ///
+        /// The authored anchors put both piles on the machine's centre line, so
+        /// meat grew out of the middle of the rack and wraps out of the top of the
+        /// spit. Food belongs on a tray on the counter, facing the person who is
+        /// going to pick it up.
+        /// </summary>
+        private static Vector3 ApplyAuthoredStationLayout(
+            ItemStation station, float maxLabelHeight, float trayZ)
         {
-            GameObject pad = new(name);
-            pad.transform.SetParent(parent, false);
-            pad.transform.localPosition = position;
-            PrototypeVisuals.CreatePrimitive("Satın Alma Alanı", PrimitiveType.Cylinder, pad.transform, Vector3.zero,
-                new Vector3(0.55f, 0.05f, 0.55f), type == StationUpgradeType.Worker ? new Color(0.38f, 0.72f, 0.95f) : new Color(0.75f, 0.48f, 0.85f));
-            MeshyVisuals.TryReplaceDirect(pad.transform, "19_upgrade_pad",
-                new Vector3(0.95f, 0.30f, 0.95f), Vector3.down * 0.03f, Vector3.zero,
-                false, "Satın Alma Alanı");
-            StationUpgradePad upgrade = pad.AddComponent<StationUpgradePad>();
-            upgrade.Configure(playerTransform, type, cost, station, conveyor);
+            Vector3 output = new(0.52f, 0.95f, trayZ);
+            if (station == null) return output;
+
+            bool hasInput = MeshyVisuals.TryFindAnchor(
+                station.transform, "INPUT_ANCHOR", out Transform inputAnchor);
+            bool hasOutput = MeshyVisuals.TryFindAnchor(
+                station.transform, "OUTPUT_ANCHOR", out Transform outputAnchor);
+
+            float top = 0.95f;
+            if (hasInput && hasOutput)
+            {
+                top = Mathf.Max(
+                    station.transform.InverseTransformPoint(inputAnchor.position).y,
+                    station.transform.InverseTransformPoint(outputAnchor.position).y);
+            }
+
+            // Clamped to counter height. The spit's anchors sit at the top of a
+            // three metre machine, which put its trays up in the air above the
+            // player's head.
+            top = Mathf.Clamp(top, 0.85f, 1.15f);
+
+            Vector3 input = new(-0.52f, top, trayZ);
+            output = new Vector3(0.52f, top, trayZ);
+            BuildTray(station.transform, input);
+            BuildTray(station.transform, output);
+            station.SetVisualLayout(input, output, maxLabelHeight);
+
+            if (MeshyVisuals.TryFindAnchor(
+                    station.transform, "WORKER_ANCHOR", out Transform workerAnchor))
+            {
+                Vector3 local = station.transform.InverseTransformPoint(workerAnchor.position);
+                local.y = 0f;
+                station.SetWorkerVisualAnchor(local);
+            }
+            return output;
+        }
+
+        /// <summary>A shallow open tray for a stack to grow out of.</summary>
+        private static void BuildTray(Transform station, Vector3 at)
+        {
+            GameObject tray = new("Tepsi");
+            tray.transform.SetParent(station, false);
+            tray.transform.localPosition = at - Vector3.up * 0.03f;
+
+            Color body = new(0.80f, 0.83f, 0.85f);
+            Color rim = new(0.55f, 0.60f, 0.63f);
+            const float halfX = 0.42f;
+            const float halfZ = 0.30f;
+
+            PrototypeVisuals.CreatePrimitive("Taban", PrimitiveType.Cube, tray.transform,
+                Vector3.zero, new Vector3(halfX * 2f, 0.04f, halfZ * 2f), body);
+            PrototypeVisuals.CreatePrimitive("Kenar Ön", PrimitiveType.Cube, tray.transform,
+                new Vector3(0f, 0.03f, -halfZ), new Vector3(halfX * 2f, 0.08f, 0.04f), rim);
+            PrototypeVisuals.CreatePrimitive("Kenar Arka", PrimitiveType.Cube, tray.transform,
+                new Vector3(0f, 0.03f, halfZ), new Vector3(halfX * 2f, 0.08f, 0.04f), rim);
+            PrototypeVisuals.CreatePrimitive("Kenar Sol", PrimitiveType.Cube, tray.transform,
+                new Vector3(-halfX, 0.03f, 0f), new Vector3(0.04f, 0.08f, halfZ * 2f), rim);
+            PrototypeVisuals.CreatePrimitive("Kenar Sağ", PrimitiveType.Cube, tray.transform,
+                new Vector3(halfX, 0.03f, 0f), new Vector3(0.04f, 0.08f, halfZ * 2f), rim);
         }
 
         private static void DecorateMeatSource(Transform station)
@@ -781,6 +1347,16 @@ namespace ShawarmaTycoon
             }
         }
 
+        private static void DecorateCuttingCounter(Transform station)
+        {
+            PrototypeVisuals.CreatePrimitive("Cutting Board", PrimitiveType.Cube, station,
+                new Vector3(0f, 1.03f, 0f), new Vector3(0.95f, 0.06f, 0.72f),
+                new Color(0.68f, 0.42f, 0.22f));
+            PrototypeVisuals.CreatePrimitive("Knife", PrimitiveType.Cube, station,
+                new Vector3(0.35f, 1.13f, 0f), new Vector3(0.65f, 0.05f, 0.12f),
+                new Color(0.72f, 0.76f, 0.78f), new Vector3(0f, 25f, 0f));
+        }
+
         private static void DecorateOven(Transform station)
         {
             PrototypeVisuals.CreatePrimitive("Heater Left", PrimitiveType.Cube, station,
@@ -792,45 +1368,6 @@ namespace ShawarmaTycoon
             PrototypeVisuals.CreatePrimitive("Doner Spit", PrimitiveType.Cylinder, station,
                 new Vector3(0f, 1.55f, 0.25f), new Vector3(0.42f, 0.86f, 0.42f),
                 PrototypeVisuals.CookedMeat);
-        }
-
-        private static void DecorateCuttingCounter(Transform station)
-        {
-            PrototypeVisuals.CreatePrimitive("Cutting Board", PrimitiveType.Cube, station,
-                new Vector3(0f, 1.03f, 0f), new Vector3(0.95f, 0.06f, 0.72f),
-                new Color(0.68f, 0.42f, 0.22f));
-            PrototypeVisuals.CreatePrimitive("Knife", PrimitiveType.Cube, station,
-                new Vector3(0.35f, 1.13f, 0f), new Vector3(0.65f, 0.05f, 0.12f),
-                new Color(0.72f, 0.76f, 0.78f), new Vector3(0f, 25f, 0f));
-        }
-
-        private static void DecorateWrapCounter(Transform station)
-        {
-            PrototypeVisuals.CreatePrimitive("Lavash", PrimitiveType.Cylinder, station,
-                new Vector3(0f, 1.05f, 0f), new Vector3(0.48f, 0.025f, 0.48f),
-                PrototypeVisuals.Wrap);
-            PrototypeVisuals.CreatePrimitive("Greens", PrimitiveType.Sphere, station,
-                new Vector3(-0.35f, 1.16f, 0f), new Vector3(0.20f, 0.12f, 0.20f),
-                new Color(0.30f, 0.70f, 0.30f));
-        }
-
-        private void CreateCustomerEntrance(Vector3 position)
-        {
-            GameObject gate = new("Customer Entrance Gate");
-            gate.transform.SetParent(runtimeRoot, false);
-            gate.transform.position = position;
-            Color frame = new Color(0.92f, 0.34f, 0.20f);
-            PrototypeVisuals.CreatePrimitive("Entrance Top", PrimitiveType.Cube, gate.transform, new Vector3(0f, 1.72f, 0f),
-                new Vector3(2.0f, 0.24f, 0.25f), frame);
-            PrototypeVisuals.CreatePrimitive("Entrance Left", PrimitiveType.Cube, gate.transform, new Vector3(-0.90f, 0.82f, 0f),
-                new Vector3(0.22f, 1.65f, 0.25f), frame);
-            PrototypeVisuals.CreatePrimitive("Entrance Right", PrimitiveType.Cube, gate.transform, new Vector3(0.90f, 0.82f, 0f),
-                new Vector3(0.22f, 1.65f, 0.25f), frame);
-            TextMesh sign = PrototypeVisuals.CreateLabel("ENTRANCE", gate.transform, new Vector3(0f, 3.15f, 0f), 0.11f);
-            sign.color = new Color(0.95f, 0.22f, 0.16f);
-            MeshyVisuals.TryReplaceDirect(gate.transform, "21_entrance_door",
-                new Vector3(3.05f, 2.90f, 0.95f), Vector3.zero, FacingCustomer, false,
-                "Entrance Top", "Entrance Left", "Entrance Right");
         }
 
         private CustomerTable CreateTable(Transform parent, string tableName, Vector3 localPosition)
@@ -845,8 +1382,8 @@ namespace ShawarmaTycoon
             PrototypeVisuals.CreatePrimitive("Table Leg", PrimitiveType.Cube, tableObject.transform,
                 new Vector3(0f, 0.35f, 0f), new Vector3(0.28f, 0.70f, 0.28f),
                 new Color(0.35f, 0.22f, 0.18f), colliderEnabled: true);
-            CreateDiningChair(tableObject.transform, "Customer Chair", -0.66f, 0f);
-            CreateDiningChair(tableObject.transform, "Guest Chair", 0.66f, 180f);
+            CreateDiningChair(tableObject.transform, "Customer Chair", -1.02f, 0f);
+            CreateDiningChair(tableObject.transform, "Guest Chair", 1.02f, 180f);
 
             GameObject seat = new("Customer Seat");
             seat.transform.SetParent(tableObject.transform, false);
@@ -857,18 +1394,24 @@ namespace ShawarmaTycoon
             CustomerTable table = tableObject.AddComponent<CustomerTable>();
             table.Configure(playerTransform, seat.transform);
 
-            Vector3 tableSize = new(1.44f, 1.08f, 2.12f);
-            bool swapped = MeshyVisuals.TryReplaceDirect(
-                tableObject.transform, "15_dining_table_clean", tableSize,
-                Vector3.zero, FacingCustomer, false,
+            bool swapped = MeshyVisuals.TryReplaceDirectAuthored(
+                tableObject.transform, "15_dining_table_clean",
+                Vector3.zero, FacingCustomer,
                 "Table Top", "Table Leg", "Customer Chair", "Guest Chair");
             if (swapped)
             {
+                if (MeshyVisuals.TryFindAnchor(
+                        tableObject.transform, "SEAT_A", out Transform authoredSeat))
+                {
+                    Vector3 localSeat = tableObject.transform.InverseTransformPoint(authoredSeat.position);
+                    seat.transform.localPosition = new Vector3(localSeat.x, 0f, localSeat.z);
+                }
+
                 // Both states are authored, so the table swaps whole models
                 // rather than dressing the clean one with loose props.
                 Transform clean = tableObject.transform.Find("15_dining_table_clean Visual");
-                GameObject dirty = MeshyVisuals.TryAttach(
-                    tableObject.transform, "16_dirty_table_props", tableSize,
+                GameObject dirty = MeshyVisuals.TryAttachAuthored(
+                    tableObject.transform, "16_dirty_table_props",
                     Vector3.zero, FacingCustomer);
                 if (clean != null && dirty != null)
                     table.SetTableVariants(clean.gameObject, dirty);
@@ -895,70 +1438,24 @@ namespace ShawarmaTycoon
                 new Vector3(0.17f, 0.16f, 0f), new Vector3(0.08f, 0.32f, 0.08f), frameColor);
         }
 
-        private GameObject CreateLockedExpansionPlot(string plotName, Vector3 position, Vector3 scale)
+        private void CreateTutorialArrow(
+            ItemStation source, ItemStation oven, ItemStation cutting, ItemStation service)
         {
-            GameObject plot = new(plotName);
-            plot.transform.SetParent(runtimeRoot, false);
-            plot.transform.localPosition = position;
-
-            Color lockedGround = new(0.38f, 0.34f, 0.31f);
-            Color lockGold = new(0.93f, 0.68f, 0.18f);
-            PrototypeVisuals.CreatePrimitive("Locked Ground", PrimitiveType.Cube, plot.transform, Vector3.zero,
-                new Vector3(scale.x, 0.10f, scale.z), lockedGround, colliderEnabled: true);
-            PrototypeVisuals.CreatePrimitive("Unlock Pad", PrimitiveType.Cylinder, plot.transform, new Vector3(0f, 0.10f, 0f),
-                new Vector3(1.20f, 0.06f, 1.20f), lockGold);
-            PrototypeVisuals.CreatePrimitive("Lock Body", PrimitiveType.Cube, plot.transform, new Vector3(0f, 0.42f, 0f),
-                new Vector3(0.62f, 0.48f, 0.20f), new Color(0.98f, 0.84f, 0.32f));
-            PrototypeVisuals.CreatePrimitive("Lock Loop", PrimitiveType.Cylinder, plot.transform, new Vector3(0f, 0.75f, 0f),
-                new Vector3(0.34f, 0.24f, 0.16f), new Color(0.98f, 0.84f, 0.32f));
-            MeshyVisuals.TryReplaceDirect(plot.transform, "20_locked_expansion_pad",
-                new Vector3(1.75f, 0.98f, 1.75f), Vector3.up * 0.05f, Vector3.zero,
-                false, "Unlock Pad", "Lock Body", "Lock Loop");
-            return plot;
+            GameObject tutorial = new("Öğretici Ok");
+            tutorial.transform.SetParent(runtimeRoot, false);
+            PrototypeVisuals.CreatePrimitive("Ok Gövdesi", PrimitiveType.Cylinder, tutorial.transform, Vector3.zero,
+                new Vector3(0.20f, 0.52f, 0.20f), new Color(1f, 0.82f, 0.16f));
+            PrototypeVisuals.CreatePrimitive("Ok Ucu", PrimitiveType.Sphere, tutorial.transform, Vector3.down * 0.38f,
+                new Vector3(0.46f, 0.24f, 0.46f), new Color(1f, 0.82f, 0.16f));
+            tutorial.AddComponent<TutorialArrow>()
+                .Configure(inventory, source.transform, oven.transform,
+                    cutting.transform, service.transform);
         }
 
-        /// <summary>Authored plot footprint; modules are sized to it so it never scales.</summary>
-        private const float PlotSpan = 5.64f;
-
-        /// <summary>
-        /// Drop needed to land the model's deck on the lot surface. The plot is
-        /// authored as a floating island, so its earth tapers 1.3 m below the
-        /// deck; sunk this far the city ground hides the earth and only the kerb
-        /// and tiling read above the lot.
-        /// </summary>
-        private const float PlotDeckOffset = -1.23f;
-
-        private GameObject CreateExpansionModule(string moduleName, Vector3 position, Vector3 scale)
-        {
-            GameObject module = new(moduleName);
-            module.transform.SetParent(runtimeRoot, false);
-            module.transform.localPosition = position;
-
-            if (MeshyVisuals.IsAvailable("34_floating_diorama_island"))
-            {
-                // Invisible slab keeps the walkable surface and its collider;
-                // the model supplies everything you actually see.
-                GameObject floor = PrototypeVisuals.CreatePrimitive(
-                    "Plot Surface", PrimitiveType.Cube, module.transform,
-                    Vector3.zero, scale, PrototypeVisuals.IslandTop, colliderEnabled: true);
-                Renderer renderer = floor.GetComponent<Renderer>();
-                if (renderer != null) renderer.enabled = false;
-
-                MeshyVisuals.TryAttach(module.transform, "34_floating_diorama_island",
-                    new Vector3(scale.x, 20f, scale.z),
-                    Vector3.up * PlotDeckOffset, Vector3.zero);
-            }
-            else
-            {
-                CreateIslandGeometry(module.transform, scale);
-            }
-            return module;
-        }
-
-        private Transform CreateMarker(string markerName, Vector3 position)
+        private Transform CreateMarker(Transform parent, string markerName, Vector3 position)
         {
             GameObject marker = new(markerName);
-            marker.transform.SetParent(runtimeRoot, false);
+            marker.transform.SetParent(parent, false);
             marker.transform.localPosition = position;
             return marker.transform;
         }

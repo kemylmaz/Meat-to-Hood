@@ -9,7 +9,7 @@ namespace ShawarmaTycoon
     {
         public static PlayerUpgradeSystem Instance { get; private set; }
 
-        [SerializeField, Min(1)] private int maxLevel = 5;
+        [SerializeField, Min(1)] private int maxLevel = ShopPrices.BoardLevels;
         private Transform player;
         private MobilePlayerController motor;
         private CarryInventory inventory;
@@ -32,6 +32,12 @@ namespace ShawarmaTycoon
             movementLevel = GameProgress.GetInt("gm.movement", 0);
             capacityLevel = GameProgress.GetInt("gm.capacity", 0);
             incomeLevel = GameProgress.GetInt("gm.income", 0);
+            foreach (GeneralManagerUpgradeType type in
+                     (GeneralManagerUpgradeType[])System.Enum.GetValues(typeof(GeneralManagerUpgradeType)))
+            {
+                GeneralManagerUpgradeType captured = type;
+                UpgradeProgress.Register("gm." + type, maxLevel, () => GetLevel(captured));
+            }
             ApplyLevels();
         }
 
@@ -44,13 +50,16 @@ namespace ShawarmaTycoon
 
         public int GetCost(GeneralManagerUpgradeType type)
         {
+            // Income last: it compounds with everything else, so it stays the
+            // dearest line on the board even after the whole board came down to a
+            // sixth of what it used to cost.
             int baseCost = type switch
             {
-                GeneralManagerUpgradeType.MovementSpeed => 200,
-                GeneralManagerUpgradeType.Capacity => 700,
-                _ => 600
+                GeneralManagerUpgradeType.MovementSpeed => ShopPrices.PlayerSpeed,
+                GeneralManagerUpgradeType.Capacity => ShopPrices.PlayerCapacity,
+                _ => ShopPrices.PlayerIncome
             };
-            return Mathf.RoundToInt(baseCost * Mathf.Pow(1.55f, GetLevel(type)));
+            return ShopPrices.BoardCost(baseCost, GetLevel(type));
         }
 
         public bool TryUpgrade(GeneralManagerUpgradeType type, bool free)
@@ -80,6 +89,7 @@ namespace ShawarmaTycoon
 
             ApplyLevels();
             GameProgress.RecordUpgrade();
+            UpgradeProgress.NotifyChanged();
             if (!free) CoinBurst.Spawn(player != null ? player.position + Vector3.up * 1.2f : transform.position + Vector3.up, cost);
             return true;
         }

@@ -129,7 +129,6 @@ namespace ShawarmaTycoon.UI
             {
                 ItemType.RawMeat => "Çiğ etleri ocağa bırak",
                 ItemType.CookedMeat => "Pişen etleri kesim tezgâhına götür",
-                ItemType.SlicedMeat => "Kesilmiş etleri dürüm tezgâhına götür",
                 ItemType.Wrap => "Dürümleri servis tezgâhına bırak",
                 _ => string.Empty
             };

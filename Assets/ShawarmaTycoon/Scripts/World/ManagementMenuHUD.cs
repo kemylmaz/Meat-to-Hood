@@ -25,6 +25,7 @@ namespace ShawarmaTycoon
 
         private sealed class Card
         {
+            public RectTransform Root;
             public Text Title;
             public Text Pips;
             public Button Free;
@@ -87,7 +88,7 @@ namespace ShawarmaTycoon
 
             Image panel = UIFactory.Panel("Panel", root, UITheme.Panel);
             UIFactory.Anchor(panel.rectTransform, UIFactory.Center, UIFactory.Center,
-                Vector2.zero, new Vector2(960f, 900f));
+                Vector2.zero, new Vector2(960f, 1080f));
             UIFactory.AddShadow(panel, new Color(0f, 0f, 0f, 0.28f), new Vector2(0f, -6f));
 
             Image header = UIFactory.Panel("Header", panel.transform, UITheme.DarkBlueGray);
@@ -102,7 +103,10 @@ namespace ShawarmaTycoon
             UIFactory.Anchor(close.GetComponent<RectTransform>(), UIFactory.TopRight, UIFactory.TopRight,
                 new Vector2(-14f, -14f), new Vector2(88f, 88f));
 
-            cards = new Card[3];
+            // Nine slots on a three-by-three grid. The HR desk carries both the
+            // five hires and the three staff upgrades, and a fixed row of three
+            // could only ever show the first three of them.
+            cards = new Card[9];
             for (int i = 0; i < cards.Length; i++)
                 cards[i] = BuildCard(panel.transform, i);
 
@@ -114,56 +118,87 @@ namespace ShawarmaTycoon
             root.gameObject.SetActive(false);
         }
 
+        private const float CardWidth = 280f;
+        private const float CardHeight = 270f;
+        private const float CardGap = 16f;
+        private const int CardColumns = 3;
+
         private Card BuildCard(Transform parent, int index)
         {
-            const float width = 280f;
-            const float gap = 22f;
-            float x = (index - 1) * (width + gap);
-
             Image card = UIFactory.Panel($"Card{index}", parent, UITheme.CreamLight);
             UIFactory.Anchor(card.rectTransform, UIFactory.Center, UIFactory.Center,
-                new Vector2(x, -22f), new Vector2(width, 600f));
+                Vector2.zero, new Vector2(CardWidth, CardHeight));
 
             Image titleBar = UIFactory.Panel("TitleBar", card.transform, UITheme.Teal);
             UIFactory.Anchor(titleBar.rectTransform, UIFactory.TopCenter, UIFactory.TopCenter,
-                Vector2.zero, new Vector2(width, 120f));
+                Vector2.zero, new Vector2(CardWidth, 84f));
 
             Card built = new()
             {
+                Root = card.rectTransform,
                 Title = UIFactory.Label("Title", titleBar.transform, "", UITheme.FontSmall, Color.white)
             };
-            UIFactory.Stretch(built.Title.rectTransform, 12f, 6f);
+            UIFactory.Stretch(built.Title.rectTransform, 12f, 4f);
 
             built.Pips = UIFactory.Label("Pips", card.transform, "", UITheme.FontBody, UITheme.Mustard);
             UIFactory.Anchor(built.Pips.rectTransform, UIFactory.Center, UIFactory.Center,
-                new Vector2(0f, 40f), new Vector2(width - 20f, 60f));
+                new Vector2(0f, 26f), new Vector2(CardWidth - 20f, 44f));
 
             int captured = index;
             built.Free = UIFactory.Button("Free", card.transform, "BEDAVA", UITheme.Green,
                 Color.white, UITheme.FontSmall, () => Purchase(captured, true));
             UIFactory.Anchor(built.Free.GetComponent<RectTransform>(),
                 UIFactory.BottomCenter, UIFactory.BottomCenter,
-                new Vector2(0f, 108f), new Vector2(width - 36f, 78f));
+                new Vector2(0f, 70f), new Vector2(CardWidth - 36f, 62f));
 
             built.Paid = UIFactory.Button("Paid", card.transform, "", UITheme.Mustard,
                 UITheme.Ink, UITheme.FontSmall, () => Purchase(captured, false));
             UIFactory.Anchor(built.Paid.GetComponent<RectTransform>(),
                 UIFactory.BottomCenter, UIFactory.BottomCenter,
-                new Vector2(0f, 22f), new Vector2(width - 36f, 78f));
+                new Vector2(0f, 4f), new Vector2(CardWidth - 36f, 62f));
             built.PaidLabel = built.Paid.GetComponentInChildren<Text>();
 
             built.MaxLabel = UIFactory.Label("Max", card.transform, "MAX", UITheme.FontBody, UITheme.InkSoft);
             UIFactory.Anchor(built.MaxLabel.rectTransform, UIFactory.BottomCenter, UIFactory.BottomCenter,
-                new Vector2(0f, 64f), new Vector2(width - 30f, 70f));
+                new Vector2(0f, 40f), new Vector2(CardWidth - 30f, 56f));
             built.MaxLabel.gameObject.SetActive(false);
             return built;
+        }
+
+        /// <summary>
+        /// Lays out the cards a menu actually uses and hides the rest. Rows are
+        /// centred on what is in them, so a menu of five does not leave a hole in
+        /// the middle of its bottom row.
+        /// </summary>
+        private void LayoutCards(int count)
+        {
+            int rows = Mathf.CeilToInt(count / (float)CardColumns);
+            float rowStride = CardHeight + CardGap;
+            float firstRowY = (rows - 1) * rowStride * 0.5f - 18f;
+
+            for (int i = 0; i < cards.Length; i++)
+            {
+                bool used = i < count;
+                cards[i].Root.gameObject.SetActive(used);
+                if (!used) continue;
+
+                int row = i / CardColumns;
+                int inRow = Mathf.Min(CardColumns, count - row * CardColumns);
+                int column = i - row * CardColumns;
+                float x = (column - (inRow - 1) * 0.5f) * (CardWidth + CardGap);
+                cards[i].Root.anchoredPosition = new Vector2(x, firstRowY - row * rowStride);
+            }
         }
 
         // ---- content --------------------------------------------------------
 
         private static readonly string[] EmployeeTitles = { "Hareket\nHızı", "Kapasite", "Otomasyon" };
         private static readonly string[] PlayerTitles = { "Hareket\nHızı", "Kapasite", "Gelir\nArtışı" };
-        private static readonly string[] RecruitTitles = { "Kasiyer", "Masa\nTemizlikçisi", "Tezgâh\nKoşucusu" };
+        private static readonly string[] RecruitTitles =
+        {
+            "Kasiyer", "Drive-Thru\nKasiyeri", "Drive-Thru\nKoşucusu",
+            "Bulaşıkçı", "2. Bulaşıkçı"
+        };
 
         private static readonly EmployeeUpgradeType[] EmployeeTypes =
         {
@@ -174,10 +209,7 @@ namespace ShawarmaTycoon
             GeneralManagerUpgradeType.MovementSpeed, GeneralManagerUpgradeType.Capacity,
             GeneralManagerUpgradeType.IncomeIncrease
         };
-        private static readonly RecruitRole[] Roles =
-        {
-            RecruitRole.Cashier, RecruitRole.Cleaner, RecruitRole.Runner
-        };
+        private static readonly RecruitRole[] Roles = RecruitmentSystem.AllRoles;
 
         private void Refresh()
         {
@@ -185,33 +217,34 @@ namespace ShawarmaTycoon
 
             switch (activeMenu.Value)
             {
+                // Hiring and staff upgrades on one desk: both are what a personnel
+                // office is for, and splitting them across two rooms meant walking
+                // through a second door to make the people you just hired faster.
                 case ManagementMenu.HumanResources:
-                    titleLabel.text = "ÇALIŞANLARI GELİŞTİR";
-                    for (int i = 0; i < cards.Length; i++)
-                    {
-                        int level = hr != null ? hr.GetLevel(EmployeeTypes[i]) : 0;
-                        ApplyCard(cards[i], EmployeeTitles[i], Pips(level), level < MaxLevel,
-                            hr != null ? hr.GetCost(EmployeeTypes[i]) : 0);
-                    }
-                    break;
-
-                case ManagementMenu.GeneralManager:
-                    titleLabel.text = "KENDİNİ GELİŞTİR";
-                    for (int i = 0; i < cards.Length; i++)
-                    {
-                        int level = gm != null ? gm.GetLevel(PlayerTypes[i]) : 0;
-                        ApplyCard(cards[i], PlayerTitles[i], Pips(level), level < MaxLevel,
-                            gm != null ? gm.GetCost(PlayerTypes[i]) : 0);
-                    }
-                    break;
-
-                default:
-                    titleLabel.text = "PERSONEL AL";
-                    for (int i = 0; i < cards.Length; i++)
+                    titleLabel.text = "PERSONEL";
+                    LayoutCards(Roles.Length + EmployeeTypes.Length);
+                    for (int i = 0; i < Roles.Length; i++)
                     {
                         bool hired = recruitment != null && recruitment.IsHired(Roles[i]);
                         ApplyCard(cards[i], RecruitTitles[i], hired ? "ÇALIŞIYOR" : "MÜSAİT", !hired,
                             recruitment != null ? recruitment.GetCost(Roles[i]) : 0);
+                    }
+                    for (int i = 0; i < EmployeeTypes.Length; i++)
+                    {
+                        int level = hr != null ? hr.GetLevel(EmployeeTypes[i]) : 0;
+                        ApplyCard(cards[Roles.Length + i], EmployeeTitles[i], Pips(level),
+                            level < MaxLevel, hr != null ? hr.GetCost(EmployeeTypes[i]) : 0);
+                    }
+                    break;
+
+                default:
+                    titleLabel.text = "KENDİNİ GELİŞTİR";
+                    LayoutCards(PlayerTypes.Length);
+                    for (int i = 0; i < PlayerTypes.Length; i++)
+                    {
+                        int level = gm != null ? gm.GetLevel(PlayerTypes[i]) : 0;
+                        ApplyCard(cards[i], PlayerTitles[i], Pips(level), level < MaxLevel,
+                            gm != null ? gm.GetCost(PlayerTypes[i]) : 0);
                     }
                     break;
             }
@@ -240,12 +273,13 @@ namespace ShawarmaTycoon
         {
             if (!activeMenu.HasValue) return;
 
-            bool success = activeMenu.Value switch
-            {
-                ManagementMenu.HumanResources => hr != null && hr.TryUpgrade(EmployeeTypes[index], free),
-                ManagementMenu.GeneralManager => gm != null && gm.TryUpgrade(PlayerTypes[index], free),
-                _ => recruitment != null && recruitment.TryHire(Roles[index], free)
-            };
+            // The HR desk's first cards are the hires and the rest are the staff
+            // upgrades, so the index has to be split against the roster length.
+            bool success = activeMenu.Value == ManagementMenu.HumanResources
+                ? index < Roles.Length
+                    ? recruitment != null && recruitment.TryHire(Roles[index], free)
+                    : hr != null && hr.TryUpgrade(EmployeeTypes[index - Roles.Length], free)
+                : gm != null && gm.TryUpgrade(PlayerTypes[index], free);
 
             feedbackLabel.text = success ? "Geliştirme uygulandı" : "Yeterli para yok";
             feedbackLabel.color = success ? UITheme.Green : UITheme.WarmRed;

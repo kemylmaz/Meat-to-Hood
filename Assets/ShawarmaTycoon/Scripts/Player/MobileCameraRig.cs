@@ -9,7 +9,6 @@ namespace ShawarmaTycoon
     {
         [SerializeField] private float zoomSpeed = 0.02f;
         [SerializeField] private float scrollZoomSpeed = 0.006f;
-        [SerializeField] private float followSpeed = 5.8f;
         [SerializeField] private float minZoom = 5.0f;
         [SerializeField] private float maxZoom = 10.0f;
         [SerializeField] private Vector3 cameraOffset = new(9f, 16.5f, -11f);
@@ -21,12 +20,12 @@ namespace ShawarmaTycoon
         /// one thing a follow camera has to get right.
         /// </summary>
         [SerializeField] private float lookAheadZ;
-        [SerializeField] private Vector2 xBounds = new(-9f, 19f);
-        [SerializeField] private Vector2 zBounds = new(-9f, 10f);
-
         private Camera targetCamera;
         private Transform followTarget;
         private float lastDistance;
+
+        public Transform FollowTarget => followTarget;
+        public float LookAtHeight => lookAtHeight;
 
         public void Configure(Camera camera)
         {
@@ -43,11 +42,11 @@ namespace ShawarmaTycoon
             if (followTarget != null) ApplyPose(followTarget.position, true);
         }
 
-        public void SetFollowBounds(Vector2 xRange, Vector2 zRange)
-        {
-            xBounds = xRange;
-            zBounds = zRange;
-        }
+        /// <summary>
+        /// Retained for old scene callers. A floating world has no camera clamp:
+        /// clamping was what pushed the player away from screen centre at edges.
+        /// </summary>
+        public void SetFollowBounds(Vector2 xRange, Vector2 zRange) { }
 
         private void Update()
         {
@@ -56,8 +55,15 @@ namespace ShawarmaTycoon
                 return;
 
             HandleScrollZoom();
-            if (followTarget == null) return;
-            ApplyPose(followTarget.position, false);
+        }
+
+        private void LateUpdate()
+        {
+            if (targetCamera == null || followTarget == null) return;
+            // The player is the fixed portrait composition anchor. Smoothing the
+            // camera position created a visible 0.5-1 m look-behind offset while
+            // walking, so follow is intentionally exact and runs after movement.
+            ApplyPose(followTarget.position, true);
         }
 
         private void ApplyZoomDelta(float delta)
@@ -69,14 +75,12 @@ namespace ShawarmaTycoon
         private void ApplyPose(Vector3 targetPosition, bool immediate)
         {
             Vector3 groundFocus = targetPosition;
-            groundFocus.x = Mathf.Clamp(groundFocus.x, xBounds.x, xBounds.y);
-            groundFocus.z = Mathf.Clamp(groundFocus.z, zBounds.x, zBounds.y) + lookAheadZ;
-            groundFocus.y = 0f;
+            groundFocus.z += lookAheadZ;
 
             Vector3 desiredPosition = groundFocus + cameraOffset;
             targetCamera.transform.position = immediate
                 ? desiredPosition
-                : Vector3.Lerp(targetCamera.transform.position, desiredPosition, followSpeed * Time.deltaTime);
+                : desiredPosition;
             targetCamera.transform.LookAt(groundFocus + Vector3.up * lookAtHeight);
         }
 
@@ -115,7 +119,6 @@ namespace ShawarmaTycoon
                 ApplyZoomDelta((distance - lastDistance) * zoomSpeed);
             lastDistance = distance;
 
-            if (followTarget != null) ApplyPose(followTarget.position, true);
             return true;
         }
 

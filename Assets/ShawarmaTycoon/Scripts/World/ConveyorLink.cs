@@ -1,59 +1,40 @@
-using System.Collections.Generic;
 using UnityEngine;
 
 namespace ShawarmaTycoon
 {
     public sealed class ConveyorLink : MonoBehaviour
     {
-        private static readonly int BaseColorId = Shader.PropertyToID("_BaseColor");
-        private static readonly int ColorId = Shader.PropertyToID("_Color");
-        private static readonly Color LockedBelt = new(0.35f, 0.32f, 0.30f);
-
         [SerializeField, Min(0.1f)] private float transferInterval = 0.75f;
         private ItemStation source;
         private ItemStation destination;
+        private Transform beltVisual;
         private bool unlocked;
         private float timer;
-        private TextMesh label;
         private int level;
-
-        /// <summary>Renderer + submesh pairs that carry the locked/unlocked tint.</summary>
-        private readonly List<KeyValuePair<Renderer, int>> beltSlots = new();
 
         public bool IsUnlocked => unlocked;
         public int Level => level;
 
-        public void Configure(ItemStation from, ItemStation to)
+        /// <summary>
+        /// A belt you have not bought is not there at all. It used to stand in the
+        /// kitchen from the first second, greyed out with "BANT KİLİTLİ" floating
+        /// over it - three machines in the way of the walk between counters,
+        /// advertising themselves, before the shop had sold a single wrap.
+        /// </summary>
+        public void Configure(ItemStation from, ItemStation to, Transform visual)
         {
             source = from;
             destination = to;
-            label = PrototypeVisuals.CreateLabel("BANT KİLİTLİ", transform, Vector3.up * 0.95f, 0.085f);
-            label.gameObject.SetActive(false);
-            CacheBeltSlots();
+            beltVisual = visual;
             UpdateVisual();
         }
 
-        /// <summary>
-        /// Finds the belt surface to tint. On the authored model that is the
-        /// MAT_BeltDark submesh; tinting whatever renderer happened to be first
-        /// would recolour an arbitrary part of the frame instead.
-        /// </summary>
-        private void CacheBeltSlots()
-        {
-            beltSlots.Clear();
-            foreach (Renderer renderer in GetComponentsInChildren<Renderer>(true))
-            {
-                Material[] slots = renderer.sharedMaterials;
-                for (int i = 0; i < slots.Length; i++)
-                    if (slots[i] != null && slots[i].name.Contains("BeltDark"))
-                        beltSlots.Add(new KeyValuePair<Renderer, int>(renderer, i));
-            }
+        /// <summary>Where a parcel enters and leaves this belt, in world space.</summary>
+        private Vector3 RideStart => transform.position + Vector3.up * 0.78f +
+            (source != null ? (source.transform.position - transform.position).normalized * 0.9f : Vector3.zero);
 
-            if (beltSlots.Count > 0) return;
-            Renderer fallback = GetComponentInChildren<Renderer>(true);
-            if (fallback != null)
-                beltSlots.Add(new KeyValuePair<Renderer, int>(fallback, 0));
-        }
+        private Vector3 RideEnd => transform.position + Vector3.up * 0.78f +
+            (destination != null ? (destination.transform.position - transform.position).normalized * 0.9f : Vector3.zero);
 
         public void Unlock()
         {
@@ -96,22 +77,25 @@ namespace ShawarmaTycoon
             if (!destination.TryReceiveFromConveyor(item))
             {
                 source.ReturnOutputFromConveyor(item);
+                return;
             }
+
+            // The move already happened; this is it made visible. The counts
+            // change instantly either way, so a parcel that is still in flight
+            // cannot be lost or double-counted.
+            BeltParcel.Send(beltVisual, RideStart, RideEnd, item,
+                Mathf.Min(0.55f, transferInterval * 0.8f));
         }
 
+        /// <summary>
+        /// A belt is either built or it is not; there is nothing else to show.
+        /// It used to be tinted to mark its state, and since the authored model
+        /// carries no submesh by that name the tint landed on the first renderer
+        /// it found - which painted the whole machine flat green.
+        /// </summary>
         private void UpdateVisual()
         {
-            // A property block keeps the shared palette material untouched, so
-            // one belt's state cannot bleed into every other object using it.
-            Color tint = unlocked ? PrototypeVisuals.Teal : LockedBelt;
-            MaterialPropertyBlock block = new();
-            block.SetColor(BaseColorId, tint);
-            block.SetColor(ColorId, tint);
-            for (int i = 0; i < beltSlots.Count; i++)
-                if (beltSlots[i].Key != null)
-                    beltSlots[i].Key.SetPropertyBlock(block, beltSlots[i].Value);
-
-            if (label != null) label.text = unlocked ? "BANT AÇIK" : "BANT KİLİTLİ";
+            if (beltVisual != null) beltVisual.gameObject.SetActive(unlocked);
         }
     }
 }

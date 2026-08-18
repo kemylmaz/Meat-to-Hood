@@ -136,24 +136,30 @@ namespace ShawarmaTycoon
 
         private void RefreshVisuals()
         {
-            for (int i = 0; i < visuals.Count; i++)
-                if (visuals[i] != null) Destroy(visuals[i]);
-            visuals.Clear();
+            ReleaseVisuals(visuals);
 
             int visibleCount = Mathf.Min(Count, maxVisibleItems);
+            // Pitched off the item itself: a column of dirty plates sits nearly
+            // flush while a column of drinks needs a cup's height between them.
+            float step = PrototypeVisuals.StackStep(HeldType);
             for (int i = 0; i < visibleCount; i++)
             {
                 GameObject prefab = PrefabFor(HeldType);
                 GameObject visual;
                 if (prefab != null)
                 {
-                    visual = Instantiate(prefab, stackRoot);
+                    string key = $"carry.prefab.{prefab.GetInstanceID()}";
+                    visual = GameplayObjectPool.Rent(key, stackRoot, () => Instantiate(prefab, stackRoot));
                     visual.transform.localPosition = Vector3.up * (i * 0.16f);
                     visual.transform.localRotation = Quaternion.identity;
                 }
                 else
                 {
-                    visual = PrototypeVisuals.CreateItemVisual(HeldType, stackRoot, Vector3.up * (i * 0.16f));
+                    ItemType type = HeldType;
+                    string key = $"carry.item.{type}";
+                    visual = GameplayObjectPool.Rent(key, stackRoot,
+                        () => PrototypeVisuals.CreateItemVisual(type, stackRoot, Vector3.zero));
+                    visual.transform.localPosition = Vector3.up * (i * step);
                 }
 
                 foreach (Collider collider in visual.GetComponentsInChildren<Collider>())
@@ -162,10 +168,13 @@ namespace ShawarmaTycoon
             }
 
             // Plates ride on top of the stock, so both loads read at a glance.
+            float plateStep = PrototypeVisuals.StackStep(ItemType.Trash);
+            float plateBase = visibleCount * step + 0.05f;
             for (int i = 0; i < TrashCount; i++)
             {
-                GameObject plate = PrototypeVisuals.CreateItemVisual(
-                    ItemType.Trash, stackRoot, Vector3.up * ((visibleCount + i) * 0.16f + 0.05f));
+                GameObject plate = GameplayObjectPool.Rent("carry.item.Trash", stackRoot,
+                    () => PrototypeVisuals.CreateItemVisual(ItemType.Trash, stackRoot, Vector3.zero));
+                plate.transform.localPosition = Vector3.up * (plateBase + i * plateStep);
                 foreach (Collider collider in plate.GetComponentsInChildren<Collider>())
                     collider.enabled = false;
                 visuals.Add(plate);
@@ -185,6 +194,13 @@ namespace ShawarmaTycoon
                 ItemType.Wrap => wrapPrefab,
                 _ => null
             };
+        }
+
+        private static void ReleaseVisuals(List<GameObject> pooledVisuals)
+        {
+            for (int i = 0; i < pooledVisuals.Count; i++)
+                GameplayObjectPool.Release(pooledVisuals[i]);
+            pooledVisuals.Clear();
         }
     }
 }

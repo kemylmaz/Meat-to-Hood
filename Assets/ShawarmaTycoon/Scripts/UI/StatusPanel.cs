@@ -14,9 +14,10 @@ namespace ShawarmaTycoon.UI
 
         public static StatusPanel Create(RectTransform parent)
         {
+            // Sits under the shop progress bar, which owns the very top strip.
             Image panel = UIFactory.Panel("StatusPanel", parent, UITheme.Panel);
             UIFactory.Anchor(panel.rectTransform, UIFactory.TopCenter, UIFactory.TopCenter,
-                new Vector2(0f, -24f), new Vector2(470f, 118f));
+                new Vector2(0f, -106f), new Vector2(470f, 118f));
             UIFactory.AddShadow(panel, new Color(0f, 0f, 0f, 0.18f), new Vector2(0f, -4f));
 
             StatusPanel status = panel.gameObject.AddComponent<StatusPanel>();

@@ -1,0 +1,31 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 49a0314a86c9e224a928f3f06c318b57, type: 3}
+  m_Name: DioramaWorldConfig
+  m_EditorClassIdentifier: Assembly-CSharp::ShawarmaTycoon.DioramaWorldConfig
+  coreId: core
+  corePosition: {x: 0, y: 0, z: 0}
+  coreSize: {x: 22.56, y: 16.92}
+  deckThickness: 0.4
+  undersideDepth: 3.2
+  floorTileSpan: 5.64
+  expansions:
+  - id: dining-wing
+    position: {x: 14.099999, y: 0, z: -2.82}
+    size: {x: 5.64, y: 5.64}
+  - id: service-wing
+    position: {x: 14.099999, y: 0, z: 2.82}
+    size: {x: 5.64, y: 5.64}
+  playerSpawn: {x: -1.5, y: 0.26, z: 0}
+  edgeSafetyMargin: 0.28
+  floorVisualSink: -0.23
+  expansionVisualDeckOffset: -1.36

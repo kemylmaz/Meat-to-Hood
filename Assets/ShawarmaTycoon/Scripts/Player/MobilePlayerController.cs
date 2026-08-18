@@ -15,6 +15,8 @@ namespace ShawarmaTycoon
         private float verticalVelocity;
         private Vector2 minBounds = new(-8.4f, -6.4f);
         private Vector2 maxBounds = new(8.4f, 6.4f);
+        private DioramaWalkableRegistry walkableRegistry;
+        private float edgeSafetyRadius = 0.28f;
         private float baseMoveSpeed;
         private Vector3 safePosition;
         /// <summary>
@@ -26,6 +28,13 @@ namespace ShawarmaTycoon
         [SerializeField, Min(0.05f)] private float maxStepDown = 0.15f;
 
         public Vector2 JoystickValue => joystick != null ? joystick.Value : Vector2.zero;
+        public DioramaWalkableRegistry WalkableRegistry => walkableRegistry;
+        public Bounds MovementBounds => walkableRegistry != null
+            ? walkableRegistry.ActiveBounds
+            : new Bounds(
+                new Vector3((minBounds.x + maxBounds.x) * 0.5f, 0f,
+                    (minBounds.y + maxBounds.y) * 0.5f),
+                new Vector3(maxBounds.x - minBounds.x, 0f, maxBounds.y - minBounds.y));
 
         /// <summary>The on-screen stick now lives in the uGUI HUD, not in OnGUI.</summary>
         public void SetJoystick(TouchJoystick stick) => joystick = stick;
@@ -38,10 +47,23 @@ namespace ShawarmaTycoon
 
         public void Configure(float speed, Vector2 minimumBounds, Vector2 maximumBounds)
         {
+            walkableRegistry = null;
             moveSpeed = Mathf.Max(0.1f, speed);
             baseMoveSpeed = moveSpeed;
             minBounds = minimumBounds;
             maxBounds = maximumBounds;
+        }
+
+        public void Configure(
+            float speed,
+            DioramaWalkableRegistry registry,
+            float safetyRadius = 0.28f)
+        {
+            walkableRegistry = registry;
+            edgeSafetyRadius = Mathf.Max(0.05f, safetyRadius);
+            moveSpeed = Mathf.Max(0.1f, speed);
+            baseMoveSpeed = moveSpeed;
+            safePosition = transform.position;
         }
 
         public void ExpandMaximumX(float maximumX)
@@ -77,14 +99,19 @@ namespace ShawarmaTycoon
                 verticalVelocity += Physics.gravity.y * Time.deltaTime;
 
             Vector3 desired = transform.position + horizontal;
-            desired.x = Mathf.Clamp(desired.x, minBounds.x, maxBounds.x);
-            desired.z = Mathf.Clamp(desired.z, minBounds.y, maxBounds.y);
+            if (walkableRegistry == null)
+            {
+                desired.x = Mathf.Clamp(desired.x, minBounds.x, maxBounds.x);
+                desired.z = Mathf.Clamp(desired.z, minBounds.y, maxBounds.y);
+            }
             Vector3 constrainedHorizontal = ResolveFooting(
                 new Vector3(desired.x - transform.position.x, 0f, desired.z - transform.position.z));
 
             characterController.Move(constrainedHorizontal + Vector3.up * (verticalVelocity * Time.deltaTime));
 
-            if (characterController.isGrounded)
+            if (characterController.isGrounded &&
+                (walkableRegistry == null ||
+                 walkableRegistry.ContainsFootprint(transform.position, FootprintRadius)))
                 safePosition = transform.position;
             else if (transform.position.y < -2f)
                 RecoverFromFall();
@@ -105,6 +132,25 @@ namespace ShawarmaTycoon
         /// </summary>
         private Vector3 ResolveFooting(Vector3 step)
         {
+            if (walkableRegistry != null)
+            {
+                if (step.sqrMagnitude < 1e-6f ||
+                    walkableRegistry.ContainsFootprint(transform.position + step, FootprintRadius))
+                    return step;
+
+                Vector3 registryX = new(step.x, 0f, 0f);
+                if (registryX.sqrMagnitude > 1e-6f &&
+                    walkableRegistry.ContainsFootprint(transform.position + registryX, FootprintRadius))
+                    return registryX;
+
+                Vector3 registryZ = new(0f, 0f, step.z);
+                if (registryZ.sqrMagnitude > 1e-6f &&
+                    walkableRegistry.ContainsFootprint(transform.position + registryZ, FootprintRadius))
+                    return registryZ;
+
+                return Vector3.zero;
+            }
+
             if (step.sqrMagnitude < 1e-6f || HasFooting(transform.position + step))
                 return step;
 
@@ -118,6 +164,10 @@ namespace ShawarmaTycoon
 
             return Vector3.zero;
         }
+
+        private float FootprintRadius => Mathf.Max(
+            edgeSafetyRadius,
+            characterController != null ? characterController.radius * 0.82f : 0.28f);
 
         private bool HasFooting(Vector3 position)
         {
@@ -138,6 +188,11 @@ namespace ShawarmaTycoon
         /// </summary>
         private float GroundHeight(Vector3 position)
         {
+            if (walkableRegistry != null)
+                return walkableRegistry.TryGetGroundHeight(position, out float registeredHeight)
+                    ? registeredHeight
+                    : NoGround;
+
             int count = Physics.RaycastNonAlloc(position + Vector3.up * 2.5f, Vector3.down,
                 groundHits, 8f, ~0, QueryTriggerInteraction.Ignore);
 

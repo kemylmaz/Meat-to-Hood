@@ -5,34 +5,53 @@ namespace ShawarmaTycoon
 {
     public sealed class CustomerManager : MonoBehaviour
     {
-        [SerializeField, Min(0.2f)] private float spawnInterval = 3f;
+        [SerializeField, Min(0.2f)] private float spawnInterval = 1.7f;
 
         /// <summary>
         /// Queue length and patience have to agree, or the back of the line is
-        /// unservable by construction. Measured service rate is roughly 7.5 s per
-        /// customer, so at the old 4 deep the last arrival needed 30 s and had
-        /// 20 - they timed out every single time, however well the shop was run.
-        /// Three deep needs about 22 s, which a well run shop makes and a badly
-        /// run one does not.
+        /// unservable by construction. The stations run unattended now, so the
+        /// shop can turn a customer round in roughly 5 s rather than 7.5, and a
+        /// seven deep queue needs about 35 s at the back. Patience is set well
+        /// clear of that; drop one of these two numbers without the other and the
+        /// tail of the line times out however well the shop is run.
         /// </summary>
-        [SerializeField, Min(1)] private int maxQueueLength = 3;
-        [SerializeField, Min(2f)] private float customerPatience = 28f;
+        [SerializeField, Min(1)] private int maxQueueLength = 7;
+        [SerializeField, Min(2f)] private float customerPatience = 55f;
 
-        [SerializeField, Min(0.5f)] private float queueSpacing = 1.05f;
-        /// <summary>How much each person already waiting sours a new arrival.</summary>
-        [SerializeField, Range(0f, 0.3f)] private float queuePressurePenalty = 0.09f;
+        /// <summary>
+        /// Opened up from 1.05 so the order bubbles have room. At the old spacing
+        /// a three item order sat over the shoulders of the people either side.
+        /// </summary>
+        [SerializeField, Min(0.5f)] private float queueSpacing = 1.3f;
+
+        /// <summary>
+        /// How much each person already waiting sours a new arrival. Softened
+        /// along with the longer queue: at the old rate a seven deep line - which
+        /// is the line the shop is now built to hold - pinned every arrival at the
+        /// floor of this penalty, and their mood then cut the same bill a second
+        /// time. Tables were paying out a coin or two.
+        /// </summary>
+        [SerializeField, Range(0f, 0.3f)] private float queuePressurePenalty = 0.035f;
 
         private readonly List<CustomerTable> tables = new();
         private readonly List<CustomerAgent> customers = new();
 
+        /// <summary>How far along the pavement a customer starts, either side of the gate.</summary>
+        [SerializeField, Min(2f)] private float approachDistance = 13f;
+
         private ItemStation serviceStation;
+        /// <summary>Where each thing on an order is taken from, keyed by what it is.</summary>
+        private readonly Dictionary<ItemType, ItemStation> counters = new();
+        private CashPile till;
         private Transform entryPoint;
         private Transform exitPoint;
+        private Transform gatePoint;
         private Transform queueFront;
         private Vector3 queueDirection = Vector3.right;
         private float spawnTimer;
         private int customerIndex;
         private int nextVipCustomer;
+        private bool vipCustomersEnabled = true;
 
         public int ActiveCustomers => customers.Count;
         public int ActiveVipCustomers
@@ -48,15 +67,20 @@ namespace ShawarmaTycoon
 
         public void Configure(
             ItemStation service,
+            CashPile counterTill,
             Transform entry,
             Transform exit,
+            Transform gate,
             Transform queueStart,
             Vector3 queueLineDirection,
             IEnumerable<CustomerTable> customerTables)
         {
             serviceStation = service;
+            counters[ItemType.Wrap] = service;
+            till = counterTill;
             entryPoint = entry;
             exitPoint = exit;
+            gatePoint = gate;
             queueFront = queueStart;
             queueDirection = queueLineDirection.sqrMagnitude > 0.01f
                 ? queueLineDirection.normalized
@@ -66,6 +90,8 @@ namespace ShawarmaTycoon
             tables.AddRange(customerTables);
             spawnTimer = 0.5f;
             nextVipCustomer = Random.Range(8, 12);
+            GameCatalogs.Initialize();
+            vipCustomersEnabled = GameCatalogs.Game.Features.VipCustomers;
         }
 
         public void RegisterTable(CustomerTable table)
@@ -74,12 +100,44 @@ namespace ShawarmaTycoon
         }
 
         /// <summary>
+        /// Adds a counter customers can be served from. Anything registered here
+        /// becomes something they may ask for; until the fridge is bought, nobody
+        /// orders a drink, because there is nowhere for one to come from.
+        /// </summary>
+        public void RegisterCounter(ItemType type, ItemStation counter)
+        {
+            if (type == ItemType.None || counter == null) return;
+            counters[type] = counter;
+        }
+
+        /// <summary>Whether a counter for this exists and has one to give.</summary>
+        public bool IsStocked(ItemType type) =>
+            counters.TryGetValue(type, out ItemStation counter) &&
+            counter != null && counter.isActiveAndEnabled && counter.OutputCount > 0;
+
+        private bool Sells(ItemType type) =>
+            counters.TryGetValue(type, out ItemStation counter) &&
+            counter != null && counter.isActiveAndEnabled;
+
+        /// <summary>Whether the shop has these on the menu at all, stocked or not.</summary>
+        public bool SellsDrinks => Sells(ItemType.Drink);
+        public bool SellsDesserts => Sells(ItemType.Dessert);
+
+        /// <summary>
         /// The table a worker should walk to, rather than only whether the job
         /// could be done from anywhere. Null when there is nothing to go for.
         /// </summary>
         public CustomerTable FindTableWithCash() => FindTable(t => t.HasUncollectedCash);
 
         public CustomerTable FindDirtyTable() => FindTable(t => t.IsDirty);
+
+        /// <summary>
+        /// The next dirty table nobody has already set off for. With two bussers
+        /// on the floor, the plain search hands them both the same table and one
+        /// arrives to a job that is already done.
+        /// </summary>
+        public CustomerTable FindDirtyTable(ICollection<CustomerTable> exclude) =>
+            FindTable(t => t.IsDirty && (exclude == null || !exclude.Contains(t)));
 
         private CustomerTable FindTable(System.Func<CustomerTable, bool> wanted)
         {
@@ -133,7 +191,7 @@ namespace ShawarmaTycoon
             SpawnCustomer(false);
         }
 
-        public CustomerAgent SpawnVipNow() => SpawnCustomer(true);
+        public CustomerAgent SpawnVipNow() => vipCustomersEnabled ? SpawnCustomer(true) : null;
 
         private CustomerAgent SpawnCustomer(bool forceVip)
         {
@@ -148,20 +206,25 @@ namespace ShawarmaTycoon
             };
 
             int spawnNumber = ++customerIndex;
-            bool vip = forceVip || spawnNumber >= nextVipCustomer;
+            bool vip = vipCustomersEnabled && (forceVip || spawnNumber >= nextVipCustomer);
             if (vip) nextVipCustomer = spawnNumber + Random.Range(9, 14);
+
+            // Started well off the frame, alternating sides, so the shop is fed by
+            // people walking up the street rather than materialising at the door.
+            Vector3 arrival = entryPoint.position;
+            arrival.x += (spawnNumber % 2 == 0 ? 1f : -1f) *
+                (approachDistance + Random.Range(0f, 4f));
 
             GameObject customer = new($"Musteri {spawnNumber}");
             customer.transform.SetParent(transform, false);
-            customer.transform.position = entryPoint.position;
+            customer.transform.position = arrival;
 
             // Rotate through the authored body variants so a queue is not six
             // copies of the same person.
             string bodyId = MeshyVisuals.CustomerVariants[
                 spawnNumber % MeshyVisuals.CustomerVariants.Length];
-            if (MeshyVisuals.TryAttach(
-                    customer.transform, bodyId, new Vector3(0.75f, 1.70f, 0.85f),
-                    Vector3.zero, Vector3.zero, false) == null)
+            if (MeshyVisuals.TryAttachAuthored(
+                    customer.transform, bodyId, Vector3.zero, Vector3.zero) == null)
             {
                 PrototypeVisuals.CreatePrimitive(
                     "Customer Fallback", PrimitiveType.Capsule, customer.transform,
@@ -181,12 +244,34 @@ namespace ShawarmaTycoon
             int waiting = 0;
             for (int i = 0; i < customers.Count; i++)
                 if (customers[i] != null && customers[i].State == CustomerState.Queueing) waiting++;
-            float arrivalMood = Mathf.Clamp(1f - waiting * queuePressurePenalty, 0.6f, 1f);
+            float arrivalMood = Mathf.Clamp(1f - waiting * queuePressurePenalty, 0.75f, 1f);
 
-            agent.Configure(this, exitPoint, 2.4f, 4.5f, 15, patience, vip, arrivalMood);
+            // The bill, before the tip. Set so a meal plus a good shop's tip comes
+            // to about what the whole meal used to be worth, which is what the
+            // economy was measured and priced against.
+            agent.Configure(this, exitPoint, 2.4f, 4.5f, 24, patience, vip, arrivalMood,
+                BuildOrder(vip));
+            if (gatePoint != null) agent.SetGatePoint(gatePoint.position);
             customers.Add(agent);
             AudioDirector.Play(GameSfx.CustomerArrive, vip ? 0.9f : 0.45f, vip ? 1.15f : 1f);
             return agent;
+        }
+
+        /// <summary>
+        /// Rolls what a customer wants. Only from what the shop actually sells:
+        /// asking for a drink before the fridge is bought would be an order that
+        /// can never be filled, and the extras are what the fridge and the oven
+        /// are bought for in the first place.
+        /// </summary>
+        private CustomerOrder BuildOrder(bool vip)
+        {
+            CustomerOrder order = new();
+            order.Add(ItemType.Wrap, vip && Random.value < 0.5f ? 2 : 1);
+            if (Sells(ItemType.Drink) && Random.value < 0.55f)
+                order.Add(ItemType.Drink, 1);
+            if (Sells(ItemType.Dessert) && Random.value < 0.35f)
+                order.Add(ItemType.Dessert, 1);
+            return order;
         }
 
         private void UpdateQueue()
@@ -205,8 +290,6 @@ namespace ShawarmaTycoon
 
         private void TryServeFrontCustomer()
         {
-            if (serviceStation == null || serviceStation.OutputCount <= 0) return;
-
             CustomerAgent front = null;
             for (int i = 0; i < customers.Count; i++)
             {
@@ -216,7 +299,16 @@ namespace ShawarmaTycoon
                     break;
                 }
             }
-            if (front == null) return;
+            if (front == null || !front.HasReachedQueue) return;
+
+            // An order that cannot be filled would hold the whole line up until
+            // the fridge was restocked. Once the customer has waited past patience,
+            // they give up on the extras and take what there is - which still costs
+            // the shop, because a smaller order is a smaller bill.
+            if (front.HasGivenUpOnExtras && front.Order.TrimUnavailableExtras(IsStocked))
+                front.RefreshOrderBubble();
+
+            if (!CanFill(front.Order)) return;
 
             CustomerTable freeTable = null;
             for (int i = 0; i < tables.Count; i++)
@@ -228,15 +320,51 @@ namespace ShawarmaTycoon
                 }
             }
             if (freeTable == null) return;
-
             if (!freeTable.TryReserve(front)) return;
-            if (!serviceStation.TryTakeServiceItem())
+
+            if (!TakeOrder(front.Order))
             {
                 freeTable.CancelReservation(front);
                 return;
             }
 
             front.Serve(freeTable);
+            // Paid over the counter here and now; the rest is left on the table.
+            till?.Add(front.CounterPayment);
+        }
+
+        private bool CanFill(CustomerOrder order)
+        {
+            for (int i = 0; i < CustomerOrder.DisplayOrder.Length; i++)
+            {
+                ItemType type = CustomerOrder.DisplayOrder[i];
+                int wanted = order.CountOf(type);
+                if (wanted <= 0) continue;
+                if (!counters.TryGetValue(type, out ItemStation counter) ||
+                    counter == null || !counter.isActiveAndEnabled ||
+                    counter.OutputCount < wanted)
+                    return false;
+            }
+            return true;
+        }
+
+        /// <summary>
+        /// Takes the whole order off the counters. Only called once
+        /// <see cref="CanFill"/> has agreed it is all there, so a half-filled
+        /// order cannot leave a wrap missing from the counter for nobody.
+        /// </summary>
+        private bool TakeOrder(CustomerOrder order)
+        {
+            if (!CanFill(order)) return false;
+
+            for (int i = 0; i < CustomerOrder.DisplayOrder.Length; i++)
+            {
+                ItemType type = CustomerOrder.DisplayOrder[i];
+                int wanted = order.CountOf(type);
+                for (int taken = 0; taken < wanted; taken++)
+                    counters[type].TryTakeForCustomer();
+            }
+            return true;
         }
 
         public void Despawn(CustomerAgent customer)

@@ -12,6 +12,7 @@ namespace ShawarmaTycoon
     public static class MeshyVisuals
     {
         private const string Phase1ResourceFolder = "Phase1Prefabs/";
+        private const string PolyResourceFolder = "PolyPrefabs/";
         private const string LegacyResourceFolder = "MeshyPrefabs/";
         private static readonly Dictionary<string, GameObject> Prefabs = new();
         /// <summary>
@@ -52,10 +53,19 @@ namespace ShawarmaTycoon
             { "27_general_manager_desk", "67_manager_desk_plant" }
         };
 
-        /// <summary>Customer body variants, picked per spawn for visual variety.</summary>
+        /// <summary>
+        /// Customer body variants, picked per spawn for visual variety. Eight
+        /// bodies rather than three, so a full queue is no longer two of everyone.
+        /// The staff and the player deliberately stay on the authored pack: they
+        /// are the shop's own people and read as a uniformed set against a crowd
+        /// that is dressed at random.
+        /// </summary>
         public static readonly string[] CustomerVariants =
         {
-            "50_customer_vest_green", "51_customer_vest_navy", "52_customer_sweater"
+            "140_customer_male_casual", "145_customer_female_casual",
+            "142_customer_male_longsleeve", "146_customer_female_dress",
+            "141_customer_male_shirt", "147_customer_female_tanktop",
+            "143_customer_male_suit", "144_customer_female_alt"
         };
 
         public static bool IsAvailable(string assetName) => Load(assetName) != null;
@@ -114,6 +124,42 @@ namespace ShawarmaTycoon
             return anchor;
         }
 
+        /// <summary>
+        /// Places an approved CozyPack prefab at its authored metre scale. These
+        /// prefabs already use a bottom-centre pivot and +Z forward; fitting them
+        /// into arbitrary boxes made counters undersized and table chairs drift.
+        /// </summary>
+        public static GameObject TryAttachAuthored(
+            Transform parent,
+            string assetName,
+            Vector3 localPosition,
+            Vector3 localEulerAngles)
+        {
+            GameObject prefab = Load(assetName);
+            if (prefab == null || parent == null) return null;
+
+            GameObject anchor = new(assetName + " Visual");
+            anchor.transform.SetParent(parent, false);
+            anchor.transform.localPosition = localPosition;
+            CozyVisualMetadata metadata = prefab.GetComponent<CozyVisualMetadata>();
+            anchor.transform.localEulerAngles = localEulerAngles +
+                (metadata != null ? metadata.RuntimeEulerOffset : Vector3.zero);
+
+            GameObject visual = Object.Instantiate(prefab, anchor.transform, false);
+            visual.name = assetName;
+            visual.transform.SetLocalPositionAndRotation(Vector3.zero, Quaternion.identity);
+            visual.transform.localScale = Vector3.one;
+
+            foreach (Collider collider in visual.GetComponentsInChildren<Collider>(true))
+                collider.enabled = false;
+            foreach (Renderer renderer in visual.GetComponentsInChildren<Renderer>(true))
+            {
+                renderer.shadowCastingMode = ShadowCastingMode.On;
+                renderer.receiveShadows = true;
+            }
+            return anchor;
+        }
+
         private static void AddCustomerFace(Transform parent, Vector3 targetSize)
         {
             GameObject face = new("Customer Face");
@@ -153,6 +199,19 @@ namespace ShawarmaTycoon
             if (visual == null)
                 return false;
 
+            HideDirectRenderers(parent, placeholderNames);
+            return true;
+        }
+
+        public static bool TryReplaceDirectAuthored(
+            Transform parent,
+            string assetName,
+            Vector3 localPosition,
+            Vector3 localEulerAngles,
+            params string[] placeholderNames)
+        {
+            GameObject visual = TryAttachAuthored(parent, assetName, localPosition, localEulerAngles);
+            if (visual == null) return false;
             HideDirectRenderers(parent, placeholderNames);
             return true;
         }
@@ -209,12 +268,18 @@ namespace ShawarmaTycoon
                 return cached;
 
             GameObject prefab = null;
+            if (GameCatalogs.TryGetArt(assetName, out GameObject catalogPrefab))
+                prefab = catalogPrefab;
             // Legacy gameplay names are aliased onto the approved pack; anything
             // authored later (the city kit) already uses its own name.
-            if (Phase1Aliases.TryGetValue(assetName, out string phase1Name))
+            if (prefab == null && Phase1Aliases.TryGetValue(assetName, out string phase1Name))
                 prefab = Resources.Load<GameObject>(Phase1ResourceFolder + phase1Name);
             if (prefab == null)
                 prefab = Resources.Load<GameObject>(Phase1ResourceFolder + assetName);
+            // The Poly Pizza bundles. Searched after the authored pack so an alias
+            // above still wins, and before the legacy Meshy geometry it replaces.
+            if (prefab == null)
+                prefab = Resources.Load<GameObject>(PolyResourceFolder + assetName);
             if (prefab == null)
                 prefab = Resources.Load<GameObject>(LegacyResourceFolder + assetName);
             Prefabs[assetName] = prefab;

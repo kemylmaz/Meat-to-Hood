@@ -2,7 +2,12 @@ using UnityEngine;
 
 namespace ShawarmaTycoon
 {
-    public enum ManagementMenu { HumanResources, GeneralManager, Recruiting }
+    /// <summary>
+    /// Two desks, two menus. Recruiting used to have a room and a desk of its own;
+    /// hiring is what a human resources office does, so it moved onto that desk
+    /// and the third door went away.
+    /// </summary>
+    public enum ManagementMenu { HumanResources, GeneralManager }
 
     /// <summary>Opens the appropriate management window once when the player reaches an office desk.</summary>
     public sealed class ManagementOfficeTerminal : MonoBehaviour

@@ -13,20 +13,21 @@ namespace ShawarmaTycoon
     public sealed class CustomerAgent : MonoBehaviour
     {
         [SerializeField, Min(0.1f)] private float moveSpeed = 2.4f;
-        [SerializeField, Min(0.1f)] private float eatingDuration = 4.5f;
+        [SerializeField, Min(0.1f)] private float eatingDuration = 8f;
         [SerializeField, Min(1)] private int mealPayout = 15;
         /// <summary>
         /// How long a customer stays happy. Under this they pay full and step the
         /// combo; past it their mood drops a notch every AngerStepSeconds. It has
         /// to be reachable from the back of a full queue - at 8 s it was not, so
         /// every customer past the first paid a penalty and the combo could never
-        /// get off the ground in a busy shop.
+        /// get off the ground in a busy shop. The queue is seven deep now, so this
+        /// moved out with it.
         /// </summary>
-        [SerializeField, Min(1f)] private float angryAfterSeconds = 15f;
+        [SerializeField, Min(1f)] private float angryAfterSeconds = 26f;
         [SerializeField, Min(2f)] private float patienceSeconds = 20f;
 
         /// <summary>Seconds between one drop in mood and the next.</summary>
-        [SerializeField, Min(1f)] private float angerStepSeconds = 7f;
+        [SerializeField, Min(1f)] private float angerStepSeconds = 9f;
 
         /// <summary>
         /// What each mood pays, from content down to furious. An ordinary
@@ -36,9 +37,13 @@ namespace ShawarmaTycoon
         private static readonly float[] MoodPayout = { 1f, 0.8f, 0.55f, 0.3f };
 
         private CustomerManager manager;
+        private OrderBubble bubble;
         private CustomerTable table;
         private Transform exitPoint;
         private Vector3 queueTarget;
+        private Vector3 gatePoint;
+        private bool hasGate;
+        private bool throughGate;
         private float eatingTimer;
         private float queueTimer;
         private GameObject angryFace;
@@ -50,7 +55,22 @@ namespace ShawarmaTycoon
         private float arrivalMultiplier = 1f;
 
         public CustomerState State { get; private set; } = CustomerState.Queueing;
+
+        /// <summary>What they are queueing for. Never null once configured.</summary>
+        public CustomerOrder Order { get; private set; } = new();
+
         public bool IsVip => isVip;
+
+        /// <summary>They are in the line proper, not still walking up the street.</summary>
+        public bool HasReachedQueue => reachedQueue;
+
+        /// <summary>
+        /// Waited long enough to settle for whatever is in stock. Until then they
+        /// hold out for the full order, which is what makes an empty fridge cost
+        /// the shop something.
+        /// </summary>
+        public bool HasGivenUpOnExtras => moodStep >= 1;
+
         public bool IsAngry => isAngry;
         public bool LeftUnserved { get; private set; }
         /// <summary>0 content, 3 furious. Drives payout and the face.</summary>
@@ -58,9 +78,12 @@ namespace ShawarmaTycoon
 
         public void Configure(
             CustomerManager owner, Transform exitTransform, float speed, float eatingSeconds,
-            int payout, float patience, bool vip = false, float arrivalMood = 1f)
+            int payout, float patience, bool vip = false, float arrivalMood = 1f,
+            CustomerOrder order = null)
         {
             manager = owner;
+            Order = order ?? new CustomerOrder();
+            if (Order.LineCount == 0) Order.Add(ItemType.Wrap, 1);
             exitPoint = exitTransform;
             moveSpeed = Mathf.Max(0.1f, speed);
             eatingDuration = Mathf.Max(0.1f, eatingSeconds);
@@ -75,12 +98,32 @@ namespace ShawarmaTycoon
             moodStep = 0;
             State = CustomerState.Queueing;
             if (isVip) CreateVipVisual();
+
+            bubble = OrderBubble.Create(transform, isVip ? 2.55f : 2.2f);
+            bubble.Show(Order);
         }
+
+        /// <summary>Redraws the bubble after the order has been trimmed.</summary>
+        public void RefreshOrderBubble() => bubble?.Show(Order);
 
         public void SetQueueTarget(Vector3 target)
         {
             queueTarget = target;
         }
+
+        /// <summary>
+        /// The spot just inside the gate. Customers walk up the pavement and in
+        /// through the door rather than appearing at it, and leave the same way,
+        /// so the boundary the gate draws is one they are actually seen crossing.
+        /// </summary>
+        public void SetGatePoint(Vector3 point)
+        {
+            gatePoint = point;
+            hasGate = true;
+        }
+
+        /// <summary>The bill, paid at the till the moment they are served.</summary>
+        public int CounterPayment { get; private set; }
 
         public void Serve(CustomerTable assignedTable)
         {
@@ -88,15 +131,28 @@ namespace ShawarmaTycoon
             bool fast = moodStep == 0;
             ComboSystem.Instance?.RegisterDineIn(fast, isVip);
 
-            // Mood, what the queue looked like when they arrived, and the shop's
-            // standing all bear on the bill. A VIP served promptly is still the
-            // prize; a VIP kept waiting is worth no more than anyone else.
-            float serviceMultiplier = MoodPayout[moodStep] * arrivalMultiplier
-                * ReputationSystem.PayoutMultiplier;
+            // Mood and what the queue looked like when they arrived bear on the
+            // bill. A VIP served promptly is still the prize; a VIP kept waiting
+            // is worth no more than anyone else. The shop's standing is not in
+            // here - it moves the tip, below.
+            float serviceMultiplier = MoodPayout[moodStep] * arrivalMultiplier;
             if (isVip && fast) serviceMultiplier *= 3f;
 
             if (fast) ReputationSystem.Instance?.RegisterHappyCustomer();
-            finalPayout = RewardCalculator.Calculate(mealPayout, serviceMultiplier);
+            // A bag with a drink and a dessert in it is worth more than a wrap on
+            // its own, so what they walked out with sets the size of the bill.
+            int bill = RewardCalculator.Calculate(
+                mealPayout, serviceMultiplier * Order.ValueMultiplier);
+
+            // The bill is paid at the till, and paid now, so a moving queue earns
+            // while it moves. What is left on the table afterwards is the tip: how
+            // much depends on what the shop's name is worth and on whether this
+            // particular customer was kept waiting.
+            CounterPayment = Mathf.Max(1, bill);
+            finalPayout = Mathf.Max(1, Mathf.RoundToInt(
+                bill * ReputationSystem.TipRate * MoodPayout[moodStep]));
+            // Served: they have what they came for, so the bubble comes down.
+            bubble?.Hide();
             State = CustomerState.WalkingToTable;
         }
 
@@ -107,7 +163,15 @@ namespace ShawarmaTycoon
                 case CustomerState.Queueing:
                     // Patience measures queueing, not the walk in from the street.
                     // Counting from the spawn point burned a quarter of it on the
-                    // 13 m approach, before the customer had waited for anything.
+                    // approach, before the customer had waited for anything - and
+                    // that approach is now the length of the pavement.
+                    if (hasGate && !throughGate)
+                    {
+                        if (MoveTowards(gatePoint)) throughGate = true;
+                        UpdateMood();
+                        break;
+                    }
+
                     if (MoveTowards(queueTarget)) reachedQueue = true;
                     if (reachedQueue) queueTimer += Time.deltaTime;
                     UpdateMood();
@@ -143,6 +207,15 @@ namespace ShawarmaTycoon
                     break;
 
                 case CustomerState.Leaving:
+                    // Out through the same door they came in by, then off up the
+                    // pavement. Walking diagonally through the fence to the exit
+                    // marker made the gate decoration.
+                    if (hasGate && throughGate)
+                    {
+                        if (MoveTowards(gatePoint)) throughGate = false;
+                        break;
+                    }
+
                     if (exitPoint == null || MoveTowards(exitPoint.position))
                         manager?.Despawn(this);
                     break;

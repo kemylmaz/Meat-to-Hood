@@ -7,9 +7,11 @@ namespace ShawarmaTycoon
     /// Ambient drive-by traffic on the block's road. Cars are pooled, driven
     /// along X in two lanes and recycled once they leave the ground slab.
     ///
-    /// A drive-through service lane can be layered on later without touching the
-    /// spawner: call <see cref="RequestStop"/> to make the next car pull up at
-    /// <see cref="ServiceStopX"/> and wait, then <see cref="ReleaseStop"/>.
+    /// The near lane is the service lane, the one that runs past the drive-through
+    /// window. Nothing drives in it until the window has been bought: a car going
+    /// by a wall where the window will be reads as a drive-through the shop is
+    /// failing to serve. Once it opens, a car in that lane pulls up at the window
+    /// and waits for its order.
     /// </summary>
     public sealed class TrafficSystem : MonoBehaviour
     {
@@ -32,6 +34,7 @@ namespace ShawarmaTycoon
 
         private CityLayout layout;
         private Transform carRoot;
+        private TakeawaySystem window;
         private float spawnTimer;
         private int colorIndex;
 
@@ -39,17 +42,35 @@ namespace ShawarmaTycoon
         public float ServiceStopX { get; set; }
         public bool StopRequested { get; private set; }
 
+        /// <summary>+1 drives toward +X on the lane nearest the shop.</summary>
+        public const int ServiceLaneDirection = 1;
+
+        /// <summary>Whether anything is allowed into the lane past the window.</summary>
+        public bool ServiceLaneOpen { get; private set; }
+
         public void Configure(CityLayout cityLayout)
         {
             layout = cityLayout;
-            ServiceStopX = cityLayout.CrossingX;
             carRoot = new GameObject("Traffic").transform;
             carRoot.SetParent(transform, false);
             spawnTimer = 1.5f;
 
-            // Seed the road so it is never empty on the first frame.
+            // Seed the road so it is never empty on the first frame. Every seeded
+            // car takes the far lane; the service lane stays empty until it opens.
             for (int i = 0; i < 3; i++)
-                Spawn(Random.Range(0f, 1f) > 0.5f ? 1 : -1, Random.Range(0.15f, 0.85f));
+                Spawn(-ServiceLaneDirection, Random.Range(0.15f, 0.85f));
+        }
+
+        /// <summary>
+        /// Opens the service lane and points it at the window that is served from
+        /// it. Called by the drive-through purchase, so the lane and the counter
+        /// can never exist without each other.
+        /// </summary>
+        public void OpenServiceLane(TakeawaySystem driveThruWindow, float stopX)
+        {
+            window = driveThruWindow;
+            ServiceStopX = stopX;
+            ServiceLaneOpen = true;
         }
 
         public void RequestStop() => StopRequested = true;
@@ -64,6 +85,11 @@ namespace ShawarmaTycoon
         private void Update()
         {
             if (layout == null) return;
+
+            // A car waits at the window exactly as long as the order does, rather
+            // than for a fixed few seconds: the queue is the shop's problem to
+            // clear, which is the whole point of putting one there.
+            StopRequested = ServiceLaneOpen && window != null && window.PendingOrder;
 
             spawnTimer -= Time.deltaTime;
             if (spawnTimer <= 0f)
@@ -97,13 +123,22 @@ namespace ShawarmaTycoon
             if (startProgress > 0f)
                 startX = Mathf.Lerp(startX, endX, startProgress);
 
+            // Half the +X traffic pulls into the driveway once it is open. The
+            // rest, and everything before it opens, stays out on the road: a car
+            // in the driveway is a customer, and there are none until the window
+            // is there to serve them.
+            bool serviceLane = ServiceLaneOpen &&
+                direction == ServiceLaneDirection && Random.value > 0.45f;
+            float laneZ = serviceLane ? layout.ServiceLaneZ : layout.LaneZ(direction);
+
             CityCar car = pool.Count > 0 ? pool.Pop() : CityCar.Create(carRoot, NextColor());
             car.gameObject.SetActive(true);
             car.Launch(this,
-                new Vector3(startX, 0.10f, layout.LaneZ(direction)),
+                new Vector3(startX, layout.RoadY, laneZ),
                 direction,
                 endX,
-                Random.Range(4.4f, 7.6f));
+                Random.Range(4.4f, 7.6f),
+                serviceLane);
             active.Add(car);
         }
 
@@ -127,12 +162,20 @@ namespace ShawarmaTycoon
         private float currentSpeed;
         private float stopHold;
         private bool holding;
+        private bool serviceLane;
 
         public static CityCar Create(Transform parent, Color bodyColor)
         {
             GameObject go = new("City Car");
             go.transform.SetParent(parent, false);
             CityCar car = go.AddComponent<CityCar>();
+
+            // One of the four City Builder vehicles, each already painted on the
+            // shared atlas. The authored car is the fallback below it, and it
+            // ships a single red body material, so that one still gets tinted.
+            string model = CityBlock.TrafficCars[Random.Range(0, CityBlock.TrafficCars.Length)];
+            if (CityKit.Spawn(model, go.transform, Vector3.zero) != null)
+                return car;
 
             if (MeshyVisuals.TryAttach(go.transform, "46_city_car",
                     new Vector3(1.9f, 1.5f, 4.2f), Vector3.zero, Vector3.zero) == null)
@@ -196,19 +239,20 @@ namespace ShawarmaTycoon
         }
 
         public void Launch(TrafficSystem system, Vector3 position, int travelDirection,
-                           float finishX, float travelSpeed)
+                           float finishX, float travelSpeed, bool inServiceLane)
         {
             owner = system;
             direction = travelDirection;
             endX = finishX;
             speed = travelSpeed;
             currentSpeed = travelSpeed;
+            serviceLane = inServiceLane;
             holding = false;
             stopHold = 0f;
             transform.position = position;
-            // Project convention: authored models face their local -Z.
+            // Approved CozyPack convention: authored models face local +Z.
             transform.rotation = Quaternion.LookRotation(
-                new Vector3(-direction, 0f, 0f), Vector3.up);
+                new Vector3(direction, 0f, 0f), Vector3.up);
         }
 
         public void Release()
@@ -217,13 +261,18 @@ namespace ShawarmaTycoon
             stopHold = 0f;
         }
 
+        /// <summary>Grace after an order is handed over, so the car does not lurch off mid-transaction.</summary>
+        private const float PullAwayDelay = 0.5f;
+
         /// <summary>Returns true once the car has left the block and can be pooled.</summary>
         public bool Tick(float deltaTime)
         {
             if (owner == null) return true;
 
             float target = speed;
-            if (owner.StopRequested && !holding)
+            // Only a car that pulled into the driveway stops. Braking out on the
+            // road looked like a jam and served nobody.
+            if (serviceLane && owner.StopRequested && !holding)
             {
                 float distance = (owner.ServiceStopX - transform.position.x) * direction;
                 if (distance > 0f && distance < 6f)
@@ -232,16 +281,22 @@ namespace ShawarmaTycoon
                     if (distance < 0.4f)
                     {
                         holding = true;
-                        stopHold = 2.5f;
+                        stopHold = PullAwayDelay;
                     }
                 }
             }
 
             if (holding)
             {
-                stopHold -= deltaTime;
                 target = 0f;
-                if (stopHold <= 0f) holding = false;
+                // The wait lasts as long as the order does. On a fixed timer the
+                // car drove off mid-order and the window paid out to nobody.
+                if (owner.StopRequested) stopHold = PullAwayDelay;
+                else
+                {
+                    stopHold -= deltaTime;
+                    if (stopHold <= 0f) holding = false;
+                }
             }
 
             currentSpeed = Mathf.MoveTowards(currentSpeed, target, deltaTime * 9f);
