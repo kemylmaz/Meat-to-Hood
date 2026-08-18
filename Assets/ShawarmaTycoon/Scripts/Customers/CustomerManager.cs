@@ -46,6 +46,8 @@ namespace ShawarmaTycoon
         private Transform entryPoint;
         private Transform exitPoint;
         private Transform gatePoint;
+        private Transform approachStart;
+        private Transform approachCorner;
         private Transform queueFront;
         private Vector3 queueDirection = Vector3.right;
         private float spawnTimer;
@@ -63,6 +65,18 @@ namespace ShawarmaTycoon
                     if (customers[i] != null && customers[i].IsVip) count++;
                 return count;
             }
+        }
+
+        /// <summary>
+        /// The walk in: where people appear on the west pavement, and the turn at
+        /// the bottom of it they round before heading for the gate. Set separately
+        /// from <see cref="Configure"/> because a shop laid out without a pavement
+        /// down that side still works - customers just walk straight at the door.
+        /// </summary>
+        public void SetApproachRoute(Transform start, Transform corner)
+        {
+            approachStart = start;
+            approachCorner = corner;
         }
 
         public void Configure(
@@ -89,6 +103,7 @@ namespace ShawarmaTycoon
             tables.Clear();
             tables.AddRange(customerTables);
             spawnTimer = 0.5f;
+
             nextVipCustomer = Random.Range(8, 12);
             GameCatalogs.Initialize();
             vipCustomersEnabled = GameCatalogs.Game.Features.VipCustomers;
@@ -209,11 +224,17 @@ namespace ShawarmaTycoon
             bool vip = vipCustomersEnabled && (forceVip || spawnNumber >= nextVipCustomer);
             if (vip) nextVipCustomer = spawnNumber + Random.Range(9, 14);
 
-            // Started well off the frame, alternating sides, so the shop is fed by
-            // people walking up the street rather than materialising at the door.
-            Vector3 arrival = entryPoint.position;
-            arrival.x += (spawnNumber % 2 == 0 ? 1f : -1f) *
-                (approachDistance + Random.Range(0f, 4f));
+            // Everyone comes down the west pavement rather than appearing on
+            // whichever side of the door the last one did not. They start up by the
+            // shopfronts on the flank, walk south along the paving, then turn east
+            // for the gate - the corner is a waypoint, see CustomerAgent, so the
+            // walk in reads as coming down a street rather than cutting the corner
+            // diagonally across the forecourt.
+            Vector3 arrival = approachStart != null
+                ? approachStart.position
+                : entryPoint.position + Vector3.left * approachDistance;
+            arrival.z += Random.Range(-1.2f, 1.2f);
+            arrival.x += Random.Range(-0.5f, 0.5f);
 
             GameObject customer = new($"Musteri {spawnNumber}");
             customer.transform.SetParent(transform, false);
@@ -232,6 +253,9 @@ namespace ShawarmaTycoon
                     colors[customerIndex % colors.Length]);
             }
 
+            // Fitted before the agent, which caches it in Awake and walks the
+            // capsule from then on rather than setting the transform outright.
+            CharacterBody.Attach(customer);
             CustomerAgent agent = customer.AddComponent<CustomerAgent>();
             // VIPs are worth the most and are the least willing to wait; during a
             // rush nobody has time to spare.
@@ -249,8 +273,12 @@ namespace ShawarmaTycoon
             // The bill, before the tip. Set so a meal plus a good shop's tip comes
             // to about what the whole meal used to be worth, which is what the
             // economy was measured and priced against.
+            // Stepped through three heights along the queue, which is what keeps
+            // full-size bubbles off each other's neighbours.
+            agent.SetBubbleLift(spawnNumber % 3 * 0.36f);
             agent.Configure(this, exitPoint, 2.4f, 4.5f, 24, patience, vip, arrivalMood,
                 BuildOrder(vip));
+            if (approachCorner != null) agent.SetApproachCorner(approachCorner.position);
             if (gatePoint != null) agent.SetGatePoint(gatePoint.position);
             customers.Add(agent);
             AudioDirector.Play(GameSfx.CustomerArrive, vip ? 0.9f : 0.45f, vip ? 1.15f : 1f);

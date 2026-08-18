@@ -38,12 +38,19 @@ namespace ShawarmaTycoon
 
         private CustomerManager manager;
         private OrderBubble bubble;
+        private float bubbleLift;
+
+        /// <summary>The capsule other things bump into. Null if none was fitted.</summary>
+        private CharacterController body;
         private CustomerTable table;
         private Transform exitPoint;
         private Vector3 queueTarget;
         private Vector3 gatePoint;
         private bool hasGate;
         private bool throughGate;
+        private Vector3 cornerPoint;
+        private bool hasCorner;
+        private bool roundedCorner;
         private float eatingTimer;
         private float queueTimer;
         private GameObject angryFace;
@@ -99,9 +106,16 @@ namespace ShawarmaTycoon
             State = CustomerState.Queueing;
             if (isVip) CreateVipVisual();
 
-            bubble = OrderBubble.Create(transform, isVip ? 2.55f : 2.2f);
+            bubble = OrderBubble.Create(transform, isVip ? 2.55f : 2.2f, bubbleLift);
             bubble.Show(Order);
         }
+
+        /// <summary>
+        /// Raises this customer's bubble clear of their neighbours'. The manager
+        /// steps it along the queue, so a line of people reads as a staircase of
+        /// cards rather than a row of overlapping ones.
+        /// </summary>
+        public void SetBubbleLift(float lift) => bubbleLift = lift;
 
         /// <summary>Redraws the bubble after the order has been trimmed.</summary>
         public void RefreshOrderBubble() => bubble?.Show(Order);
@@ -120,6 +134,15 @@ namespace ShawarmaTycoon
         {
             gatePoint = point;
             hasGate = true;
+        }
+
+        /// <summary>
+        /// The turn at the bottom of the pavement, walked to before the gate.
+        /// </summary>
+        public void SetApproachCorner(Vector3 point)
+        {
+            cornerPoint = point;
+            hasCorner = true;
         }
 
         /// <summary>The bill, paid at the till the moment they are served.</summary>
@@ -156,6 +179,8 @@ namespace ShawarmaTycoon
             State = CustomerState.WalkingToTable;
         }
 
+        private void Awake() => body = GetComponent<CharacterController>();
+
         private void Update()
         {
             switch (State)
@@ -165,6 +190,17 @@ namespace ShawarmaTycoon
                     // Counting from the spawn point burned a quarter of it on the
                     // approach, before the customer had waited for anything - and
                     // that approach is now the length of the pavement.
+                    // Down the pavement to the corner first, then in through the
+                    // gate. Without the corner the walk cut diagonally across the
+                    // forecourt from wherever they spawned, which read as people
+                    // drifting at the shop rather than walking down a street to it.
+                    if (hasCorner && !roundedCorner)
+                    {
+                        if (MoveTowards(cornerPoint)) roundedCorner = true;
+                        UpdateMood();
+                        break;
+                    }
+
                     if (hasGate && !throughGate)
                     {
                         if (MoveTowards(gatePoint)) throughGate = true;
@@ -290,7 +326,11 @@ namespace ShawarmaTycoon
                 return true;
 
             Vector3 direction = delta.normalized;
-            transform.position = Vector3.MoveTowards(transform.position, target, moveSpeed * Time.deltaTime);
+            if (body != null)
+                CharacterBody.StepTowards(body, target, moveSpeed, Time.deltaTime);
+            else
+                transform.position = Vector3.MoveTowards(
+                    transform.position, target, moveSpeed * Time.deltaTime);
             transform.rotation = Quaternion.Slerp(
                 transform.rotation,
                 Quaternion.LookRotation(direction, Vector3.up),

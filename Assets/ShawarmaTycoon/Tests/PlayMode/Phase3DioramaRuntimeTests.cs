@@ -46,11 +46,15 @@ namespace ShawarmaTycoon.Tests
         public void Prototype_StandsOnTheStreetAndStartsWithLockedWings()
         {
             Assert.That(Object.FindObjectsByType<DioramaWorld>(FindObjectsSortMode.None), Has.Length.EqualTo(1));
-            Assert.That(world.GetComponentsInChildren<DioramaModule>(true), Has.Length.EqualTo(3));
+            // Core plus every purchasable plot; the plot count is a design choice
+            // the config owns, so this follows it rather than repeating it.
+            int expectedModules = world.ExpansionModules.Count + 1;
+            Assert.That(world.GetComponentsInChildren<DioramaModule>(true),
+                Has.Length.EqualTo(expectedModules));
             Assert.That(world.BaseModule, Is.Not.Null);
             Assert.That(world.BaseModule.IsBaseModule, Is.True);
             Assert.That(world.BaseModule.IsUnlocked, Is.True);
-            Assert.That(world.ExpansionModules.Count, Is.EqualTo(2));
+            Assert.That(world.ExpansionModules.Count, Is.GreaterThan(0));
             Assert.That(world.WalkableRegistry.ActiveSurfaceCount, Is.EqualTo(1));
             // The lot has an outside now: a block around it, traffic on the road
             // and a gate in the fence between the two.
@@ -103,28 +107,52 @@ namespace ShawarmaTycoon.Tests
             foreach (DioramaModule module in world.ExpansionModules)
                 module.SetUnlocked(true, false);
 
-            Assert.That(world.WalkableRegistry.ActiveSurfaceCount, Is.EqualTo(3));
+            Assert.That(world.WalkableRegistry.ActiveSurfaceCount,
+                Is.EqualTo(world.ExpansionModules.Count + 1));
             Bounds core = world.BaseModule.WalkableBounds;
-            DioramaModule[] ordered = world.ExpansionModules
-                .OrderBy(module => module.WalkableBounds.center.z)
-                .ToArray();
 
-            foreach (DioramaModule module in ordered)
+            // The plots are a grid rather than a single row now, so rather than
+            // naming which module meets what, every seam is found by looking for
+            // surfaces that touch and then asked whether a player can stand on it.
+            int seamsChecked = 0;
+            void AssertSeamWalkable(Vector3 point, string what)
             {
-                Bounds wing = module.WalkableBounds;
-                Assert.That(wing.min.x, Is.EqualTo(core.max.x).Within(0.002f),
-                    $"'{module.Id}' does not meet the core surface.");
-                Vector3 coreWingSeam = new(core.max.x, core.max.y, wing.center.z);
-                Assert.That(world.WalkableRegistry.ContainsFootprint(coreWingSeam, 0.20f), Is.True,
-                    $"The player footprint falls through the seam beside '{module.Id}'.");
+                seamsChecked++;
+                Assert.That(world.WalkableRegistry.ContainsFootprint(point, 0.20f), Is.True,
+                    $"The player footprint falls through the seam {what}.");
             }
 
-            Bounds southWing = ordered[0].WalkableBounds;
-            Bounds northWing = ordered[1].WalkableBounds;
-            Assert.That(northWing.min.z, Is.EqualTo(southWing.max.z).Within(0.002f));
-            Vector3 wingSeam = new(southWing.center.x, southWing.max.y, southWing.max.z);
-            Assert.That(world.WalkableRegistry.ContainsFootprint(wingSeam, 0.20f), Is.True,
-                "The player footprint falls through the seam between expansion modules.");
+            int againstCore = 0;
+            foreach (DioramaModule module in world.ExpansionModules)
+            {
+                Bounds wing = module.WalkableBounds;
+                if (Mathf.Abs(wing.min.x - core.max.x) >= 0.002f) continue;
+                againstCore++;
+                AssertSeamWalkable(
+                    new Vector3(core.max.x, core.max.y, wing.center.z), $"beside '{module.Id}'");
+            }
+            Assert.That(againstCore, Is.GreaterThan(0),
+                "No expansion plot meets the core surface; the grid is detached.");
+
+            foreach (DioramaModule a in world.ExpansionModules)
+            foreach (DioramaModule b in world.ExpansionModules)
+            {
+                if (a == b) continue;
+                Bounds west = a.WalkableBounds, east = b.WalkableBounds;
+                if (Mathf.Abs(east.min.x - west.max.x) < 0.002f &&
+                    Mathf.Abs(east.center.z - west.center.z) < 0.002f)
+                    AssertSeamWalkable(
+                        new Vector3(west.max.x, west.max.y, west.center.z),
+                        $"between '{a.Id}' and '{b.Id}'");
+                if (Mathf.Abs(east.min.z - west.max.z) < 0.002f &&
+                    Mathf.Abs(east.center.x - west.center.x) < 0.002f)
+                    AssertSeamWalkable(
+                        new Vector3(west.center.x, west.max.y, west.max.z),
+                        $"between '{a.Id}' and '{b.Id}'");
+            }
+
+            Assert.That(seamsChecked, Is.GreaterThan(world.ExpansionModules.Count),
+                "Found fewer seams than there are plots; the grid is not joined up.");
         }
 
         [Test]

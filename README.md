@@ -19,7 +19,7 @@ Shawarma Tycoon is a mobile-first restaurant-management prototype built in Unity
 - Build combos and capitalize on rush-hour multipliers
 - Upgrade the player, stations, staff, conveyors, and the two management offices
 - Recruit a cashier, a drive-through cashier, a runner, and two bussers
-- Expand the restaurant across unlockable plots along the lot's east side
+- Expand the restaurant across six unlockable plots along the lot's east side, two tables to a plot
 - Watch one bar at the top of the screen creep toward 100% as the shop gets built out
 - Earn offline income through local session persistence
 
@@ -80,7 +80,7 @@ Two conventions are worth knowing before editing:
 - **There are two model packs, imported by two builders.** `CozyPackBuilder` handles the project's own Blender exports, which carry three named LOD meshes, a `FRONT_DIRECTION` anchor and material names that map onto a hand-picked palette. `PolyPackBuilder` handles the downloaded [Poly Pizza](https://poly.pizza) bundles under `Art/PolyPack` — the city kit, the restaurant and kitchen sets, the food kit and the animated crowd — which have none of that. Those bundles were authored at four unrelated scales, so each model states one real-world measurement and the builder solves for the uniform scale, lands the pivot at bottom-centre and unpacks the palette atlas embedded in the FBX. Both write id-addressed prefabs into `Resources`, and `MeshyVisuals`/`CityKit` search the authored pack first.
 - **The UI is generated at runtime too.** `UIFactory` builds its own nine-sliced sprites and uses the built-in legacy font, so there is no TextMeshPro import step and no HUD prefab to keep in sync.
 
-The world is assembled as `Restaurant World/Restaurant Lot` plus two independently unlockable `DioramaModule` plots along the east side. Each module separates its always-full-size walkable surface, animated visual root, gameplay content root, and non-walkable locked preview. `DioramaWalkableRegistry` is the only ground authority used by the player, so tables, counters, previews and the street outside cannot be mistaken for walkable floor.
+The world is assembled as `Restaurant World/Restaurant Lot` plus a grid of six independently unlockable `DioramaModule` plots along the east side, two columns of three covering the lot's full depth. Each module separates its always-full-size walkable surface, animated visual root, gameplay content root, and non-walkable locked preview. `DioramaWalkableRegistry` is the only ground authority used by the player, so tables, counters, previews and the street outside cannot be mistaken for walkable floor.
 
 The lot stands on a street rather than floating: `ShopWorldBuilder` raises walls along the two edges the camera looks past and a knee-high fence with a shopfront gate along the edge it looks over, and `CityBlock` lays the pavement, the driveway, the road and the skyline around it. The pavement is level with the shop floor on purpose — customers keep the height they spawn at, so a step at the gate would leave half the queue sunk into the tiles. Everything the player has not bought yet is absent rather than shown greyed out: no belt stands in the kitchen, no desk stands in an office, and no car uses the lane past a drive-through window that is not there.
 
@@ -117,17 +117,19 @@ The figures below are measured rather than estimated. `Assets/ShawarmaTycoon/Edi
 | --- | ---: | --- |
 | Hand-carried, nothing bought | ~50 /min | two runs gave 42 and 65; variance is wide |
 | Three belts and one table wing | ~120 /min | line runs itself, player collects and busses |
-| Everything bought | ~310 /min | drive-through, courier and both extra counters live |
+| Everything bought | ~318 /min | drive-through, courier and both extra counters live |
 
 The probe is a **floor**, not a target: it walks a whole cook cycle before collecting any money, where a player picks the cash up on the way past. Every price in the game lives in `ShopPrices.cs` and is set against these three numbers.
 
 | | Cost | Share |
 | --- | ---: | ---: |
-| Belts, workers, tables, offices, drive-through, fridge, dessert oven, courier, hires | 5,295 | 44% |
-| The two upgrade boards, taken to level 5 | 6,852 | 56% |
-| **Everything** | **12,147** | ~65 min |
+| Belts, workers, tables, offices, drive-through, fridge, dessert oven, courier, hires | 11,055 | 62% |
+| The two upgrade boards, taken to level 5 | 6,852 | 38% |
+| **Everything** | **17,907** | ~114 min |
 
 The first pass cost 49,000 against the same income — over four hours — and four fifths of it was the two upgrade boards, which sell multipliers rather than anything the player can see appear. `Prices_StayInStepWithMeasuredIncome` holds the shape: a first purchase reachable in the opening two minutes, a completion between half an hour and two, and boards that cannot cost more than twice the shop they upgrade.
+
+Widening the lot to six plots turned up the most useful thing the probe has said so far: **a bigger floor earns no more money**. Fully built, the shop measures 318 /min with eighteen covers and measured 310 /min with ten. What caps it is how fast the kitchen line turns meat into wraps, not how many people can sit down. So seating is priced as capacity the player wants rather than as the thing that pays for itself: a plot is sold whole, two tables at a time, which reaches eighteen covers on a ten step ladder. Pricing eighteen tables individually put buying the shop out at 242 minutes, twice the ceiling.
 
 Two other things had to move with the prices. The shop now **opens prepped** — a few wraps on the counter and part-cooked stock behind it — because the queue arrives within seconds of the first frame while a cold line takes ninety seconds to produce anything, and that opening minute earned exactly nothing. And the binding constraint early on is **tables, not food**: with four tables and nobody bussing, the counter fills with wraps while the queue stands there because there is nowhere to seat anyone, so the table wing and the first busser are priced to be reachable within the first few minutes.
 

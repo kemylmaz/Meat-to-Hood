@@ -21,18 +21,22 @@ namespace ShawarmaTycoon
         /// <summary>Tables the shop opens with, before anything is bought.</summary>
         private const int FreeTables = 2;
 
-        /// <summary>How many of the ten stand on the shop's own floor.</summary>
+        /// <summary>How many stand on the shop's own floor.</summary>
         private const int MainFloorTables = 6;
 
+        /// <summary>Tables per purchasable plot; one purchase brings the pair.</summary>
+        private const int TablesPerPlot = 2;
+
         /// <summary>
-        /// Where the ten tables go, in the order they are bought. Two rows of
-        /// three across the dining room, then two on each purchasable plot.
+        /// Where the tables go, in the order they are bought: two rows of three
+        /// across the dining room, then two on each purchasable plot. The plot
+        /// entries carry no position of their own - they are placed on the plot
+        /// they belong to, so the list only has to say how many there are.
         /// </summary>
-        private static readonly Vector3[] TableSlots =
+        private static readonly Vector3[] MainFloorSlots =
         {
             new(-9f, 0.25f, 1.4f), new(-6.2f, 0.25f, 1.4f), new(-3.4f, 0.25f, 1.4f),
-            new(-9f, 0.25f, -2f), new(-6.2f, 0.25f, -2f), new(-3.4f, 0.25f, -2f),
-            Vector3.zero, Vector3.zero, Vector3.zero, Vector3.zero
+            new(-9f, 0.25f, -2f), new(-6.2f, 0.25f, -2f), new(-3.4f, 0.25f, -2f)
         };
 
         private Transform runtimeRoot;
@@ -255,44 +259,63 @@ namespace ShawarmaTycoon
             DioramaExpansion expansion = root.AddComponent<DioramaExpansion>();
             expansion.Configure(expansionModules);
 
+            // Six on the floor, then two on every plot the shop can reach. The
+            // count follows the plots rather than a written-down list, so widening
+            // the expansion grid adds tables to buy without touching this.
             List<CustomerTable> tables = new();
-            List<GameObject> boughtTables = new();
-            for (int i = 0; i < TableSlots.Length; i++)
+            List<GameObject> boughtFloorTables = new();
+            for (int i = 0; i < MainFloorTables; i++)
             {
-                int slot = i;
-                Transform parent = shopWorld.DiningRoot;
-                Vector3 position = TableSlots[i];
-                // The last four stand on the purchasable plots, so buying that
-                // table is also what makes the ground under it appear.
-                if (i >= MainFloorTables)
-                {
-                    int module = (i - MainFloorTables) / 2;
-                    if (module >= expansionModules.Count) break;
-                    parent = expansionModules[module].ContentRoot;
-                    position = new Vector3((i - MainFloorTables) % 2 == 0 ? -1.4f : 1.4f, 0.25f, 0f);
-                }
-
-                CustomerTable table = CreateTable(parent, $"Masa {slot + 1}", position);
+                CustomerTable table = CreateTable(
+                    shopWorld.DiningRoot, $"Masa {i + 1}", MainFloorSlots[i]);
                 tables.Add(table);
-                if (slot >= FreeTables) boughtTables.Add(table.gameObject);
+                if (i >= FreeTables) boughtFloorTables.Add(table.gameObject);
             }
 
-            for (int i = 0; i < boughtTables.Count; i++) boughtTables[i].SetActive(false);
+            // A plot is one purchase that brings two tables with it, rather than
+            // two purchases that happen to share a plot. That is what lets the shop
+            // reach eighteen covers on a ten step ladder: seating is the biggest
+            // sink in the game, and the measured income says a wider floor earns
+            // no more than a narrow one, so eighteen separately priced tables put
+            // buying the shop out at twice the intended pace.
+            List<GameObject> plotTables = new();
+            for (int module = 0; module < expansionModules.Count; module++)
+            for (int seat = 0; seat < TablesPerPlot; seat++)
+            {
+                int number = MainFloorTables + module * TablesPerPlot + seat + 1;
+                CustomerTable table = CreateTable(
+                    expansionModules[module].ContentRoot, $"Masa {number}",
+                    new Vector3(seat == 0 ? -1.4f : 1.4f, 0.25f, 0f));
+                tables.Add(table);
+                plotTables.Add(table.gameObject);
+            }
+
+            foreach (GameObject bought in boughtFloorTables) bought.SetActive(false);
+            foreach (GameObject bought in plotTables) bought.SetActive(false);
 
             CreatePurchasePad(
                 shopWorld.UtilityRoot, "Masa Ekle", layout.TablePad, "tables",
                 ShopPrices.Table,
                 (level, _) =>
                 {
-                    // Level n adds the nth bought table. The plots hold the last
-                    // four, so they are unlocked as the table that stands on them
-                    // is paid for.
+                    // The floor fills first, one table a level; after that each
+                    // level opens the next plot and stands both its tables on it.
                     int index = level - 1;
-                    if (index < 0 || index >= boughtTables.Count) return;
-                    int slot = FreeTables + index;
-                    if (slot >= MainFloorTables && (slot - MainFloorTables) % 2 == 0)
-                        expansion.UnlockNext();
-                    boughtTables[index].SetActive(true);
+                    if (index < 0) return;
+                    if (index < boughtFloorTables.Count)
+                    {
+                        boughtFloorTables[index].SetActive(true);
+                        return;
+                    }
+
+                    int plot = index - boughtFloorTables.Count;
+                    if (plot >= expansionModules.Count) return;
+                    expansion.UnlockNext();
+                    for (int seat = 0; seat < TablesPerPlot; seat++)
+                    {
+                        int table = plot * TablesPerPlot + seat;
+                        if (table < plotTables.Count) plotTables[table].SetActive(true);
+                    }
                 });
 
             // --- customers ----------------------------------------------------
@@ -305,6 +328,9 @@ namespace ShawarmaTycoon
             CustomerManager customerManager = customerRoot.AddComponent<CustomerManager>();
             customerManager.Configure(service, till, entry, exit,
                 shopWorld.EntranceAnchor, queueFront, Vector3.back, tables);
+            customerManager.SetApproachRoute(
+                CreateMarker(shopWorld.CustomerFlowRoot, "Yaklaşma Başı", ApproachStart(layout)),
+                CreateMarker(shopWorld.CustomerFlowRoot, "Yaklaşma Dönüşü", ApproachCorner(layout)));
             customerManager.RegisterCounter(ItemType.Drink, fridge);
             customerManager.RegisterCounter(ItemType.Dessert, dessertOven);
             courier.Configure(playerTransform, inventory, customerManager, courierCash);
@@ -381,8 +407,8 @@ namespace ShawarmaTycoon
                 // The bussers wait at either end of the dining room's first row,
                 // read off the table slots rather than a table that may not have
                 // been bought yet.
-                TableSlots[0] + new Vector3(-2.1f, 0f, 0f),
-                TableSlots[2] + new Vector3(2.1f, 0f, 0f)
+                MainFloorSlots[0] + new Vector3(-2.1f, 0f, 0f),
+                MainFloorSlots[2] + new Vector3(2.1f, 0f, 0f)
             };
         }
 
@@ -1014,8 +1040,11 @@ namespace ShawarmaTycoon
                 new Vector3(storeX + 0.82f, floorY, wallZ - 0.45f), new Vector3(0f, -6f, 0f));
             MeshyVisuals.TryAttachAuthored(parent, ShopCrate,
                 new Vector3(storeX + 0.1f, floorY + 0.3f, wallZ - 0.52f), new Vector3(0f, 15f, 0f));
+            // At the far end of the line rather than beside the crates: the corner
+            // between the west wall and the drive-through bay is only two metres
+            // wide, and the barrel was standing in the bay itself.
             MeshyVisuals.TryAttachAuthored(parent, "255_food_barrel",
-                new Vector3(storeX + 1.75f, floorY, wallZ - 0.55f), Vector3.zero);
+                new Vector3(layout.Service.x + 1.4f, floorY, wallZ - 0.55f), Vector3.zero);
         }
 
         private GameObject CreateTrashBin(Transform parent, Vector3 position)
@@ -1451,6 +1480,25 @@ namespace ShawarmaTycoon
                 .Configure(inventory, source.transform, oven.transform,
                     cutting.transform, service.transform);
         }
+
+        /// <summary>
+        /// Top of the pavement running down the shop's west flank, where the queue
+        /// comes from. Read off the lot rather than written down, so the walk stays
+        /// on the paving if the lot is ever resized.
+        /// </summary>
+        private Vector3 ApproachStart(RestaurantLayoutConfig layout) =>
+            new(FlankPavementX, layout.CustomerEntry.y, cityLayout.LotDepth * 0.35f);
+
+        /// <summary>
+        /// The turn at the bottom of that pavement, out on the forecourt clear of
+        /// the fence, from which the walk turns east for the gate.
+        /// </summary>
+        private Vector3 ApproachCorner(RestaurantLayoutConfig layout) =>
+            new(FlankPavementX, layout.CustomerEntry.y, -(cityLayout.LotDepth * 0.5f + 2.8f));
+
+        /// <summary>Middle of the paved strip between the lot and the west facades.</summary>
+        private float FlankPavementX =>
+            -(cityLayout.LotWidth * 0.5f + cityLayout.SideWalkGap * 0.5f);
 
         private Transform CreateMarker(Transform parent, string markerName, Vector3 position)
         {

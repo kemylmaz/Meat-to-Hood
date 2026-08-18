@@ -34,7 +34,23 @@ namespace ShawarmaTycoon
         /// throughput is measured against, so this is the ladder the player climbs
         /// for the entire game rather than a pair of wings bought once.
         /// </summary>
-        public static readonly int[] Table = { 50, 90, 150, 230, 330, 450, 600, 780 };
+        /// <summary>
+        /// One entry per purchase, not per table: four fill the shop's own floor,
+        /// then six open a plot each and stand two tables on it. Eighteen covers
+        /// off ten steps.
+        ///
+        /// How far this ladder can run is set by the income guardrail rather than
+        /// by how much floor there is. Seating is the biggest single sink in the
+        /// game, and the probe measures a fully built shop at 318 coins a minute
+        /// whether it has six tables or eighteen - the kitchen line caps it, not
+        /// the seats. Pricing eighteen tables individually put buying the shop out
+        /// at 242 minutes against an intended ceiling of 120, which is why a plot
+        /// is sold whole and the first eight steps are untouched.
+        /// </summary>
+        public static readonly int[] Table =
+        {
+            50, 90, 150, 230, 330, 450, 600, 780, 990, 1240
+        };
 
         /// <summary>A decoration lifts the shop's standing, and standing is the tip.</summary>
         public static readonly int[] Decoration = { 120, 200, 320, 480 };

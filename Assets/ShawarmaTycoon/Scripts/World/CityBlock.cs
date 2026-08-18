@@ -345,8 +345,12 @@ namespace ShawarmaTycoon
                 float width = CityKit.TileWidth(model, 8f);
                 float depth = CityKit.TileDepth(model, 6f);
                 if (x + width > toX) break;
+                // Turned to look back across the road at the shop. Only the +Z
+                // face of these models is a shopfront - awning, door, glazing -
+                // and the other three are blank wall, so left unturned the whole
+                // street showed the player its back.
                 CityKit.Spawn(model, parent,
-                    new Vector3(x + width * 0.5f, baseY, frontZ + depth * 0.5f));
+                    new Vector3(x + width * 0.5f, baseY, frontZ + depth * 0.5f), 180f);
                 x += width + Random(ref seed, 0.25f, 1.0f);
             }
             return true;
@@ -399,9 +403,12 @@ namespace ShawarmaTycoon
             float z = layout.FrontEdgeZ + 2f;
             float end = layout.RoadCenterZ - layout.RoadWidth * 0.5f - 1f;
 
-            // Turned to look across the lot.
+            // Turned so the shopfront on the model's +Z face looks across the lot,
+            // which on the -X flank means east, into the camera. This row lines the
+            // pavement the queue walks down, so it is the one row the player reads
+            // close up and the one that most wants its front toward them.
             bool authored = CityKit.Has(Facades[0]);
-            float yaw = side < 0f ? -90f : 90f;
+            float yaw = side < 0f ? 90f : -90f;
 
             while (z < end)
             {
@@ -668,7 +675,14 @@ namespace ShawarmaTycoon
         public float SideWalkGap = 3.4f;
 
         /// <summary>How far the purchasable expansion plots reach along +X.</summary>
-        public float ExpansionReach = 20f;
+        /// <summary>
+        /// How far the purchasable plots reach along +X, and so where the pavement
+        /// and the parked cars on that flank have to start. Two columns of 5.64 m
+        /// plots off a lot half-width of 11.28 land their outer edge here; at the
+        /// old 20 m the east pavement was laid across the outer column and the
+        /// parked cars stood inside the last plot the player could buy.
+        /// </summary>
+        public float ExpansionReach = 22.56f;
 
         /// <summary>The drive-through lane, and the gap between it and the lot kerb.</summary>
         public float ServiceLaneWidth = 3.4f;

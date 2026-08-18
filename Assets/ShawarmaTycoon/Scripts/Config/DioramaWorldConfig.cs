@@ -38,14 +38,36 @@ namespace ShawarmaTycoon
         [SerializeField, Min(1f)] private float undersideDepth = 3.2f;
         [SerializeField, Min(1f)] private float floorTileSpan = AuthoredPlotSpan;
 
+        /// <summary>
+        /// The plots east of the lot, two columns of three. Together they cover
+        /// x 11.28 to 22.56 and the lot's full depth, which doubles the floor the
+        /// shop can reach and is the ground the street furniture had to be pushed
+        /// off to make room for - see CityLayout.ExpansionReach.
+        ///
+        /// Ordered so the shop grows outward: the near column fills middle, south,
+        /// north before the far one starts, rather than reaching for the far corner
+        /// while the plot next to the door is still empty.
+        /// </summary>
         [Header("Expansion Modules")]
-        [SerializeField] private ExpansionDefinition[] expansions =
+        [SerializeField] private ExpansionDefinition[] expansions = BuildExpansionGrid();
+
+        private static ExpansionDefinition[] BuildExpansionGrid()
         {
-            new("dining-wing", new Vector3(AuthoredPlotSpan * 2.5f, 0f, -AuthoredPlotSpan * 0.5f),
-                new Vector2(AuthoredPlotSpan, AuthoredPlotSpan)),
-            new("service-wing", new Vector3(AuthoredPlotSpan * 2.5f, 0f, AuthoredPlotSpan * 0.5f),
-                new Vector2(AuthoredPlotSpan, AuthoredPlotSpan))
-        };
+            float[] columns = { AuthoredPlotSpan * 2.5f, AuthoredPlotSpan * 3.5f };
+            float[] rows = { 0f, -AuthoredPlotSpan, AuthoredPlotSpan };
+            Vector2 size = new(AuthoredPlotSpan, AuthoredPlotSpan);
+
+            ExpansionDefinition[] grid = new ExpansionDefinition[columns.Length * rows.Length];
+            int index = 0;
+            for (int column = 0; column < columns.Length; column++)
+            for (int row = 0; row < rows.Length; row++)
+            {
+                grid[index++] = new ExpansionDefinition(
+                    $"wing-{column}-{row}",
+                    new Vector3(columns[column], 0f, rows[row]), size);
+            }
+            return grid;
+        }
 
         [Header("Player and Camera")]
         [SerializeField] private Vector3 playerSpawn = new(-1.5f, 0.26f, 0f);
@@ -84,15 +106,7 @@ namespace ShawarmaTycoon
             deckThickness = 0.40f;
             undersideDepth = 3.2f;
             floorTileSpan = AuthoredPlotSpan;
-            expansions = new[]
-            {
-                new ExpansionDefinition("dining-wing",
-                    new Vector3(AuthoredPlotSpan * 2.5f, 0f, -AuthoredPlotSpan * 0.5f),
-                    new Vector2(AuthoredPlotSpan, AuthoredPlotSpan)),
-                new ExpansionDefinition("service-wing",
-                    new Vector3(AuthoredPlotSpan * 2.5f, 0f, AuthoredPlotSpan * 0.5f),
-                    new Vector2(AuthoredPlotSpan, AuthoredPlotSpan))
-            };
+            expansions = BuildExpansionGrid();
             playerSpawn = new Vector3(-1.5f, 0.26f, 0f);
             edgeSafetyMargin = 0.28f;
             floorVisualSink = -0.23f;

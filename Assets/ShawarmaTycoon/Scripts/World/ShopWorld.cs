@@ -353,7 +353,7 @@ namespace ShawarmaTycoon
             // and the opening cannot drift apart.
             float windowX = BuildWalls(
                 shell.transform, size, deckTop, back, west,
-                -size.x * 0.5f + ShellModule * 3.2f, out GameObject bay);
+                -size.x * 0.5f + ShellModule * 2.2f, out GameObject bay);
             Transform entrance = BuildFenceAndGate(shell.transform, size, deckTop, front);
 
             world.ConfigureShell(shell.transform, entrance, size, deckTop, windowX, back, bay);

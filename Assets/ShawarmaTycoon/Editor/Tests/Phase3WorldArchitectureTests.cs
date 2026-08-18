@@ -104,7 +104,15 @@ namespace ShawarmaTycoon.Tests
         /// </summary>
         private const float HandCarriedIncome = 50f;
         private const float BeltedIncome = 120f;
-        private const float FullyBuiltIncome = 310f;
+
+        /// <summary>
+        /// Re-measured on the widened lot: 999 coins over 188 s with all six plots
+        /// bought. Doubling the floor moved this by eight coins a minute, because
+        /// what caps the shop is how fast the kitchen line turns meat into wraps,
+        /// not how many people can sit down. Worth knowing before pricing seating
+        /// as though it were the constraint.
+        /// </summary>
+        private const float FullyBuiltIncome = 318f;
 
         /// <summary>
         /// The price ladder has to stay in step with what the shop earns. These
@@ -288,37 +296,52 @@ namespace ShawarmaTycoon.Tests
             DioramaWorldConfig config = Resources.Load<DioramaWorldConfig>("Config/DioramaWorldConfig");
             Assert.That(config, Is.Not.Null, "The Phase 3 world config resource is missing.");
             Assert.That(config.CoreId, Is.Not.Empty);
-            Assert.That(config.Expansions.Count, Is.EqualTo(2));
+            Assert.That(config.Expansions.Count, Is.GreaterThan(0));
 
             HashSet<string> ids = new(StringComparer.Ordinal) { config.CoreId };
             float coreEastEdge = config.CorePosition.x + config.CoreSize.x * 0.5f;
             float coreSouthEdge = config.CorePosition.z - config.CoreSize.y * 0.5f;
             float coreNorthEdge = config.CorePosition.z + config.CoreSize.y * 0.5f;
 
-            List<DioramaWorldConfig.ExpansionDefinition> ordered = config.Expansions
-                .OrderBy(definition => definition.Position.z)
-                .ToList();
-
-            foreach (DioramaWorldConfig.ExpansionDefinition expansion in ordered)
+            foreach (DioramaWorldConfig.ExpansionDefinition expansion in config.Expansions)
             {
                 Assert.That(expansion.Id, Is.Not.Empty);
                 Assert.That(ids.Add(expansion.Id), Is.True, $"Duplicate module id '{expansion.Id}'.");
                 Assert.That(expansion.Size.x, Is.GreaterThan(0f));
                 Assert.That(expansion.Size.y, Is.GreaterThan(0f));
 
-                float westEdge = expansion.Position.x - expansion.Size.x * 0.5f;
                 float southEdge = expansion.Position.z - expansion.Size.y * 0.5f;
                 float northEdge = expansion.Position.z + expansion.Size.y * 0.5f;
-                Assert.That(westEdge, Is.EqualTo(coreEastEdge).Within(0.001f),
-                    $"Module '{expansion.Id}' does not meet the core island.");
-                Assert.That(southEdge, Is.GreaterThanOrEqualTo(coreSouthEdge - 0.001f));
-                Assert.That(northEdge, Is.LessThanOrEqualTo(coreNorthEdge + 0.001f));
+                Assert.That(southEdge, Is.GreaterThanOrEqualTo(coreSouthEdge - 0.001f),
+                    $"Module '{expansion.Id}' hangs off the south end of the lot.");
+                Assert.That(northEdge, Is.LessThanOrEqualTo(coreNorthEdge + 0.001f),
+                    $"Module '{expansion.Id}' hangs off the north end of the lot.");
             }
 
-            float firstNorth = ordered[0].Position.z + ordered[0].Size.y * 0.5f;
-            float secondSouth = ordered[1].Position.z - ordered[1].Size.y * 0.5f;
-            Assert.That(secondSouth, Is.EqualTo(firstNorth).Within(0.001f),
-                "The two east-wing modules have a gap or overlap at their shared seam.");
+            // The plots are a grid bolted onto the core's east face, so every
+            // column and row has to line up on one pitch and every cell has to be
+            // filled exactly once. Anything else leaves a gap in the floor or two
+            // plots the player can buy into the same patch of ground.
+            List<float> columns = config.Expansions
+                .Select(definition => definition.Position.x).Distinct().OrderBy(x => x).ToList();
+            List<float> rows = config.Expansions
+                .Select(definition => definition.Position.z).Distinct().OrderBy(z => z).ToList();
+            Assert.That(config.Expansions.Count, Is.EqualTo(columns.Count * rows.Count),
+                "The east plots do not fill a rectangle: a cell is missing or doubled.");
+
+            Vector2 plot = config.Expansions[0].Size;
+            Assert.That(columns[0] - plot.x * 0.5f, Is.EqualTo(coreEastEdge).Within(0.001f),
+                "The first column of plots does not meet the core island.");
+            for (int i = 1; i < columns.Count; i++)
+                Assert.That(columns[i] - columns[i - 1], Is.EqualTo(plot.x).Within(0.001f),
+                    "Gap or overlap between plot columns.");
+            for (int i = 1; i < rows.Count; i++)
+                Assert.That(rows[i] - rows[i - 1], Is.EqualTo(plot.y).Within(0.001f),
+                    "Gap or overlap between plot rows.");
+
+            foreach (DioramaWorldConfig.ExpansionDefinition expansion in config.Expansions)
+                Assert.That(expansion.Size, Is.EqualTo(plot),
+                    $"Module '{expansion.Id}' is not on the same grid pitch as the rest.");
         }
 
         [TestCaseSource(nameof(RequiredAuthoredArtIds))]

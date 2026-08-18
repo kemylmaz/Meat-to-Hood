@@ -19,11 +19,23 @@ MonoBehaviour:
   undersideDepth: 3.2
   floorTileSpan: 5.64
   expansions:
-  - id: dining-wing
-    position: {x: 14.099999, y: 0, z: -2.82}
+  - id: wing-0-0
+    position: {x: 14.099999, y: 0, z: 0}
     size: {x: 5.64, y: 5.64}
-  - id: service-wing
-    position: {x: 14.099999, y: 0, z: 2.82}
+  - id: wing-0-1
+    position: {x: 14.099999, y: 0, z: -5.64}
+    size: {x: 5.64, y: 5.64}
+  - id: wing-0-2
+    position: {x: 14.099999, y: 0, z: 5.64}
+    size: {x: 5.64, y: 5.64}
+  - id: wing-1-0
+    position: {x: 19.74, y: 0, z: 0}
+    size: {x: 5.64, y: 5.64}
+  - id: wing-1-1
+    position: {x: 19.74, y: 0, z: -5.64}
+    size: {x: 5.64, y: 5.64}
+  - id: wing-1-2
+    position: {x: 19.74, y: 0, z: 5.64}
     size: {x: 5.64, y: 5.64}
   playerSpawn: {x: -1.5, y: 0.26, z: 0}
   edgeSafetyMargin: 0.28

@@ -22,6 +22,9 @@ namespace ShawarmaTycoon
         private enum Phase { Idle, ToPickup, Collecting, ToDelivery, Delivering, GoingHome }
 
         private Vector3 home;
+
+        /// <summary>The capsule other things bump into. Null if none was fitted.</summary>
+        private CharacterController body;
         private CarryInventory hands;
         private Phase phase = Phase.Idle;
 
@@ -41,6 +44,7 @@ namespace ShawarmaTycoon
             home = homePosition;
             hands = carryHands;
             transform.position = homePosition;
+            body = GetComponent<CharacterController>();
         }
 
         /// <summary>
@@ -119,8 +123,11 @@ namespace ShawarmaTycoon
             Vector3 delta = target - transform.position;
             if (delta.sqrMagnitude <= arriveRadius * arriveRadius) return true;
 
-            transform.position = Vector3.MoveTowards(
-                transform.position, target, moveSpeed * Time.deltaTime);
+            if (body != null)
+                CharacterBody.StepTowards(body, target, moveSpeed, Time.deltaTime);
+            else
+                transform.position = Vector3.MoveTowards(
+                    transform.position, target, moveSpeed * Time.deltaTime);
             // The models look along +Z once their authored offset is applied, and
             // the animation driver reads the movement itself for walk vs carry.
             transform.rotation = Quaternion.Slerp(

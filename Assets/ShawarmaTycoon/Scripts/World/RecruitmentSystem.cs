@@ -300,6 +300,9 @@ namespace ShawarmaTycoon
             CarryInventory hands = worker.AddComponent<CarryInventory>();
             hands.Configure(4);
             worker.AddComponent<CozyAnimationDriver>();
+            // Fitted before the agent is configured: the agent picks the capsule up
+            // there and walks through it from then on.
+            CharacterBody.Attach(worker);
             worker.AddComponent<WorkerAgent>().Configure(worker.transform.position, hands);
         }
     }
