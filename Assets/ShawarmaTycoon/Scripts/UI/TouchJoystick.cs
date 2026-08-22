@@ -19,6 +19,7 @@ namespace ShawarmaTycoon.UI
         private RectTransform baseRect;
         private RectTransform knobRect;
         private CanvasGroup group;
+        private Image catcher;
         private Vector2 origin;
         private int activePointerId = int.MinValue;
 
@@ -33,9 +34,9 @@ namespace ShawarmaTycoon.UI
             joystick.canvasRect = canvas;
 
             // Transparent full-screen catcher: receives drags but draws nothing.
-            Image catcher = root.gameObject.AddComponent<Image>();
-            catcher.color = new Color(0f, 0f, 0f, 0f);
-            catcher.raycastTarget = true;
+            joystick.catcher = root.gameObject.AddComponent<Image>();
+            joystick.catcher.color = new Color(0f, 0f, 0f, 0f);
+            joystick.catcher.raycastTarget = true;
 
             RectTransform visual = UIFactory.Node("Stick", root);
             visual.anchorMin = visual.anchorMax = UIFactory.BottomLeft;
@@ -60,6 +61,16 @@ namespace ShawarmaTycoon.UI
             joystick.knobRect = knob;
 
             return joystick;
+        }
+
+        public void SetInputEnabled(bool inputEnabled)
+        {
+            enabled = inputEnabled;
+            if (catcher != null) catcher.raycastTarget = inputEnabled;
+            if (inputEnabled) return;
+            activePointerId = int.MinValue;
+            Value = Vector2.zero;
+            if (group != null) group.alpha = 0f;
         }
 
         public void OnPointerDown(PointerEventData eventData)

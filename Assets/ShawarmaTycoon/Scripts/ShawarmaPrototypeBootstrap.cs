@@ -107,6 +107,7 @@ namespace ShawarmaTycoon
                 shopWorld.KitchenRoot, "ET DEPOSU", layout.MeatSource, new Vector3(2.5f, 0.9f, 2.0f),
                 new Color(0.74f, 0.39f, 0.26f), StationMode.Source,
                 ItemType.None, ItemType.RawMeat, 0.5f, 1, 16, 0.65f);
+            MarkPlaceable(meatSource.gameObject, "station.meat_source", "Et Deposu");
             DecorateMeatSource(meatSource.transform);
             MeshyVisuals.TryReplaceDirect(
                 meatSource.transform, "04_meat_storage_rack", new Vector3(3.0f, 2.8f, 2.1f),
@@ -118,6 +119,7 @@ namespace ShawarmaTycoon
                 shopWorld.KitchenRoot, "OCAK", layout.Oven, new Vector3(2.2f, 0.9f, 1.9f),
                 new Color(0.88f, 0.45f, 0.20f), StationMode.Processor,
                 ItemType.RawMeat, ItemType.CookedMeat, 1.4f, 12, 12, 1f);
+            MarkPlaceable(oven.gameObject, "station.oven", "Ocak");
             DecorateOven(oven.transform);
             // Fitted rather than placed at its authored 1.16 m. The spit is the
             // middle of the shop, and next to a 2.4 m rack and a 2.2 m counter the
@@ -134,6 +136,7 @@ namespace ShawarmaTycoon
                 shopWorld.KitchenRoot, "KESİM", layout.Cutting, new Vector3(2.2f, 0.9f, 1.9f),
                 new Color(0.65f, 0.70f, 0.67f), StationMode.Processor,
                 ItemType.CookedMeat, ItemType.Wrap, 1.6f, 12, 12, 1f);
+            MarkPlaceable(cutting.gameObject, "station.cutting", "Kesim Tezgâhı");
             DecorateCuttingCounter(cutting.transform);
             MeshyVisuals.TryReplaceDirectAuthored(
                 cutting.transform, "08_cutting_station",
@@ -147,6 +150,7 @@ namespace ShawarmaTycoon
                 shopWorld.KitchenRoot, "SERVİS", layout.Service, new Vector3(2.2f, 0.9f, 1.9f),
                 PrototypeVisuals.Teal, StationMode.Service,
                 ItemType.Wrap, ItemType.None, 0.1f, 1, 14, 1f);
+            MarkPlaceable(service.gameObject, "station.service", "Servis Tezgâhı");
             MeshyVisuals.TryReplaceDirectAuthored(
                 service.transform, "12_service_cashier_counter",
                 Vector3.zero, FacingCustomer, KitchenVisualScale,
@@ -183,10 +187,13 @@ namespace ShawarmaTycoon
             // --- belts --------------------------------------------------------
             ConveyorLink rawBelt = CreateConveyor(
                 shopWorld.KitchenRoot, "Et Bandı", meatSource, oven, layout.MeatSource, layout.Oven);
+            MarkPlaceable(rawBelt.gameObject, "belt.raw", "Et Bandı");
             ConveyorLink ovenBelt = CreateConveyor(
                 shopWorld.KitchenRoot, "Ocak Bandı", oven, cutting, layout.Oven, layout.Cutting);
+            MarkPlaceable(ovenBelt.gameObject, "belt.oven", "Ocak Bandı");
             ConveyorLink cuttingBelt = CreateConveyor(
                 shopWorld.KitchenRoot, "Kesim Bandı", cutting, service, layout.Cutting, layout.Service);
+            MarkPlaceable(cuttingBelt.gameObject, "belt.cutting", "Kesim Bandı");
             CreateConveyorPad(shopWorld.KitchenRoot, "Et Bandı Pedi",
                 layout.MeatBeltPad, "belt.raw", rawBelt);
             CreateConveyorPad(shopWorld.KitchenRoot, "Ocak Bandı Pedi",
@@ -206,6 +213,7 @@ namespace ShawarmaTycoon
                 shopWorld.UtilityRoot, "İÇECEK DEPOSU", layout.DrinkCrate,
                 new Vector3(1.9f, 1.0f, 1.2f), new Color(0.30f, 0.44f, 0.62f), StationMode.Source,
                 ItemType.None, ItemType.Drink, 0.5f, 1, 18, 1.1f);
+            MarkPlaceable(drinkCrate.gameObject, "station.drink_crate", "İçecek Deposu");
             DecorateDrinkCrate(drinkCrate.transform);
             ApplyAuthoredStationLayout(drinkCrate, 1.7f, -0.72f);
 
@@ -213,6 +221,7 @@ namespace ShawarmaTycoon
                 shopWorld.UtilityRoot, "BUZDOLABI", layout.Fridge,
                 new Vector3(1.5f, 1.0f, 1.0f), new Color(0.86f, 0.90f, 0.93f), StationMode.Service,
                 ItemType.Drink, ItemType.None, 0.1f, 1, 12, 1f);
+            MarkPlaceable(fridge.gameObject, "station.fridge", "Buzdolabı");
             DecorateFridge(fridge.transform);
             ApplyAuthoredStationLayout(fridge, 2.4f, -0.7f);
             fridge.SetEmptyWarning("İÇECEK BİTTİ");
@@ -221,6 +230,7 @@ namespace ShawarmaTycoon
                 shopWorld.UtilityRoot, "TATLI FIRINI", layout.DessertOven,
                 new Vector3(1.7f, 1.0f, 1.1f), new Color(0.80f, 0.55f, 0.38f), StationMode.Source,
                 ItemType.None, ItemType.Dessert, 0.5f, 1, 8, 4.2f);
+            MarkPlaceable(dessertOven.gameObject, "station.dessert_oven", "Tatlı Fırını");
             DecorateDessertOven(dessertOven.transform);
             ApplyAuthoredStationLayout(dessertOven, 2.2f, -0.7f);
 
@@ -255,8 +265,8 @@ namespace ShawarmaTycoon
                 OfficeWestX + OfficeWidth, ManagementMenu.GeneralManager, "GM",
                 "office.gm", ShopPrices.GeneralManagerOffice, managementHud);
 
-            CreatePlanter(managementRoot.transform, new Vector3(2.6f, 0.25f, -7.4f));
-            CreatePlanter(managementRoot.transform, new Vector3(6.2f, 0.25f, -7.4f));
+            CreatePlanter(managementRoot.transform, new Vector3(2.6f, 0.25f, -7.4f), "office.planter.1");
+            CreatePlanter(managementRoot.transform, new Vector3(6.2f, 0.25f, -7.4f), "office.planter.2");
 
             // --- dining -------------------------------------------------------
             // Two tables to open with, then one at a time up to ten. Seating is
@@ -275,7 +285,7 @@ namespace ShawarmaTycoon
             for (int i = 0; i < MainFloorTables; i++)
             {
                 CustomerTable table = CreateTable(
-                    shopWorld.DiningRoot, $"Masa {i + 1}", MainFloorSlots[i]);
+                    shopWorld.DiningRoot, $"Masa {i + 1}", MainFloorSlots[i], $"table.{i + 1}");
                 tables.Add(table);
                 if (i >= FreeTables) boughtFloorTables.Add(table.gameObject);
             }
@@ -293,7 +303,7 @@ namespace ShawarmaTycoon
                 int number = MainFloorTables + module * TablesPerPlot + seat + 1;
                 CustomerTable table = CreateTable(
                     expansionModules[module].ContentRoot, $"Masa {number}",
-                    new Vector3(seat == 0 ? -1.4f : 1.4f, 0.25f, 0f));
+                    new Vector3(seat == 0 ? -1.4f : 1.4f, 0.25f, 0f), $"table.{number}");
                 tables.Add(table);
                 plotTables.Add(table.gameObject);
             }
@@ -382,6 +392,9 @@ namespace ShawarmaTycoon
                 hud.Objective.BindTables(tables);
                 hud.Objective.BindStations(new[] { oven, cutting, service });
                 playerMotor.SetJoystick(hud.Joystick);
+                BuildModeController buildMode = root.AddComponent<BuildModeController>();
+                buildMode.Configure(Camera.main, playerMotor, hud.Joystick,
+                    shopWorld.WalkableRegistry, hud.BuildMode);
             }
 
             CreateTutorialArrow(meatSource, oven, cutting, service);
@@ -723,6 +736,7 @@ namespace ShawarmaTycoon
                     child.localPosition = new Vector3(1.15f, child.localPosition.y, -0.35f);
 
             CourierStation station = counter.AddComponent<CourierStation>();
+            MarkPlaceable(counter, "station.courier", "Kurye Tezgâhı");
             station.SetScooter(BuildScooter(bay.transform,
                 layout.CourierCounter + new Vector3(0.2f, 0f, -2.9f)));
 
@@ -864,6 +878,7 @@ namespace ShawarmaTycoon
             GameObject prop = new("Dekor " + (variant + 1));
             prop.transform.SetParent(parent, false);
             prop.transform.localPosition = position;
+            MarkPlaceable(prop, $"decoration.{variant + 1}", $"Dekorasyon {variant + 1}");
 
             // A lamp, the menu board, a bench seat for people waiting, and a rug.
             string[] models = { "213_decor_floor_lamp", "154_shop_menu", "214_decor_couch", "210_decor_carpet" };
@@ -1071,6 +1086,7 @@ namespace ShawarmaTycoon
                 new Vector3(0f, 0.08f, -0.42f), new Vector3(0.32f, 0.08f, 0.22f), new Color(0.88f, 0.68f, 0.26f));
             TrashBin trashBin = trashBinObject.AddComponent<TrashBin>();
             trashBin.Configure(playerTransform, inventory);
+            MarkPlaceable(trashBinObject, "utility.trash_bin", "Çöp Kutusu");
             MeshyVisuals.TryReplaceDirectAuthored(
                 trashBinObject.transform, "17_trash_bin",
                 Vector3.zero, FacingCustomer,
@@ -1095,6 +1111,7 @@ namespace ShawarmaTycoon
 
             TakeawaySystem window = windowRoot.AddComponent<TakeawaySystem>();
             window.Configure(playerTransform, inventory);
+            MarkPlaceable(windowRoot, "station.drive_thru", "Drive-Thru Tezgâhı");
             // Turned to face the shop, like every other counter. The camera only
             // ever sees the -Z faces, so a counter facing the driveway showed the
             // player its blank back; what marks this one as a drive-through is the
@@ -1281,11 +1298,12 @@ namespace ShawarmaTycoon
                 Mathf.Max(RoomWallThickness, depthZ));
         }
 
-        private void CreatePlanter(Transform parent, Vector3 position)
+        private void CreatePlanter(Transform parent, Vector3 position, string stableId)
         {
             GameObject planter = new("Saksı");
             planter.transform.SetParent(parent, false);
             planter.transform.localPosition = position;
+            MarkPlaceable(planter, stableId, "Saksı");
             if (MeshyVisuals.TryAttachAuthored(
                     planter.transform, "33_decorative_plant", Vector3.zero, Vector3.zero) == null)
                 PrototypeVisuals.CreatePrimitive("Planter Fallback", PrimitiveType.Cylinder,
@@ -1407,11 +1425,13 @@ namespace ShawarmaTycoon
                 PrototypeVisuals.CookedMeat);
         }
 
-        private CustomerTable CreateTable(Transform parent, string tableName, Vector3 localPosition)
+        private CustomerTable CreateTable(
+            Transform parent, string tableName, Vector3 localPosition, string stableId)
         {
             GameObject tableObject = new(tableName);
             tableObject.transform.SetParent(parent, false);
             tableObject.transform.localPosition = localPosition;
+            MarkPlaceable(tableObject, stableId, tableName);
 
             PrototypeVisuals.CreatePrimitive("Table Top", PrimitiveType.Cube, tableObject.transform,
                 new Vector3(0f, 0.72f, 0f), new Vector3(1.20f, 0.16f, 0.80f),
@@ -1454,6 +1474,14 @@ namespace ShawarmaTycoon
                     table.SetTableVariants(clean.gameObject, dirty);
             }
             return table;
+        }
+
+        private static PlaceableObject MarkPlaceable(GameObject target, string stableId, string label)
+        {
+            PlaceableObject placeable = target.GetComponent<PlaceableObject>();
+            if (placeable == null) placeable = target.AddComponent<PlaceableObject>();
+            placeable.Configure(stableId, label);
+            return placeable;
         }
 
         private static void CreateDiningChair(Transform parent, string name, float z, float yaw)

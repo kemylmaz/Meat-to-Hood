@@ -289,6 +289,79 @@ namespace ShawarmaTycoon.Tests
             Assert.That(UpgradeProgress.Ratio, Is.Zero);
         }
 
+        [Test]
+        public void BuildMode_WiresTheHudAndEveryPlaceableHasAUniquePersistentId()
+        {
+            BuildModeController controller = Object.FindFirstObjectByType<BuildModeController>();
+            Assert.That(controller, Is.Not.Null, "The runtime has no build-mode controller.");
+            Assert.That(Object.FindFirstObjectByType<UI.BuildModeHUD>(), Is.Not.Null,
+                "The HUD has no build-mode button or toolbar.");
+
+            PlaceableObject[] placeables = Object.FindObjectsByType<PlaceableObject>(
+                FindObjectsInactive.Include, FindObjectsSortMode.None);
+            Assert.That(placeables.Length, Is.GreaterThanOrEqualTo(30),
+                "Tables, equipment and decorations were not all registered for build mode.");
+            Assert.That(placeables.Select(item => item.StableId).Distinct().Count(),
+                Is.EqualTo(placeables.Length), "Two movable objects share one save id.");
+            Assert.That(placeables.All(item => !string.IsNullOrWhiteSpace(item.StableId)), Is.True,
+                "A movable object cannot persist because its save id is empty.");
+
+            ConveyorLink lockedBelt = Object.FindObjectsByType<ConveyorLink>(
+                FindObjectsInactive.Include, FindObjectsSortMode.None).First(link => !link.IsUnlocked);
+            Assert.That(lockedBelt.GetComponent<PlaceableObject>().IsSelectable, Is.False,
+                "An invisible, unbought belt can still be selected in build mode.");
+
+            float timeScale = Time.timeScale;
+            try
+            {
+                controller.SetBuildMode(true);
+                Assert.That(controller.IsActive, Is.True);
+                Assert.That(Time.timeScale, Is.Zero, "Restaurant simulation keeps running during layout edits.");
+                Assert.That(Object.FindFirstObjectByType<MobilePlayerController>().enabled, Is.False,
+                    "Player movement is still active under build-mode dragging.");
+            }
+            finally
+            {
+                controller.SetBuildMode(false);
+                Time.timeScale = timeScale;
+            }
+            Assert.That(controller.IsActive, Is.False);
+        }
+
+        [Test]
+        public void BuildMode_RejectsLockedFloorAndFurnitureOverlap()
+        {
+            BuildModeController controller = Object.FindFirstObjectByType<BuildModeController>();
+            CustomerTable[] tables = Object.FindObjectsByType<CustomerTable>(
+                FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+            Assert.That(tables.Length, Is.GreaterThanOrEqualTo(2));
+
+            PlaceableObject moving = tables[0].GetComponent<PlaceableObject>();
+            Vector3 original = moving.transform.position;
+            Quaternion originalRotation = moving.transform.rotation;
+            moving.EnsureInitialized();
+
+            try
+            {
+                Assert.That(controller.CanPlace(moving), Is.True,
+                    "An authored opening table starts in an invalid build position.");
+
+                moving.MoveWorld(tables[1].transform.position);
+                Assert.That(controller.CanPlace(moving), Is.False,
+                    "Two dining tables can be placed through one another.");
+
+                Bounds lot = world.BaseModule.WalkableBounds;
+                moving.MoveWorld(new Vector3(lot.max.x + 3f, original.y, lot.center.z));
+                Assert.That(controller.CanPlace(moving), Is.False,
+                    "Furniture can be dropped outside the unlocked restaurant floor.");
+            }
+            finally
+            {
+                moving.transform.SetPositionAndRotation(original, originalRotation);
+                Physics.SyncTransforms();
+            }
+        }
+
         /// <summary>
         /// A fed station has to keep working with nobody at it. While that needed
         /// the player in range the whole game was standing next to a machine, and

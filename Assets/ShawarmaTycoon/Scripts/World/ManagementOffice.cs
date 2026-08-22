@@ -93,6 +93,8 @@ namespace ShawarmaTycoon
             desk.transform.SetParent(furnishRoot, false);
             desk.transform.localPosition = deskLocalPosition;
             desk.transform.localEulerAngles = new Vector3(0f, deskYaw, 0f);
+            PlaceableObject placeable = desk.AddComponent<PlaceableObject>();
+            placeable.Configure("office." + menuType.ToString().ToLowerInvariant(), displayName + " Masası");
 
             if (MeshyVisuals.TryAttachAuthored(
                     desk.transform, deskAsset, Vector3.zero, Vector3.zero) == null)

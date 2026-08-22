@@ -142,5 +142,44 @@ namespace ShawarmaTycoon
             }
             return true;
         }
+
+        /// <summary>
+        /// True when the centre, four corners and four edge midpoints of a world
+        /// AABB all stand on currently unlocked restaurant floor. The inset lets
+        /// placement tolerate render meshes that extend a few centimetres beyond
+        /// their actual feet.
+        /// </summary>
+        public bool ContainsBoundsXZ(Bounds bounds, float inset = 0f)
+        {
+            float minX = Mathf.Min(bounds.center.x, bounds.min.x + Mathf.Max(0f, inset));
+            float maxX = Mathf.Max(bounds.center.x, bounds.max.x - Mathf.Max(0f, inset));
+            float minZ = Mathf.Min(bounds.center.z, bounds.min.z + Mathf.Max(0f, inset));
+            float maxZ = Mathf.Max(bounds.center.z, bounds.max.z - Mathf.Max(0f, inset));
+            Vector3 center = bounds.center;
+            Vector3[] samples =
+            {
+                center,
+                new(minX, center.y, minZ), new(maxX, center.y, minZ),
+                new(minX, center.y, maxZ), new(maxX, center.y, maxZ),
+                new(center.x, center.y, minZ), new(center.x, center.y, maxZ),
+                new(minX, center.y, center.z), new(maxX, center.y, center.z)
+            };
+
+            for (int sample = 0; sample < samples.Length; sample++)
+            {
+                bool contained = false;
+                for (int i = 0; i < surfaces.Count; i++)
+                {
+                    DioramaWalkableSurface surface = surfaces[i];
+                    if (surface != null && surface.isActiveAndEnabled && surface.ContainsXZ(samples[sample]))
+                    {
+                        contained = true;
+                        break;
+                    }
+                }
+                if (!contained) return false;
+            }
+            return true;
+        }
     }
 }

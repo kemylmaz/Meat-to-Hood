@@ -20,6 +20,7 @@ namespace ShawarmaTycoon.UI
         public RectTransform CanvasRect { get; private set; }
         public TouchJoystick Joystick { get; private set; }
         public ObjectiveBanner Objective { get; private set; }
+        public BuildModeHUD BuildMode { get; private set; }
         public Canvas Canvas { get; private set; }
 
         public static GameHUD Ensure(Transform parent)
@@ -93,6 +94,7 @@ namespace ShawarmaTycoon.UI
             TasksPanel.Create(SafeArea);
             Objective = ObjectiveBanner.Create(SafeArea);
             MuteButton.Create(SafeArea);
+            BuildMode = BuildModeHUD.Create(SafeArea);
 
             ModalLayer = UIFactory.Node("Modals", SafeArea);
             UIFactory.Stretch(ModalLayer);
