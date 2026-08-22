@@ -27,6 +27,9 @@ namespace ShawarmaTycoon
         private TextMesh maxLabel;
         private GameObject warningBadge;
         private Renderer warningBadgePanel;
+        private readonly Renderer[] statusLights = new Renderer[4];
+        private Transform statusLightsRoot;
+        private int statusLightSignature = int.MinValue;
         private int inputCount;
         private int outputCount;
         private float processTimer;
@@ -148,6 +151,14 @@ namespace ShawarmaTycoon
         {
             if (inputRoot != null) inputRoot.localPosition = inputLocalPosition;
             if (outputRoot != null) outputRoot.localPosition = outputLocalPosition;
+            if (statusLightsRoot != null)
+            {
+                Vector3 display = mode == StationMode.Processor
+                    ? Vector3.Lerp(inputLocalPosition, outputLocalPosition, 0.5f)
+                    : outputLocalPosition;
+                statusLightsRoot.localPosition = new Vector3(
+                    display.x, display.y + 0.11f, display.z - 0.23f);
+            }
             if (warningBadge != null)
                 warningBadge.transform.localPosition = new Vector3(0f, Mathf.Max(0.5f, maxLabelHeight), 0f);
         }
@@ -179,6 +190,7 @@ namespace ShawarmaTycoon
             outputRoot = CreateRoot("Output Stack", new Vector3(0.48f, 0.78f, 0f));
             statusLabel = PrototypeVisuals.CreateLabel(displayName, transform, new Vector3(0f, 1.55f, 0f), 0.13f);
             BuildWarningBadge();
+            BuildStatusLights();
 
             if (mode == StationMode.Source)
                 outputCount = outputCapacity;
@@ -234,6 +246,29 @@ namespace ShawarmaTycoon
             warningBadge.SetActive(false);
         }
 
+        /// <summary>
+        /// Four tiny counter lights make the kitchen readable at camera distance:
+        /// amber is stock waiting, green is work in progress, teal is ready food,
+        /// and red is a fault. They replace another row of floating numbers.
+        /// </summary>
+        private void BuildStatusLights()
+        {
+            GameObject root = new("Durum Lambaları");
+            root.transform.SetParent(transform, false);
+            root.transform.localPosition = new Vector3(0f, 1.12f, -0.62f);
+            statusLightsRoot = root.transform;
+
+            for (int i = 0; i < statusLights.Length; i++)
+            {
+                GameObject light = PrototypeVisuals.CreatePrimitive(
+                    "Lamba " + (i + 1), PrimitiveType.Sphere, root.transform,
+                    new Vector3((i - 1.5f) * 0.17f, 0f, 0f), Vector3.one * 0.115f,
+                    new Color(0.27f, 0.25f, 0.23f));
+                PaymentFlyer.DisablePhysicsAndShadows(light);
+                statusLights[i] = light.GetComponent<Renderer>();
+            }
+        }
+
         private void Update()
         {
             if (Time.timeScale <= 0f) return;
@@ -250,7 +285,7 @@ namespace ShawarmaTycoon
                 if (TryInteract())
                     transferTimer = transferInterval;
             }
-
+            RefreshStatusLights();
         }
 
         private void UpdateSource()
@@ -293,6 +328,9 @@ namespace ShawarmaTycoon
                 if (inventory.HeldType == inputType && outputCount < EffectiveOutputCapacity && inventory.TryRemove(inputType))
                 {
                     outputCount++;
+                    ItemTransferArc.Send(
+                        inputType, player.position + Vector3.up * 1.25f,
+                        outputRoot != null ? outputRoot.position : transform.position + Vector3.up);
                     AudioDirector.Play(GameSfx.Drop, 0.7f);
                     RefreshVisuals();
                     return true;
@@ -303,6 +341,9 @@ namespace ShawarmaTycoon
             if (inventory.HeldType == inputType && inputCount < EffectiveInputCapacity && inventory.TryRemove(inputType))
             {
                 inputCount++;
+                ItemTransferArc.Send(
+                    inputType, player.position + Vector3.up * 1.25f,
+                    inputRoot != null ? inputRoot.position : transform.position + Vector3.up);
                 AudioDirector.Play(GameSfx.Drop, 0.7f);
                 RefreshVisuals();
                 return true;
@@ -316,6 +357,9 @@ namespace ShawarmaTycoon
             if (outputCount <= 0 || !inventory.CanAccept(outputType)) return false;
             if (!inventory.TryAdd(outputType)) return false;
             outputCount--;
+            ItemTransferArc.Send(
+                outputType, outputRoot != null ? outputRoot.position : transform.position + Vector3.up,
+                player.position + Vector3.up * 1.25f);
             AudioDirector.Play(GameSfx.Pickup, 0.7f);
             RefreshVisuals();
             return true;
@@ -397,6 +441,49 @@ namespace ShawarmaTycoon
             SetWarningBadge(
                 mode != StationMode.Source && outputCount >= EffectiveOutputCapacity,
                 new Color(1f, 0.78f, 0.28f));
+        }
+
+        private void RefreshStatusLights()
+        {
+            if (statusLights[0] == null) return;
+
+            int progressSegments = mode == StationMode.Processor
+                ? Mathf.Clamp(Mathf.CeilToInt(ProcessProgress * 2f), 0, 2)
+                : 0;
+            int signature = ((int)mode << 24) | (IsBroken ? 1 << 23 : 0) |
+                (Mathf.Min(inputCount, 31) << 12) | (Mathf.Min(outputCount, 31) << 4) |
+                progressSegments;
+            if (signature == statusLightSignature) return;
+            statusLightSignature = signature;
+
+            Color off = new(0.27f, 0.25f, 0.23f);
+            Color amber = new(1f, 0.69f, 0.20f);
+            Color green = new(0.34f, 0.84f, 0.46f);
+            Color teal = new(0.24f, 0.78f, 0.78f);
+            Color red = new(0.94f, 0.29f, 0.24f);
+
+            Color[] colors = { off, off, off, off };
+            if (IsBroken)
+            {
+                for (int i = 0; i < colors.Length; i++) colors[i] = red;
+            }
+            else if (mode == StationMode.Processor)
+            {
+                colors[0] = inputCount > 0 ? amber : off;
+                colors[1] = progressSegments >= 1 ? green : off;
+                colors[2] = progressSegments >= 2 ? green : off;
+                colors[3] = outputCount > 0 ? (OutputIsFull ? amber : teal) : off;
+            }
+            else
+            {
+                int capacity = EffectiveOutputCapacity;
+                int lit = Mathf.Clamp(Mathf.CeilToInt(outputCount / (float)Mathf.Max(1, capacity) * 4f), 0, 4);
+                for (int i = 0; i < lit; i++) colors[i] = mode == StationMode.Service ? teal : green;
+            }
+
+            for (int i = 0; i < statusLights.Length; i++)
+                if (statusLights[i] != null)
+                    statusLights[i].sharedMaterial = PrototypeVisuals.Material(colors[i]);
         }
 
         private void SetWarningBadge(bool visible, Color panelColor)

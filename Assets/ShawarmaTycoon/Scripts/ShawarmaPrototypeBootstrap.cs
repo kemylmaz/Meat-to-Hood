@@ -345,7 +345,9 @@ namespace ShawarmaTycoon
                         int table = plot * TablesPerPlot + seat;
                         if (table < plotTables.Count) plotTables[table].SetActive(true);
                     }
-                });
+                },
+                previewAsset: "15_dining_table_clean",
+                previewSize: new Vector3(0.82f, 0.72f, 0.82f));
 
             // --- customers ----------------------------------------------------
             Transform entry = CreateMarker(shopWorld.CustomerFlowRoot, "Müşteri Girişi", layout.CustomerEntry);
@@ -366,13 +368,19 @@ namespace ShawarmaTycoon
 
             CreatePurchasePad(shopWorld.UtilityRoot, "Buzdolabı Pedi",
                 layout.FridgePad, "shop.fridge", new[] { ShopPrices.Fridge },
-                (_, __) => drinksRoot.SetActive(true));
+                (_, __) => drinksRoot.SetActive(true),
+                previewAsset: "190_kitchen_fridge",
+                previewSize: new Vector3(0.72f, 0.94f, 0.66f), previewYaw: 90f);
             CreatePurchasePad(shopWorld.UtilityRoot, "Tatlı Fırını Pedi",
                 layout.DessertPad, "shop.dessert", new[] { ShopPrices.DessertOven },
-                (_, __) => dessertOven.gameObject.SetActive(true));
+                (_, __) => dessertOven.gameObject.SetActive(true),
+                previewAsset: "151_shop_oven",
+                previewSize: new Vector3(0.76f, 0.78f, 0.68f));
             CreatePurchasePad(shopWorld.UtilityRoot, "Kurye Pedi",
                 layout.CourierPad, "shop.courier", new[] { ShopPrices.Courier },
-                (_, __) => courier.transform.parent.gameObject.SetActive(true));
+                (_, __) => courier.transform.parent.gameObject.SetActive(true),
+                previewAsset: "244_food_bag",
+                previewSize: new Vector3(0.62f, 0.72f, 0.48f));
 
             FloorSpillSystem floorSpills = null;
             if (gameConfig.Features.FloorSpills)
@@ -668,7 +676,9 @@ namespace ShawarmaTycoon
             Transform parent, string padName, Vector3 position, string saveKey, ConveyorLink belt)
         {
             CreatePurchasePad(parent, padName, position, saveKey,
-                ShopPrices.Belt, (level, _) => belt.SetLevel(level));
+                ShopPrices.Belt, (level, _) => belt.SetLevel(level),
+                previewAsset: "13_conveyor_straight",
+                previewSize: new Vector3(0.90f, 0.30f, 0.52f));
         }
 
         private PurchasePad CreatePurchasePad(
@@ -678,13 +688,18 @@ namespace ShawarmaTycoon
             string saveKey,
             int[] costs,
             System.Action<int, bool> onLevel,
-            string padAsset = "19_upgrade_pad")
+            string padAsset = "19_upgrade_pad",
+            string previewAsset = null,
+            Vector3? previewSize = null,
+            float previewYaw = 0f)
         {
             GameObject pad = new(padName);
             pad.transform.SetParent(parent, false);
             pad.transform.localPosition = position;
             PurchasePad purchase = pad.AddComponent<PurchasePad>();
             purchase.Configure(playerTransform, saveKey, costs, onLevel, padAsset);
+            if (!string.IsNullOrEmpty(previewAsset) && previewSize.HasValue)
+                purchase.SetPreview(previewAsset, previewSize.Value, previewYaw);
             return purchase;
         }
 
@@ -867,7 +882,9 @@ namespace ShawarmaTycoon
                     if (index < 0 || index >= props.Count) return;
                     props[index].SetActive(true);
                     ReputationSystem.Instance?.AddStandingFloor(ShopPrices.DecorationStanding);
-                });
+                },
+                previewAsset: "73_planter",
+                previewSize: new Vector3(0.66f, 0.82f, 0.66f));
         }
 
         /// <summary>
@@ -1145,9 +1162,12 @@ namespace ShawarmaTycoon
                 return window;
             }
 
-            unlockPad.AddComponent<PurchasePad>().Configure(
+            PurchasePad driveThruPad = unlockPad.AddComponent<PurchasePad>();
+            driveThruPad.Configure(
                 playerTransform, "drivethru.unlocked", new[] { ShopPrices.DriveThru },
                 (_, __) => OpenDriveThru(window), "18_money_collection_pad");
+            driveThruPad.SetPreview(
+                "244_food_bag", new Vector3(0.62f, 0.72f, 0.48f));
             return window;
         }
 
@@ -1220,7 +1240,9 @@ namespace ShawarmaTycoon
 
             CreatePurchasePad(parent, roomName + " Pedi",
                 new Vector3(eastX - 1.6f, 0.28f, centreZ), saveKey,
-                new[] { cost }, (_, __) => office.Furnish(), "18_money_collection_pad");
+                new[] { cost }, (_, __) => office.Furnish(), "18_money_collection_pad",
+                previewAsset: "218_office_desk",
+                previewSize: new Vector3(0.82f, 0.68f, 0.68f), previewYaw: 90f);
         }
 
         /// <summary>Clear width of an office door.</summary>

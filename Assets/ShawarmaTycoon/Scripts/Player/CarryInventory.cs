@@ -18,6 +18,7 @@ namespace ShawarmaTycoon
 
         private readonly List<GameObject> visuals = new();
         private TextMesh capacityLabel;
+        private FeedbackPulse stackPulse;
         private int baseCapacity;
 
         public ItemType HeldType { get; private set; } = ItemType.None;
@@ -35,6 +36,8 @@ namespace ShawarmaTycoon
                 root.transform.localPosition = new Vector3(0f, 1.15f, -0.28f);
                 stackRoot = root.transform;
             }
+
+            stackPulse = stackRoot.GetComponent<FeedbackPulse>() ?? stackRoot.gameObject.AddComponent<FeedbackPulse>();
 
             capacityLabel = PrototypeVisuals.CreateLabel("MAX", transform, new Vector3(0f, 2.75f, 0f), 0.14f);
             capacityLabel.color = PrototypeVisuals.Red;
@@ -181,6 +184,8 @@ namespace ShawarmaTycoon
             }
 
             Changed?.Invoke();
+            if (Application.isPlaying && (Count > 0 || TrashCount > 0))
+                stackPulse?.Kick();
             if (capacityLabel != null) capacityLabel.gameObject.SetActive(Count >= capacity);
         }
 

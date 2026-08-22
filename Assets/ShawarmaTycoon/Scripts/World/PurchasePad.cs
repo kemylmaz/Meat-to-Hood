@@ -52,9 +52,11 @@ namespace ShawarmaTycoon
         private float carry;
         private float stillTimer;
         private Vector3 lastPlayerPosition;
+        private float nextPaymentFeedback;
 
         private Transform barFill;
         private TextMesh priceLabel;
+        private FeedbackPulse gaugePulse;
         private int shownPrice = -1;
         private float shownProgress = -1f;
 
@@ -115,6 +117,7 @@ namespace ShawarmaTycoon
             gauge.transform.SetParent(transform, false);
             gauge.transform.localPosition = Vector3.up * 0.76f;
             gauge.transform.localEulerAngles = new Vector3(55f, 0f, 0f);
+            gaugePulse = gauge.AddComponent<FeedbackPulse>();
 
             PrototypeVisuals.CreatePrimitive(
                 "Plaka", PrimitiveType.Cube, gauge.transform,
@@ -149,6 +152,47 @@ namespace ShawarmaTycoon
             priceLabel.fontSize = 64;
             priceLabel.color = new Color(0.14f, 0.40f, 0.19f);
             priceLabel.fontStyle = FontStyle.Bold;
+        }
+
+        /// <summary>
+        /// Floats a pocket-sized version of the unlock above the pad. This is a
+        /// showroom piece, not a collider or a second gameplay object.
+        /// </summary>
+        public void SetPreview(
+            string assetId, Vector3 targetSize, float yaw = 0f,
+            Vector3? localPosition = null)
+        {
+            if (SoldOut || string.IsNullOrEmpty(assetId)) return;
+
+            GameObject preview = new("Satın Alma Önizlemesi");
+            preview.transform.SetParent(transform, false);
+            preview.transform.localPosition = localPosition ?? new Vector3(0f, 1.15f, 0.60f);
+            preview.AddComponent<PurchasePreviewBob>();
+
+            GameObject pedestal = PrototypeVisuals.CreatePrimitive(
+                "Işık Halkası", PrimitiveType.Cylinder, preview.transform,
+                new Vector3(0f, -0.35f, 0f), new Vector3(0.52f, 0.025f, 0.52f),
+                new Color(0.46f, 0.87f, 0.57f));
+            PaymentFlyer.DisablePhysicsAndShadows(pedestal);
+
+            GameObject model = MeshyVisuals.TryAttach(
+                preview.transform, assetId, targetSize, Vector3.zero,
+                new Vector3(0f, yaw, 0f));
+            if (model == null)
+            {
+                Destroy(preview);
+                return;
+            }
+
+            Material mint = PrototypeVisuals.Material(new Color(0.66f, 0.91f, 0.70f));
+            foreach (Renderer renderer in model.GetComponentsInChildren<Renderer>(true))
+            {
+                renderer.sharedMaterial = mint;
+                renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+                renderer.receiveShadows = false;
+            }
+            foreach (Collider collider in model.GetComponentsInChildren<Collider>(true))
+                collider.enabled = false;
         }
 
         private void Update()
@@ -201,6 +245,15 @@ namespace ShawarmaTycoon
             if (step <= 0 || !economy.TrySpend(step)) return;
 
             paid += step;
+            if (Time.time >= nextPaymentFeedback)
+            {
+                nextPaymentFeedback = Time.time + 0.17f;
+                PaymentFlyer.Send(
+                    player.position + Vector3.up * 1.25f,
+                    transform.position + Vector3.up * 0.42f);
+                AudioDirector.Play(GameSfx.Coin, 0.16f, 0.82f + progressPitch * 0.24f);
+                gaugePulse?.Kick();
+            }
             if (paid < CurrentCost)
             {
                 GameProgress.SetInt(saveKey + ".paid", paid);
@@ -222,6 +275,7 @@ namespace ShawarmaTycoon
             GameProgress.RecordUpgrade();
             UpgradeProgress.NotifyChanged();
             CoinBurst.Spawn(transform.position + Vector3.up * 0.7f, price);
+            UnlockCelebration.Spawn(transform.position + Vector3.up * 0.25f);
             AudioDirector.Play(GameSfx.Unlock);
             onLevelBought?.Invoke(level, false);
             RestaurantNavigation.Instance?.Rebuild();
@@ -246,6 +300,8 @@ namespace ShawarmaTycoon
                 priceLabel.text = "₺" + outstanding;
             }
         }
+
+        private float progressPitch => CurrentCost <= 0 ? 0f : Mathf.Clamp01(paid / (float)CurrentCost);
 
         private void OnDrawGizmosSelected()
         {
