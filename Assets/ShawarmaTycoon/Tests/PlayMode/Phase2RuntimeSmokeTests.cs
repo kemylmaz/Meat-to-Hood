@@ -52,6 +52,20 @@ namespace ShawarmaTycoon.Tests
             Assert.That(second, Is.SameAs(first));
             GameplayObjectPool.Release(second);
         }
+
+        private sealed class MemorySaveProvider : ISaveProvider
+        {
+            private SaveData data;
+
+            public bool TryLoad(out SaveData loaded)
+            {
+                loaded = data;
+                return loaded != null;
+            }
+
+            public void Save(SaveData value) => data = value;
+            public void Delete() => data = null;
+        }
     }
 }
 #endif
