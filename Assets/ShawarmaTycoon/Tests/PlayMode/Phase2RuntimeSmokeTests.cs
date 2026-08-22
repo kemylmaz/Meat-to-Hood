@@ -12,6 +12,9 @@ namespace ShawarmaTycoon.Tests
         public void BuildPrototypeForFixture()
         {
             if (GameObject.Find("Shawarma Prototype Runtime") != null) return;
+            SaveRepository.ResetStateForTests();
+            SaveRepository.InitializeForTests(new MemorySaveProvider());
+            GameProgress.SetInt(FirstShiftTutorial.CompletionKey, 1);
             bootstrapHost = new GameObject("Phase 2 Test Bootstrap");
             bootstrapHost.AddComponent<ShawarmaPrototypeBootstrap>();
         }
@@ -22,6 +25,7 @@ namespace ShawarmaTycoon.Tests
             GameObject runtime = GameObject.Find("Shawarma Prototype Runtime");
             if (runtime != null) Object.DestroyImmediate(runtime);
             if (bootstrapHost != null) Object.DestroyImmediate(bootstrapHost);
+            SaveRepository.ResetStateForTests();
         }
 
         [Test]

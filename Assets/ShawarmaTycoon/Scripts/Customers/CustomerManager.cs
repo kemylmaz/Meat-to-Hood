@@ -64,6 +64,8 @@ namespace ShawarmaTycoon
         private float manualCheckoutTimer;
 
         public int ActiveCustomers => customers.Count;
+        /// <summary>Raised immediately after a complete order is paid at the register.</summary>
+        public event System.Action<bool> CustomerCheckedOut;
         public int ActiveVipCustomers
         {
             get
@@ -391,6 +393,7 @@ namespace ShawarmaTycoon
             till?.Add(front.CounterPayment);
             if (byCashier) ComboSystem.Instance?.RegisterWorkerAction();
             else ComboSystem.Instance?.RegisterManualAction();
+            CustomerCheckedOut?.Invoke(byCashier);
             AudioDirector.Play(GameSfx.Drop, 0.55f, byCashier ? 0.96f : 1.04f);
             return true;
         }

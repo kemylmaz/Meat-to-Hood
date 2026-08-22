@@ -19,6 +19,10 @@ namespace ShawarmaTycoon.Tests
             SaveRepository.ResetStateForTests();
             SaveRepository.InitializeForTests(new MemorySaveProvider());
             GameProgress.SetInt("expansion", 0);
+            // This fixture exercises the unrestricted restaurant sandbox. The
+            // first-shift flow has its own runtime QA and intentionally pauses a
+            // fresh game until the opening button is pressed.
+            GameProgress.SetInt(FirstShiftTutorial.CompletionKey, 1);
 
             bootstrapHost = new GameObject("Phase 3 Test Bootstrap");
             bootstrapHost.AddComponent<ShawarmaPrototypeBootstrap>();

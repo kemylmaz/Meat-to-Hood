@@ -414,9 +414,12 @@ namespace ShawarmaTycoon
                 BuildModeController buildMode = root.AddComponent<BuildModeController>();
                 buildMode.Configure(Camera.main, playerMotor, hud.Joystick,
                     shopWorld.WalkableRegistry, hud.BuildMode);
-            }
 
-            CreateTutorialArrow(meatSource, oven, cutting, service);
+                TutorialArrow tutorialArrow = CreateTutorialArrow();
+                FirstShiftTutorial firstShift = root.AddComponent<FirstShiftTutorial>();
+                firstShift.Configure(hud, playerMotor, inventory, meatSource, oven,
+                    cutting, service, till, customerManager, tutorialArrow);
+            }
 
             // Things that go wrong, so an automated shop still needs somebody in
             // it. Held back until at least one belt is running - see the system.
@@ -1596,8 +1599,7 @@ namespace ShawarmaTycoon
                 new Vector3(0.17f, 0.16f, 0f), new Vector3(0.08f, 0.32f, 0.08f), frameColor);
         }
 
-        private void CreateTutorialArrow(
-            ItemStation source, ItemStation oven, ItemStation cutting, ItemStation service)
+        private TutorialArrow CreateTutorialArrow()
         {
             GameObject tutorial = new("Öğretici Ok");
             tutorial.transform.SetParent(runtimeRoot, false);
@@ -1605,9 +1607,9 @@ namespace ShawarmaTycoon
                 new Vector3(0.20f, 0.52f, 0.20f), new Color(1f, 0.82f, 0.16f));
             PrototypeVisuals.CreatePrimitive("Ok Ucu", PrimitiveType.Sphere, tutorial.transform, Vector3.down * 0.38f,
                 new Vector3(0.46f, 0.24f, 0.46f), new Color(1f, 0.82f, 0.16f));
-            tutorial.AddComponent<TutorialArrow>()
-                .Configure(inventory, source.transform, oven.transform,
-                    cutting.transform, service.transform);
+            TutorialArrow arrow = tutorial.AddComponent<TutorialArrow>();
+            arrow.SetTarget(null);
+            return arrow;
         }
 
         /// <summary>
