@@ -52,9 +52,9 @@ namespace ShawarmaTycoon
         /// than something done in passing.
         /// </summary>
         [Header("Drinks, Desserts and Couriers")]
-        [SerializeField] private Vector3 drinkCrate = new(1.6f, 0.25f, -5.4f);
-        [SerializeField] private Vector3 fridge = new(5.2f, 0.25f, -5.4f);
-        [SerializeField] private Vector3 fridgePad = new(5.2f, 0.28f, -3.4f);
+        [SerializeField] private Vector3 drinkCrate = new(10.6f, 0.25f, -2.6f);
+        [SerializeField] private Vector3 fridge = new(10.6f, 0.25f, 1.1f);
+        [SerializeField] private Vector3 fridgePad = new(7.8f, 0.28f, 1.1f);
         [SerializeField] private Vector3 dessertOven = new(8.8f, 0.25f, -5.4f);
         [SerializeField] private Vector3 dessertPad = new(7.4f, 0.28f, -7.2f);
         [SerializeField] private Vector3 courierCounter = new(10.4f, 0.25f, -7.5f);

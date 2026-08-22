@@ -20,7 +20,7 @@ namespace ShawarmaTycoon
         private Transform player;
         private CarryInventory inventory;
         private TextMesh orderLabel;
-        private TextMesh cashLabel;
+        private WorldCashMarker cashMarker;
         private GameObject bagVisual;
         private GameObject orderLight;
         private GameObject cashPad;
@@ -264,8 +264,7 @@ namespace ShawarmaTycoon
                 "Cash Pad Surface", PrimitiveType.Cube, cashPad.transform,
                 new Vector3(0f, 0.055f, 0f), new Vector3(0.70f, 0.04f, 0.46f),
                 new Color(0.16f, 0.72f, 0.30f));
-            cashLabel = PrototypeVisuals.CreateLabel(
-                string.Empty, cashPad.transform, Vector3.up * 0.34f, 0.12f);
+            cashMarker = WorldCashMarker.Create(cashPad.transform);
 
             cashStack = new GameObject("Takeaway Cash Stack");
             cashStack.transform.SetParent(cashPad.transform, false);
@@ -278,6 +277,11 @@ namespace ShawarmaTycoon
                     new Vector3(0.58f, 0.025f, 0.34f),
                     i % 2 == 0 ? new Color(0.24f, 0.88f, 0.34f) : new Color(0.14f, 0.68f, 0.24f));
             }
+            MeshyVisuals.TryReplaceDirect(cashPad.transform, "18_money_collection_pad",
+                new Vector3(0.90f, 0.44f, 0.90f), Vector3.zero, Vector3.zero, false,
+                "Cash Pad Surface");
+            foreach (Transform bill in cashStack.transform)
+                bill.gameObject.SetActive(!MeshyVisuals.IsAvailable("18_money_collection_pad"));
         }
 
         private void UpdateVisuals()
@@ -311,7 +315,7 @@ namespace ShawarmaTycoon
             bool hasCash = pendingCash > 0;
             if (cashPad != null) cashPad.SetActive(hasCash);
             if (cashStack != null) cashStack.SetActive(hasCash);
-            if (cashLabel != null) cashLabel.text = hasCash ? "+$" + pendingCash : string.Empty;
+            cashMarker?.SetAmount(pendingCash);
         }
 
         private void OnDrawGizmosSelected()

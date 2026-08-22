@@ -16,7 +16,7 @@ namespace ShawarmaTycoon
         private GameObject dirtyIndicator;
         private GameObject cashPad;
         private GameObject cashStack;
-        private TextMesh cashLabel;
+        private WorldCashMarker cashMarker;
         private TextMesh statusLabel;
         private bool reserved;
         private bool dirty;
@@ -97,7 +97,7 @@ namespace ShawarmaTycoon
                 "Cash Pad Surface", PrimitiveType.Cube, cashPad.transform,
                 new Vector3(0f, 0.055f, 0f), new Vector3(0.62f, 0.04f, 0.40f),
                 new Color(0.12f, 0.66f, 0.27f));
-            cashLabel = PrototypeVisuals.CreateLabel("", cashPad.transform, Vector3.up * 0.36f, 0.13f);
+            cashMarker = WorldCashMarker.Create(cashPad.transform);
 
             cashStack = new GameObject("Cash Stack");
             cashStack.transform.SetParent(transform, false);
@@ -251,7 +251,7 @@ namespace ShawarmaTycoon
 
         private void UpdateCashLabel()
         {
-            if (cashLabel != null) cashLabel.text = pendingCash > 0 ? "+$" + pendingCash : string.Empty;
+            cashMarker?.SetAmount(pendingCash);
         }
 
         private void UpdateLabel()

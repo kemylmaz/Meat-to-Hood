@@ -396,6 +396,56 @@ namespace ShawarmaTycoon.Tests
             }
         }
 
+        [Test]
+        public void TableTakings_UseAReadableLiraReceiptCard()
+        {
+            CustomerTable[] tables = Object.FindObjectsByType<CustomerTable>(
+                FindObjectsInactive.Include, FindObjectsSortMode.None);
+            Assert.That(tables, Is.Not.Empty);
+
+            foreach (CustomerTable table in tables)
+            {
+                WorldCashMarker marker = table.GetComponentInChildren<WorldCashMarker>(true);
+                Assert.That(marker, Is.Not.Null, $"'{table.name}' still has no visual money card.");
+                Assert.That(marker.transform.Find("Fiş Kartı/Banknot"), Is.Not.Null,
+                    $"'{table.name}' money card has no banknote pictogram.");
+
+                marker.SetAmount(125);
+                Assert.That(marker.AmountText, Is.EqualTo("₺125"),
+                    "World takings should use the same lira currency as the HUD.");
+            }
+        }
+
+        [Test]
+        public void Stations_DrawOnlyUsefulTrays_AndDrinkLineFitsTheFloor()
+        {
+            ItemStation meat = FindStation("ET DEPOSU");
+            ItemStation oven = FindStation("OCAK");
+            ItemStation service = FindStation("SERVİS");
+            ItemStation crate = FindStation("İÇECEK DEPOSU");
+            ItemStation fridge = FindStation("BUZDOLABI");
+            Assert.That(new[] { meat, oven, service, crate, fridge }, Has.None.Null);
+
+            Assert.That(meat.GetComponentsInChildren<Transform>(true).Count(t => t.name == "Tepsi"),
+                Is.EqualTo(1), "A source station should not draw an empty input tray.");
+            Assert.That(oven.GetComponentsInChildren<Transform>(true).Count(t => t.name == "Tepsi"),
+                Is.EqualTo(2), "A processor needs one input and one output tray.");
+            Assert.That(service.GetComponentsInChildren<Transform>(true).Count(t => t.name == "Tepsi"),
+                Is.EqualTo(1), "A service station should not draw a meaningless second tray.");
+            Assert.That(crate.GetComponentsInChildren<Transform>(true).Count(t => t.name == "Tepsi"),
+                Is.EqualTo(1));
+            Assert.That(fridge.GetComponentsInChildren<Transform>(true).Count(t => t.name == "Tepsi"),
+                Is.Zero, "The fridge should use its shelves instead of loose processor trays.");
+
+            BuildModeController controller = Object.FindFirstObjectByType<BuildModeController>();
+            Assert.That(controller.CanPlace(crate.GetComponent<PlaceableObject>()), Is.True,
+                "The repaired drink rack starts in an invalid build-mode position.");
+            Assert.That(controller.CanPlace(fridge.GetComponent<PlaceableObject>()), Is.True,
+                "The repaired fridge starts in an invalid build-mode position.");
+            Assert.That(fridge.transform.position.x, Is.GreaterThan(10f),
+                "The fridge has drifted back into the centre of the dining floor.");
+        }
+
         /// <summary>
         /// A fed station has to keep working with nobody at it. While that needed
         /// the player in range the whole game was standing next to a machine, and

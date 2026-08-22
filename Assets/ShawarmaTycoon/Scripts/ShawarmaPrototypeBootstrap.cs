@@ -114,6 +114,7 @@ namespace ShawarmaTycoon
                 Vector3.zero, new Vector3(0f, 180f, 0f), false,
                 "Counter", "Work Top", "Rack Back", "RawMeat");
             ApplyAuthoredStationLayout(meatSource, 2.9f, -1.05f);
+            meatSource.SetVisualItemScale(1.18f);
 
             ItemStation oven = CreateStation(
                 shopWorld.KitchenRoot, "OCAK", layout.Oven, new Vector3(2.2f, 0.9f, 1.9f),
@@ -129,8 +130,9 @@ namespace ShawarmaTycoon
                 Vector3.zero, FacingCustomer, false,
                 "Counter", "Work Top", "Heater Left", "Heater Right", "Doner Spit");
             ApplyAuthoredStationLayout(oven, 2.55f, -0.82f);
+            oven.SetVisualItemScale(1.24f);
             oven.SetOutputBatchVisual("75_meat_tray_stack", 4,
-                new Vector3(0.46f, 0.34f, 0.36f), 0.35f);
+                new Vector3(0.72f, 0.50f, 0.56f), 0.52f);
 
             ItemStation cutting = CreateStation(
                 shopWorld.KitchenRoot, "KESİM", layout.Cutting, new Vector3(2.2f, 0.9f, 1.9f),
@@ -143,8 +145,9 @@ namespace ShawarmaTycoon
                 Vector3.zero, FacingCustomer, KitchenVisualScale,
                 "Counter", "Work Top", "Cutting Board", "Knife");
             ApplyAuthoredStationLayout(cutting, 1.9f, -0.75f);
+            cutting.SetVisualItemScale(1.18f);
             cutting.SetOutputBatchVisual("74_wrap_tray_stack", 4,
-                new Vector3(0.46f, 0.44f, 0.36f), 0.45f);
+                new Vector3(0.68f, 0.55f, 0.52f), 0.55f);
 
             ItemStation service = CreateStation(
                 shopWorld.KitchenRoot, "SERVİS", layout.Service, new Vector3(2.2f, 0.9f, 1.9f),
@@ -156,8 +159,9 @@ namespace ShawarmaTycoon
                 Vector3.zero, FacingCustomer, KitchenVisualScale,
                 "Counter", "Work Top");
             Vector3 serviceTray = ApplyAuthoredStationLayout(service, 1.9f, -0.66f);
+            service.SetVisualItemScale(1.05f);
             service.SetOutputBatchVisual("74_wrap_tray_stack", 3,
-                new Vector3(0.46f, 0.44f, 0.36f), 0.45f);
+                new Vector3(0.68f, 0.55f, 0.52f), 0.55f);
             BuildServingDisplay(service, serviceTray);
             // The shop opens prepped. The queue arrives within seconds of the
             // first frame and the line takes a minute and a half to produce
@@ -213,17 +217,25 @@ namespace ShawarmaTycoon
                 shopWorld.UtilityRoot, "İÇECEK DEPOSU", layout.DrinkCrate,
                 new Vector3(1.9f, 1.0f, 1.2f), new Color(0.30f, 0.44f, 0.62f), StationMode.Source,
                 ItemType.None, ItemType.Drink, 0.5f, 1, 18, 1.1f);
+            drinkCrate.transform.localRotation = Quaternion.Euler(0f, 90f, 0f);
             MarkPlaceable(drinkCrate.gameObject, "station.drink_crate", "İçecek Deposu");
             DecorateDrinkCrate(drinkCrate.transform);
             ApplyAuthoredStationLayout(drinkCrate, 1.7f, -0.72f);
+            drinkCrate.SetVisualItemScale(1.08f);
+            drinkCrate.SetOutputGrid(4, 0.25f, 0.18f);
 
             ItemStation fridge = CreateStation(
                 shopWorld.UtilityRoot, "BUZDOLABI", layout.Fridge,
                 new Vector3(1.5f, 1.0f, 1.0f), new Color(0.86f, 0.90f, 0.93f), StationMode.Service,
                 ItemType.Drink, ItemType.None, 0.1f, 1, 12, 1f);
+            fridge.transform.localRotation = Quaternion.Euler(0f, 90f, 0f);
             MarkPlaceable(fridge.gameObject, "station.fridge", "Buzdolabı");
             DecorateFridge(fridge.transform);
-            ApplyAuthoredStationLayout(fridge, 2.4f, -0.7f);
+            // A fridge has shelves, not a processor's pair of metal trays. Stock
+            // is spread across its lower display shelf instead of piled vertically.
+            fridge.SetVisualLayout(Vector3.zero, new Vector3(0f, 0.72f, -0.48f), 2.15f);
+            fridge.SetVisualItemScale(1.12f);
+            fridge.SetOutputGrid(4, 0.25f, 0.18f);
             fridge.SetEmptyWarning("İÇECEK BİTTİ");
 
             ItemStation dessertOven = CreateStation(
@@ -242,6 +254,7 @@ namespace ShawarmaTycoon
             drinksRoot.transform.SetParent(shopWorld.UtilityRoot, false);
             drinkCrate.transform.SetParent(drinksRoot.transform, true);
             fridge.transform.SetParent(drinksRoot.transform, true);
+            RepairLegacyDrinkLineLayout(layout, drinkCrate, fridge);
             drinksRoot.SetActive(false);
             dessertOven.gameObject.SetActive(false);
 
@@ -958,9 +971,10 @@ namespace ShawarmaTycoon
             if (MeshyVisuals.IsAvailable(ShopCrate))
             {
                 for (int i = 0; i < 3; i++)
-                    MeshyVisuals.TryAttachAuthored(station, ShopCrate,
+                    MeshyVisuals.TryAttach(station, ShopCrate,
+                        new Vector3(0.82f, 0.62f, 0.68f),
                         new Vector3(-0.5f + i % 2 * 0.78f, i > 1 ? 0.3f : 0f, i > 1 ? 0.1f : 0f),
-                        new Vector3(0f, i * 12f, 0f));
+                        new Vector3(0f, i * 12f, 0f), false);
                 for (int i = 0; i < 4; i++)
                     PrototypeVisuals.CreateItemVisual(ItemType.Drink, station,
                         new Vector3(-0.45f + i * 0.3f, 0.68f, -0.28f), 1.1f);
@@ -979,9 +993,12 @@ namespace ShawarmaTycoon
 
         private static void DecorateFridge(Transform station)
         {
-            if (MeshyVisuals.TryReplaceDirectAuthored(
-                    station, "190_kitchen_fridge", Vector3.zero, FacingCustomer,
-                    "Counter", "Work Top"))
+            // The source model is a wide commercial display case. At raw authored
+            // scale it spans almost five metres and dominates the dining room;
+            // fit it to a compact two-door footprint while preserving its aspect.
+            if (MeshyVisuals.TryReplaceDirect(
+                    station, "190_kitchen_fridge", new Vector3(2.55f, 1.65f, 0.95f),
+                    Vector3.zero, FacingCustomer, false, "Counter", "Work Top"))
                 return;
 
             PrototypeVisuals.CreatePrimitive("Dolap Gövdesi", PrimitiveType.Cube, station,
@@ -1357,8 +1374,16 @@ namespace ShawarmaTycoon
 
             Vector3 input = new(-0.52f, top, trayZ);
             output = new Vector3(0.52f, top, trayZ);
-            BuildTray(station.transform, input);
-            BuildTray(station.transform, output);
+            // A source has no input and a service counter stores only finished
+            // goods. Building both trays for every station left one obviously
+            // empty tray in front of racks, fridges and tills.
+            if (station.InputType != ItemType.None && station.Mode != StationMode.Service)
+                BuildTray(station.transform, input);
+            ItemType visibleOutput = station.Mode == StationMode.Service
+                ? station.InputType
+                : station.OutputType;
+            if (visibleOutput != ItemType.None)
+                BuildTray(station.transform, output);
             station.SetVisualLayout(input, output, maxLabelHeight);
 
             if (MeshyVisuals.TryFindAnchor(
@@ -1369,6 +1394,38 @@ namespace ShawarmaTycoon
                 station.SetWorkerVisualAnchor(local);
             }
             return output;
+        }
+
+        /// <summary>
+        /// Earlier builds could save the hidden drink line after it inherited a
+        /// transient editor position. Repair only that clearly displaced legacy
+        /// pair once; ordinary player-authored layouts remain untouched.
+        /// </summary>
+        private static void RepairLegacyDrinkLineLayout(
+            RestaurantLayoutConfig layout, ItemStation drinkCrate, ItemStation fridge)
+        {
+            const string migrationKey = "visual_fix.drink_line_layout.v2";
+            if (GameProgress.GetInt(migrationKey, 0) > 0) return;
+
+            PlaceableObject cratePlaceable = drinkCrate.GetComponent<PlaceableObject>();
+            PlaceableObject fridgePlaceable = fridge.GetComponent<PlaceableObject>();
+            cratePlaceable?.EnsureInitialized();
+            fridgePlaceable?.EnsureInitialized();
+
+            bool crateDisplaced = Vector3.SqrMagnitude(
+                drinkCrate.transform.position - layout.DrinkCrate) > 16f;
+            bool fridgeDisplaced = Vector3.SqrMagnitude(
+                fridge.transform.position - layout.Fridge) > 16f;
+            if (crateDisplaced || fridgeDisplaced)
+            {
+                cratePlaceable?.ResetToDefault();
+                fridgePlaceable?.ResetToDefault();
+                cratePlaceable?.Commit();
+                fridgePlaceable?.Commit();
+            }
+
+            GameProgress.SetInt(migrationKey, 1);
+            GameProgress.FlushNow();
         }
 
         /// <summary>A shallow open tray for a stack to grow out of.</summary>

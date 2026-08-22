@@ -30,9 +30,15 @@ namespace ShawarmaTycoon
                     new Vector3(0.32f, 0.03f, 0.19f), billColor, new Vector3(0f, i * 23f, 0f));
             }
 
-            TextMesh label = PrototypeVisuals.CreateLabel((expense ? "-" : "+") + "$" + value, root.transform, Vector3.up * 0.60f, 0.28f);
-            label.color = expense ? new Color(0.90f, 0.17f, 0.14f) : new Color(0.08f, 0.70f, 0.20f);
+            TextMesh label = PrototypeVisuals.CreateLabel(
+                (expense ? "−" : "+") + "₺" + value,
+                root.transform, Vector3.up * 0.60f, 0.24f);
+            label.font = UI.UITheme.DisplayFont;
             label.fontStyle = FontStyle.Bold;
+            Renderer labelRenderer = label.GetComponent<Renderer>();
+            if (labelRenderer != null && label.font != null)
+                labelRenderer.sharedMaterial = label.font.material;
+            label.color = expense ? new Color(0.90f, 0.17f, 0.14f) : new Color(0.08f, 0.70f, 0.20f);
         }
 
         private void Update()

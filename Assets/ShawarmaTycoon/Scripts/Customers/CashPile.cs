@@ -17,7 +17,7 @@ namespace ShawarmaTycoon
         private Transform player;
         private GameObject pad;
         private GameObject bills;
-        private TextMesh amountLabel;
+        private WorldCashMarker cashMarker;
         private int pending;
 
         public int Pending => pending;
@@ -35,7 +35,7 @@ namespace ShawarmaTycoon
                 "Cash Pad Surface", PrimitiveType.Cube, pad.transform,
                 new Vector3(0f, 0.055f, 0f), new Vector3(0.62f, 0.04f, 0.40f),
                 new Color(0.12f, 0.66f, 0.27f));
-            amountLabel = PrototypeVisuals.CreateLabel("", pad.transform, Vector3.up * 0.36f, 0.13f);
+            cashMarker = WorldCashMarker.Create(pad.transform);
 
             bills = new GameObject("Cash Stack");
             bills.transform.SetParent(transform, false);
@@ -97,7 +97,7 @@ namespace ShawarmaTycoon
             bool has = pending > 0;
             if (pad != null) pad.SetActive(has);
             if (bills != null) bills.SetActive(has);
-            if (amountLabel != null) amountLabel.text = has ? "+$" + pending : string.Empty;
+            cashMarker?.SetAmount(pending);
         }
     }
 }

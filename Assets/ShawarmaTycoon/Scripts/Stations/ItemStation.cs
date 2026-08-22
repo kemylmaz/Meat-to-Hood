@@ -25,6 +25,8 @@ namespace ShawarmaTycoon
         private Transform outputRoot;
         private TextMesh statusLabel;
         private TextMesh maxLabel;
+        private GameObject warningBadge;
+        private Renderer warningBadgePanel;
         private int inputCount;
         private int outputCount;
         private float processTimer;
@@ -112,6 +114,10 @@ namespace ShawarmaTycoon
         private int outputBatchSize = 4;
         private Vector3 outputBatchTargetSize = Vector3.one * 0.4f;
         private float outputBatchHeight = 0.4f;
+        private float visualItemScale = 0.85f;
+        private int outputGridColumns;
+        private float outputGridSpacingX = 0.24f;
+        private float outputGridSpacingZ = 0.18f;
 
         /// <summary>
         /// Shows the output pile as authored full trays: one model per
@@ -128,12 +134,28 @@ namespace ShawarmaTycoon
             RefreshVisuals();
         }
 
+        /// <summary>Station-only display scale; carried food keeps its own size.</summary>
+        public void SetVisualItemScale(float scale)
+        {
+            visualItemScale = Mathf.Clamp(scale, 0.5f, 1.6f);
+            RefreshVisuals();
+        }
+
+        /// <summary>Spreads loose output across a shelf instead of making a tower.</summary>
+        public void SetOutputGrid(int columns, float spacingX, float spacingZ)
+        {
+            outputGridColumns = Mathf.Max(0, columns);
+            outputGridSpacingX = Mathf.Max(0.05f, spacingX);
+            outputGridSpacingZ = Mathf.Max(0.05f, spacingZ);
+            RefreshVisuals();
+        }
+
         public void SetVisualLayout(Vector3 inputLocalPosition, Vector3 outputLocalPosition, float maxLabelHeight)
         {
             if (inputRoot != null) inputRoot.localPosition = inputLocalPosition;
             if (outputRoot != null) outputRoot.localPosition = outputLocalPosition;
-            if (maxLabel != null)
-                maxLabel.transform.localPosition = new Vector3(0f, Mathf.Max(0.5f, maxLabelHeight), 0f);
+            if (warningBadge != null)
+                warningBadge.transform.localPosition = new Vector3(0f, Mathf.Max(0.5f, maxLabelHeight), 0f);
         }
 
         public void SetWorkerVisualAnchor(Vector3 localPosition)
@@ -168,9 +190,7 @@ namespace ShawarmaTycoon
             inputRoot = CreateRoot("Input Stack", new Vector3(-0.48f, 0.78f, 0f));
             outputRoot = CreateRoot("Output Stack", new Vector3(0.48f, 0.78f, 0f));
             statusLabel = PrototypeVisuals.CreateLabel(displayName, transform, new Vector3(0f, 1.55f, 0f), 0.13f);
-            maxLabel = PrototypeVisuals.CreateLabel("MAX", transform, new Vector3(0f, 2.05f, 0f), 0.15f);
-            maxLabel.color = PrototypeVisuals.Red;
-            maxLabel.gameObject.SetActive(false);
+            BuildWarningBadge();
 
             if (mode == StationMode.Source)
                 outputCount = outputCapacity;
@@ -190,6 +210,40 @@ namespace ShawarmaTycoon
             root.transform.SetParent(transform, false);
             root.transform.localPosition = localPosition;
             return root.transform;
+        }
+
+        private void BuildWarningBadge()
+        {
+            warningBadge = new GameObject("İstasyon Durum Kartı");
+            warningBadge.transform.SetParent(transform, false);
+            warningBadge.transform.localPosition = new Vector3(0f, 2.05f, 0f);
+            warningBadge.transform.localEulerAngles = new Vector3(55f, 0f, 0f);
+
+            PrototypeVisuals.CreatePrimitive(
+                "Gölge", PrimitiveType.Cube, warningBadge.transform,
+                new Vector3(0.035f, -0.035f, 0.045f), new Vector3(1.14f, 0.34f, 0.055f),
+                new Color(0.25f, 0.14f, 0.10f));
+            GameObject panel = PrototypeVisuals.CreatePrimitive(
+                "Kart", PrimitiveType.Cube, warningBadge.transform,
+                Vector3.zero, new Vector3(1.08f, 0.30f, 0.060f),
+                new Color(1f, 0.78f, 0.28f));
+            warningBadgePanel = panel.GetComponent<Renderer>();
+
+            GameObject labelObject = new("Durum");
+            labelObject.transform.SetParent(warningBadge.transform, false);
+            labelObject.transform.localPosition = new Vector3(0f, 0f, -0.045f);
+            maxLabel = labelObject.AddComponent<TextMesh>();
+            maxLabel.anchor = TextAnchor.MiddleCenter;
+            maxLabel.alignment = TextAlignment.Center;
+            maxLabel.font = UI.UITheme.DisplayFont;
+            maxLabel.fontSize = 64;
+            maxLabel.characterSize = 0.042f;
+            maxLabel.fontStyle = FontStyle.Bold;
+            maxLabel.color = new Color(0.25f, 0.14f, 0.10f);
+            Renderer textRenderer = maxLabel.GetComponent<Renderer>();
+            if (textRenderer != null && maxLabel.font != null)
+                textRenderer.sharedMaterial = maxLabel.font.material;
+            warningBadge.SetActive(false);
         }
 
         private void Update()
@@ -399,19 +453,28 @@ namespace ShawarmaTycoon
             if (IsBroken)
             {
                 maxLabel.text = "ARIZA";
-                maxLabel.gameObject.SetActive(true);
+                SetWarningBadge(true, PrototypeVisuals.Red);
                 return;
             }
 
             if (!string.IsNullOrEmpty(emptyWarning))
             {
                 maxLabel.text = emptyWarning;
-                maxLabel.gameObject.SetActive(outputCount <= 0);
+                SetWarningBadge(outputCount <= 0, PrototypeVisuals.Red);
                 return;
             }
 
-            maxLabel.gameObject.SetActive(
-                mode != StationMode.Source && outputCount >= EffectiveOutputCapacity);
+            maxLabel.text = "DOLU";
+            SetWarningBadge(
+                mode != StationMode.Source && outputCount >= EffectiveOutputCapacity,
+                new Color(1f, 0.78f, 0.28f));
+        }
+
+        private void SetWarningBadge(bool visible, Color panelColor)
+        {
+            if (warningBadge != null) warningBadge.SetActive(visible);
+            if (warningBadgePanel != null)
+                warningBadgePanel.sharedMaterial = PrototypeVisuals.Material(panelColor);
         }
 
         public bool TryReceiveFromConveyor(ItemType item)
@@ -465,10 +528,10 @@ namespace ShawarmaTycoon
 
             if (inputType != ItemType.None && inputRoot != null)
             {
-                float step = PrototypeVisuals.StackStep(inputType, StackScale);
+                float step = PrototypeVisuals.StackStep(inputType, visualItemScale);
                 for (int i = 0; i < shownInput; i++)
                     inputVisuals.Add(RentItemVisual(
-                        inputType, inputRoot, Vector3.up * (i * step), StackScale));
+                        inputType, inputRoot, Vector3.up * (i * step), visualItemScale));
             }
 
             ItemType visibleOutputType = mode == StationMode.Service ? inputType : outputType;
@@ -495,10 +558,24 @@ namespace ShawarmaTycoon
                     }
                 }
 
-                float step = PrototypeVisuals.StackStep(visibleOutputType, StackScale);
+                float step = PrototypeVisuals.StackStep(visibleOutputType, visualItemScale);
                 for (int i = 0; i < loose; i++)
+                {
+                    Vector3 loosePosition;
+                    if (outputGridColumns > 0)
+                    {
+                        int column = i % outputGridColumns;
+                        int row = i / outputGridColumns;
+                        float centre = (outputGridColumns - 1) * 0.5f;
+                        loosePosition = new Vector3(
+                            (column - centre) * outputGridSpacingX,
+                            y + row * 0.035f,
+                            row * outputGridSpacingZ);
+                    }
+                    else loosePosition = Vector3.up * (y + i * step);
                     outputVisuals.Add(RentItemVisual(
-                        visibleOutputType, outputRoot, Vector3.up * (y + i * step), StackScale));
+                        visibleOutputType, outputRoot, loosePosition, visualItemScale));
+                }
             }
             UpdateLabel();
             // Every count change funnels through here, so this is the one place
@@ -507,9 +584,6 @@ namespace ShawarmaTycoon
             // just emptied, and dark on one that had just filled up.
             UpdateMaxIndicator();
         }
-
-        /// <summary>Counter portions are drawn a little under carried size.</summary>
-        private const float StackScale = 0.85f;
 
         private static GameObject RentItemVisual(
             ItemType type, Transform parent, Vector3 localPosition, float scale)

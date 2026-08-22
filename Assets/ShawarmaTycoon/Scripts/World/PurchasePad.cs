@@ -243,7 +243,7 @@ namespace ShawarmaTycoon
             if (priceLabel != null && outstanding != shownPrice)
             {
                 shownPrice = outstanding;
-                priceLabel.text = "$" + outstanding;
+                priceLabel.text = "₺" + outstanding;
             }
         }
 
