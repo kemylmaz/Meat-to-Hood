@@ -32,10 +32,6 @@ namespace ShawarmaTycoon
         private float processTimer;
         private float sourceTimer;
         private float transferTimer;
-        private bool workerAssigned;
-        private int workerLevel;
-        private GameObject workerVisual;
-        private Vector3 workerVisualAnchor = new(0f, 0f, 1.25f);
 
         public StationMode Mode => mode;
         public ItemType InputType => inputType;
@@ -43,8 +39,6 @@ namespace ShawarmaTycoon
         public int InputCount => inputCount;
         public int OutputCount => outputCount;
         public float ProcessProgress => processDuration <= 0f ? 0f : Mathf.Clamp01(processTimer / processDuration);
-        public bool WorkerAssigned => workerAssigned;
-        public int WorkerLevel => workerLevel;
         private int EffectiveInputCapacity => inputCapacity + HumanResourcesSystem.WorkerCapacityBonus;
         private int EffectiveOutputCapacity => outputCapacity + HumanResourcesSystem.WorkerCapacityBonus;
 
@@ -156,12 +150,6 @@ namespace ShawarmaTycoon
             if (outputRoot != null) outputRoot.localPosition = outputLocalPosition;
             if (warningBadge != null)
                 warningBadge.transform.localPosition = new Vector3(0f, Mathf.Max(0.5f, maxLabelHeight), 0f);
-        }
-
-        public void SetWorkerVisualAnchor(Vector3 localPosition)
-        {
-            workerVisualAnchor = localPosition;
-            if (workerVisual != null) workerVisual.transform.localPosition = workerVisualAnchor;
         }
 
         public void Configure(
@@ -283,15 +271,9 @@ namespace ShawarmaTycoon
                 return;
             }
 
-            // A fed station works on its own. It used to stop the moment the
-            // player stepped away, so the whole game was standing still beside a
-            // machine waiting for it - the work was never carrying the food, it
-            // was babysitting. What a hired worker buys now is speed, not the
-            // ability to run at all.
-            float workSpeed = workerAssigned
-                ? (1f + Mathf.Max(0, workerLevel - 1) * 0.45f) * HumanResourcesSystem.WorkerSpeedMultiplier
-                : 1f;
-            processTimer += Time.deltaTime * workSpeed;
+            // A fed station works on its own. Its visible progression is the belt
+            // that feeds it; shared management automation handles later speedups.
+            processTimer += Time.deltaTime;
             if (processTimer < processDuration) return;
 
             processTimer = 0f;
@@ -371,59 +353,6 @@ namespace ShawarmaTycoon
             outputCount--;
             RefreshVisuals();
             return true;
-        }
-
-        public void AssignWorker()
-        {
-            SetWorkerLevel(Mathf.Max(1, workerLevel));
-        }
-
-        public void SetWorkerLevel(int level)
-        {
-            workerLevel = Mathf.Max(0, level);
-            workerAssigned = workerLevel > 0;
-            RefreshWorkerVisual();
-            UpdateLabel();
-            UpdateMaxIndicator();
-        }
-
-        /// <summary>
-        /// A hired worker used to show up as nothing but an emoji in the station
-        /// label, so a fully staffed kitchen looked exactly like an empty one.
-        /// Now they stand at the station: behind the counter on the +Z side,
-        /// turned to face the serving side the player works from.
-        /// </summary>
-        private void RefreshWorkerVisual()
-        {
-            if (workerAssigned == (workerVisual != null)) return;
-
-            if (!workerAssigned)
-            {
-                // Unparent first: Destroy only takes effect at the end of the
-                // frame, so a re-hire in the same frame would otherwise find the
-                // outgoing figure still standing at the station.
-                workerVisual.transform.SetParent(null, false);
-                Destroy(workerVisual);
-                workerVisual = null;
-                return;
-            }
-
-            workerVisual = new GameObject("İşçi");
-            workerVisual.transform.SetParent(transform, false);
-            workerVisual.transform.localPosition = workerVisualAnchor;
-            // Models look along +Z, so facing the serving side is a half turn.
-            workerVisual.transform.localRotation = Quaternion.Euler(0f, 180f, 0f);
-
-
-            if (MeshyVisuals.TryAttachAuthored(
-                    workerVisual.transform, "55_worker_red_backcap",
-                    Vector3.zero, Vector3.zero) != null)
-                return;
-
-            // No model: the label emoji stays the only cue rather than parking a
-            // bare capsule behind every counter.
-            Destroy(workerVisual);
-            workerVisual = null;
         }
 
         private string emptyWarning;
@@ -614,8 +543,7 @@ namespace ShawarmaTycoon
                 StationMode.Service => outputCount.ToString(),
                 _ => $"{inputCount}  →  {outputCount}"
             };
-            string workerText = workerAssigned ? "  👷" : "";
-            statusLabel.text = $"{name}{workerText}\n{countText}";
+            statusLabel.text = $"{name}\n{countText}";
         }
 
         private void OnDrawGizmosSelected()

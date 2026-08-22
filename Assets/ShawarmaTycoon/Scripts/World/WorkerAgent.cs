@@ -124,11 +124,12 @@ namespace ShawarmaTycoon
             Vector3 delta = target - transform.position;
             if (delta.sqrMagnitude <= arriveRadius * arriveRadius) return true;
 
+            float effectiveSpeed = moveSpeed * HumanResourcesSystem.WorkerSpeedMultiplier;
             if (body != null)
-                CharacterBody.StepTowards(body, target, moveSpeed, Time.deltaTime);
+                CharacterBody.StepTowards(body, target, effectiveSpeed, Time.deltaTime);
             else
                 transform.position = Vector3.MoveTowards(
-                    transform.position, target, moveSpeed * Time.deltaTime);
+                    transform.position, target, effectiveSpeed * Time.deltaTime);
             // The models look along +Z once their authored offset is applied, and
             // the animation driver reads the movement itself for walk vs carry.
             transform.rotation = Quaternion.Slerp(

@@ -183,11 +183,6 @@ namespace ShawarmaTycoon
             cutting.SetWorldLabelVisible(false);
             service.SetWorldLabelVisible(false);
 
-            CreateWorkerPad(shopWorld.KitchenRoot, "Ocak İşçisi",
-                layout.OvenWorkerPad, "station.oven.worker", oven);
-            CreateWorkerPad(shopWorld.KitchenRoot, "Kesim İşçisi",
-                layout.CuttingWorkerPad, "station.cutting.worker", cutting);
-
             // --- belts --------------------------------------------------------
             ConveyorLink rawBelt = CreateConveyor(
                 shopWorld.KitchenRoot, "Et Bandı", meatSource, oven, layout.MeatSource, layout.Oven);
@@ -674,23 +669,6 @@ namespace ShawarmaTycoon
         {
             CreatePurchasePad(parent, padName, position, saveKey,
                 ShopPrices.Belt, (level, _) => belt.SetLevel(level));
-        }
-
-        /// <summary>
-        /// A hire for one station. The station runs unattended either way; what
-        /// the worker buys is speed, and a figure standing at it so a staffed
-        /// kitchen does not look exactly like an empty one.
-        /// </summary>
-        private void CreateWorkerPad(
-            Transform parent, string padName, Vector3 position, string saveKey, ItemStation station)
-        {
-            CreatePurchasePad(parent, padName, position, saveKey,
-                ShopPrices.StationWorker,
-                (level, _) =>
-                {
-                    station.SetWorkerLevel(level);
-                    GameProgress.RegisterWorker(saveKey);
-                });
         }
 
         private PurchasePad CreatePurchasePad(
@@ -1386,13 +1364,6 @@ namespace ShawarmaTycoon
                 BuildTray(station.transform, output);
             station.SetVisualLayout(input, output, maxLabelHeight);
 
-            if (MeshyVisuals.TryFindAnchor(
-                    station.transform, "WORKER_ANCHOR", out Transform workerAnchor))
-            {
-                Vector3 local = station.transform.InverseTransformPoint(workerAnchor.position);
-                local.y = 0f;
-                station.SetWorkerVisualAnchor(local);
-            }
             return output;
         }
 

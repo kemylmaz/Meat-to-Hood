@@ -26,8 +26,9 @@ namespace ShawarmaTycoon
     {
         // --- things that change what the shop is -----------------------------
 
-        public static readonly int[] Belt = { 45, 90, 170 };
-        public static readonly int[] StationWorker = { 70, 130, 240 };
+        // A belt purchase builds the visible belt. Further invisible pad levels
+        // were removed; shared automation upgrades remain the speed progression.
+        public static readonly int[] Belt = { 45 };
 
         /// <summary>
         /// The third table through to the tenth. Seating is what the whole shop
@@ -109,7 +110,7 @@ namespace ShawarmaTycoon
 
         /// <summary>Everything the player can buy that adds to the shop itself.</summary>
         public static int ContentTotal =>
-            Sum(Belt) * 3 + Sum(StationWorker) * 2 + Sum(Table) + Sum(Decoration) +
+            Sum(Belt) * 3 + Sum(Table) + Sum(Decoration) +
             HumanResourcesOffice + GeneralManagerOffice + DriveThru +
             Fridge + DessertOven + Courier +
             HireCashier + HireDriveThruCashier + HireRunner + HireBusser + HireSecondBusser;

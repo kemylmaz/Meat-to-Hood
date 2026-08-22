@@ -18,15 +18,13 @@ namespace ShawarmaTycoon
 
         /// <summary>
         /// Pads stand beside the thing they build, not on a board somewhere else.
-        /// Belt pads sit in front of the gap each belt fills; worker pads a row
-        /// further out, so no two are within reach of one spot.
+        /// Belt pads sit in front of the gap each belt fills; no two are within
+        /// reach of one spot.
         /// </summary>
         [Header("Purchase Pads")]
         [SerializeField] private Vector3 meatBeltPad = new(-1.6f, 0.28f, 4.3f);
         [SerializeField] private Vector3 ovenBeltPad = new(2.8f, 0.28f, 4.3f);
         [SerializeField] private Vector3 cuttingBeltPad = new(7.2f, 0.28f, 4.3f);
-        [SerializeField] private Vector3 ovenWorkerPad = new(0.6f, 0.28f, 2.8f);
-        [SerializeField] private Vector3 cuttingWorkerPad = new(5f, 0.28f, 2.8f);
         [SerializeField] private Vector3 tablePad = new(0.6f, 0.28f, -0.4f);
         [SerializeField] private Vector3 decorationPad = new(-10.4f, 0.28f, -1.4f);
 
@@ -67,8 +65,6 @@ namespace ShawarmaTycoon
         public Vector3 MeatBeltPad => meatBeltPad;
         public Vector3 OvenBeltPad => ovenBeltPad;
         public Vector3 CuttingBeltPad => cuttingBeltPad;
-        public Vector3 OvenWorkerPad => ovenWorkerPad;
-        public Vector3 CuttingWorkerPad => cuttingWorkerPad;
         public Vector3 TablePad => tablePad;
         public Vector3 DecorationPad => decorationPad;
         public Vector3 CustomerEntry => customerEntry;

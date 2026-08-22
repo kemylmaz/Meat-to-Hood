@@ -291,6 +291,34 @@ namespace ShawarmaTycoon.Tests
         }
 
         [Test]
+        public void ConveyorPads_BuildOnce_AndStationWorkerPadsAreAbsent()
+        {
+            Assert.That(ShopPrices.Belt, Has.Length.EqualTo(1),
+                "A belt pad still sells invisible levels after building the belt.");
+
+            string[] beltPads = { "Et Bandı Pedi", "Ocak Bandı Pedi", "Kesim Bandı Pedi" };
+            foreach (string padName in beltPads)
+            {
+                GameObject padObject = GameObject.Find(padName);
+                Assert.That(padObject, Is.Not.Null, $"'{padName}' was removed with the upgrades.");
+                PurchasePad pad = padObject.GetComponent<PurchasePad>();
+                Assert.That(pad, Is.Not.Null);
+                Assert.That(pad.Level, Is.Zero);
+                Assert.That(pad.CurrentCost, Is.EqualTo(ShopPrices.Belt[0]));
+            }
+
+            PurchasePad[] pads = Object.FindObjectsByType<PurchasePad>(
+                FindObjectsInactive.Include, FindObjectsSortMode.None);
+            Assert.That(pads.Any(p => p.name == "Ocak İşçisi" || p.name == "Kesim İşçisi"),
+                Is.False, "A decorative station-worker purchase pad is still in the shop.");
+            Assert.That(Object.FindObjectsByType<ItemStation>(
+                    FindObjectsInactive.Include, FindObjectsSortMode.None)
+                .SelectMany(s => s.GetComponentsInChildren<Transform>(true))
+                .Any(t => t.name == "İşçi"), Is.False,
+                "A removed station worker is still standing beside a machine.");
+        }
+
+        [Test]
         public void BuildMode_WiresTheHudAndEveryPlaceableHasAUniquePersistentId()
         {
             BuildModeController controller = Object.FindFirstObjectByType<BuildModeController>();
@@ -457,7 +485,6 @@ namespace ShawarmaTycoon.Tests
             ItemStation oven = FindStation("OCAK");
             Assert.That(oven, Is.Not.Null);
             Assert.That(oven.Mode, Is.EqualTo(StationMode.Processor));
-            Assert.That(oven.WorkerAssigned, Is.False, "No worker is hired at the start.");
 
             Transform player = Object.FindFirstObjectByType<MobilePlayerController>().transform;
             player.position = new Vector3(oven.transform.position.x, player.position.y, -6f);

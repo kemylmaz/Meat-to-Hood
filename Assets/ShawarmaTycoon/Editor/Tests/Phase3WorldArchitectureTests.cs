@@ -153,7 +153,6 @@ namespace ShawarmaTycoon.Tests
         public void Prices_ClimbWithEveryLevel()
         {
             AssertClimbs(ShopPrices.Belt, nameof(ShopPrices.Belt));
-            AssertClimbs(ShopPrices.StationWorker, nameof(ShopPrices.StationWorker));
             AssertClimbs(ShopPrices.Table, nameof(ShopPrices.Table));
             AssertClimbs(ShopPrices.Decoration, nameof(ShopPrices.Decoration));
 
@@ -262,7 +261,6 @@ namespace ShawarmaTycoon.Tests
             Vector3[] pads =
             {
                 layout.MeatBeltPad, layout.OvenBeltPad, layout.CuttingBeltPad,
-                layout.OvenWorkerPad, layout.CuttingWorkerPad,
                 layout.TablePad, layout.DecorationPad, layout.DriveThruUnlockPad,
                 layout.FridgePad, layout.DessertPad, layout.CourierPad
             };

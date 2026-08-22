@@ -5,7 +5,7 @@ namespace ShawarmaTycoon
 {
     public enum EmployeeUpgradeType { MovementSpeed, Capacity, AdoptUse }
 
-    /// <summary>Shared HR upgrades apply to every hired employee and station worker.</summary>
+    /// <summary>Shared HR upgrades apply to hired employees and shop automation.</summary>
     public sealed class HumanResourcesSystem : MonoBehaviour
     {
         public static HumanResourcesSystem Instance { get; private set; }

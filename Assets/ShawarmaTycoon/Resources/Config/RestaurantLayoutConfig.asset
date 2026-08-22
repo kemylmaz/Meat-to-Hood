@@ -19,8 +19,6 @@ MonoBehaviour:
   meatBeltPad: {x: -1.6, y: 0.28, z: 4.3}
   ovenBeltPad: {x: 2.8, y: 0.28, z: 4.3}
   cuttingBeltPad: {x: 7.2, y: 0.28, z: 4.3}
-  ovenWorkerPad: {x: 0.6, y: 0.28, z: 2.8}
-  cuttingWorkerPad: {x: 5, y: 0.28, z: 2.8}
   tablePad: {x: 0.6, y: 0.28, z: -0.4}
   decorationPad: {x: -10.4, y: 0.28, z: -1.4}
   customerEntry: {x: 7.68, y: 0.25, z: -11.6}
