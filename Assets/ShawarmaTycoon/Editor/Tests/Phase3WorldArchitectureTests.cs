@@ -258,6 +258,23 @@ namespace ShawarmaTycoon.Tests
             Assert.That(UpgradeProgress.Ratio, Is.Zero);
         }
 
+        [TestCase(0f, 1)]
+        [TestCase(0.149f, 1)]
+        [TestCase(0.15f, 2)]
+        [TestCase(0.379f, 2)]
+        [TestCase(0.38f, 3)]
+        [TestCase(0.649f, 3)]
+        [TestCase(0.65f, 4)]
+        [TestCase(0.899f, 4)]
+        [TestCase(0.90f, 5)]
+        [TestCase(1f, 5)]
+        public void RestaurantMakeover_UsesFiveStableProgressTiers(float ratio, int expectedTier)
+        {
+            Assert.That(RestaurantMakeoverSystem.GetTierForRatio(ratio), Is.EqualTo(expectedTier));
+            Assert.That(RestaurantMakeoverSystem.TierName(expectedTier), Is.Not.Empty);
+            Assert.That(RestaurantMakeoverSystem.TierShortName(expectedTier), Is.Not.Empty);
+        }
+
         /// <summary>
         /// Pads drain coins while the player stands on one, so two within reach of
         /// a single spot take payment for two different things at once.

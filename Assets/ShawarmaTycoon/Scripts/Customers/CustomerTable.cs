@@ -16,11 +16,13 @@ namespace ShawarmaTycoon
         private GameObject dirtyIndicator;
         private GameObject cashPad;
         private GameObject cashStack;
+        private readonly GameObject[] makeoverVisuals = new GameObject[6];
         private WorldCashMarker cashMarker;
         private TextMesh statusLabel;
         private bool reserved;
         private bool dirty;
         private int pendingCash;
+        private int makeoverTier = 1;
 
         private Collider[] seatClearanceHits = new Collider[32];
 
@@ -130,18 +132,117 @@ namespace ShawarmaTycoon
             RefreshDirtyVisual();
         }
 
+        /// <summary>
+        /// Changes only the authored furniture shell. The gameplay root, seat,
+        /// money pad and colliders remain exactly where build mode placed them.
+        /// </summary>
+        public void ApplyMakeoverTier(int tier)
+        {
+            makeoverTier = Mathf.Clamp(tier, 1, 5);
+            if (makeoverTier > 1 && makeoverVisuals[makeoverTier] == null)
+                makeoverVisuals[makeoverTier] = BuildMakeoverVisual(makeoverTier);
+
+            for (int i = 2; i < makeoverVisuals.Length; i++)
+                if (makeoverVisuals[i] != null)
+                    makeoverVisuals[i].SetActive(i == makeoverTier);
+
+            RefreshDirtyVisual();
+        }
+
+        private GameObject BuildMakeoverVisual(int tier)
+        {
+            GameObject root = new($"Masa Teması SV.{tier}");
+            root.transform.SetParent(transform, false);
+
+            string tableAsset = tier == 2 || tier == 5
+                ? "159_shop_table_round_small"
+                : "158_shop_table_round";
+            string chairAsset = tier == 3 || tier == 5
+                ? "156_shop_chair_b"
+                : "155_shop_chair_a";
+
+            GameObject tabletop = MeshyVisuals.TryAttach(root.transform, tableAsset,
+                new Vector3(1.32f, 0.82f, 1.04f), Vector3.zero, Vector3.zero, true);
+            if (tabletop == null)
+            {
+                tabletop = PrototypeVisuals.CreatePrimitive("Temalı Masa", PrimitiveType.Cube,
+                    root.transform, new Vector3(0f, 0.72f, 0f),
+                    new Vector3(1.38f, 0.12f, 1.02f), TableWood(tier));
+                PrototypeVisuals.CreatePrimitive("Masa Ayağı", PrimitiveType.Cylinder,
+                    root.transform, new Vector3(0f, 0.36f, 0f),
+                    new Vector3(0.25f, 0.68f, 0.25f), TableDark(tier));
+            }
+
+            AddThemedChair(root.transform, chairAsset, new Vector3(0f, 0f, 1.03f), 180f, tier);
+            AddThemedChair(root.transform, chairAsset, new Vector3(0f, 0f, -1.03f), 0f, tier);
+
+            Color accent = TableAccent(tier);
+            PrototypeVisuals.CreatePrimitive("Masa Runner", PrimitiveType.Cube, root.transform,
+                new Vector3(0f, 0.835f, 0f), new Vector3(0.30f, 0.025f, 0.78f), accent);
+
+            if (tier >= 3)
+            {
+                PrototypeVisuals.CreatePrimitive("Minik Vazo", PrimitiveType.Cylinder, root.transform,
+                    new Vector3(0f, 0.94f, 0f), new Vector3(0.16f, 0.20f, 0.16f),
+                    tier == 5 ? new Color(0.97f, 0.74f, 0.25f) : new Color(0.87f, 0.89f, 0.75f));
+                PrototypeVisuals.CreatePrimitive("Vazo Dalı", PrimitiveType.Sphere, root.transform,
+                    new Vector3(0f, 1.12f, 0f), Vector3.one * (tier == 5 ? 0.25f : 0.20f),
+                    tier == 4 ? new Color(0.96f, 0.65f, 0.25f) : new Color(0.32f, 0.66f, 0.40f));
+            }
+
+            return root;
+        }
+
+        private static void AddThemedChair(
+            Transform parent, string asset, Vector3 position, float yaw, int tier)
+        {
+            if (MeshyVisuals.TryAttach(parent, asset, new Vector3(0.62f, 0.90f, 0.62f),
+                    position, new Vector3(0f, yaw, 0f), true) != null) return;
+
+            PrototypeVisuals.CreatePrimitive("Temalı Sandalye", PrimitiveType.Cube, parent,
+                position + new Vector3(0f, 0.43f, 0f), new Vector3(0.54f, 0.70f, 0.54f),
+                TableAccent(tier));
+        }
+
+        private static Color TableWood(int tier)
+        {
+            return tier switch
+            {
+                2 => new Color(0.77f, 0.53f, 0.34f),
+                3 => new Color(0.62f, 0.48f, 0.31f),
+                4 => new Color(0.45f, 0.29f, 0.20f),
+                _ => new Color(0.35f, 0.20f, 0.16f)
+            };
+        }
+
+        private static Color TableDark(int tier) => Color.Lerp(TableWood(tier), Color.black, 0.28f);
+
+        private static Color TableAccent(int tier)
+        {
+            return tier switch
+            {
+                2 => new Color(0.88f, 0.42f, 0.28f),
+                3 => new Color(0.30f, 0.63f, 0.48f),
+                4 => new Color(0.91f, 0.60f, 0.22f),
+                _ => new Color(0.73f, 0.20f, 0.17f)
+            };
+        }
+
         private void RefreshDirtyVisual()
         {
             bool swaps = cleanVisual != null && dirtyVisual != null;
+            bool themed = makeoverTier > 1 && makeoverVisuals[makeoverTier] != null;
             if (swaps)
             {
-                cleanVisual.SetActive(!dirty);
-                dirtyVisual.SetActive(dirty);
+                cleanVisual.SetActive(!themed && !dirty);
+                dirtyVisual.SetActive(!themed && dirty);
             }
 
-            // The loose plate marker is only needed when there is no dirty model.
+            // A themed table keeps its coherent furniture set and uses the clear
+            // red plate marker to communicate dirt instead of swapping back to
+            // the starter-table model.
             if (dirtyIndicator != null)
-                dirtyIndicator.SetActive(dirty && !swaps);
+                dirtyIndicator.SetActive(dirty && (!swaps || themed));
         }
 
         public bool TryReserve(CustomerAgent customer)

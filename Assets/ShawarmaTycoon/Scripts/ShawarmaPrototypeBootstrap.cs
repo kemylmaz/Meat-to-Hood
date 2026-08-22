@@ -427,6 +427,12 @@ namespace ShawarmaTycoon
             DressKitchenWall(shopWorld.KitchenRoot, layout);
             AnimateStations(oven, cutting, dessertOven);
 
+            // Every meaningful slice of shop completion now has a physical
+            // counterpart: facade, floor, walls, light, decor and furniture all
+            // advance together while gameplay positions remain untouched.
+            RestaurantMakeoverSystem makeover = root.AddComponent<RestaurantMakeoverSystem>();
+            makeover.Configure(shopWorld, tables, playerTransform);
+
             // The whole restaurant is runtime-built, so navigation can only be
             // baked after every floor, counter, table and decoration exists.
             if (Application.isPlaying)

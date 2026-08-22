@@ -17,6 +17,7 @@ namespace ShawarmaTycoon.UI
         private const float FillCatchUpRate = 0.55f;
 
         private Image fill;
+        private Text caption;
         private Text percentLabel;
         private RectTransform root;
         private float displayed;
@@ -39,9 +40,9 @@ namespace ShawarmaTycoon.UI
             UIFactory.Anchor(title.rectTransform, UIFactory.TopCenter, UIFactory.TopCenter,
                 new Vector2(0f, -2f), new Vector2(390f, 43f));
 
-            Text caption = UIFactory.Label("Caption", pill.transform, "DÜKKÂN GELİŞİMİ",
+            bar.caption = UIFactory.Label("Caption", pill.transform, "SV. 1 • MAHALLE",
                 14, UITheme.CreamLight, TextAnchor.MiddleLeft, FontStyle.Bold);
-            UIFactory.Anchor(caption.rectTransform, UIFactory.BottomLeft, UIFactory.BottomLeft,
+            UIFactory.Anchor(bar.caption.rectTransform, UIFactory.BottomLeft, UIFactory.BottomLeft,
                 new Vector2(22f, 10f), new Vector2(126f, 25f));
 
             Image track = UIFactory.Panel("Track", pill.transform, UITheme.Ink);
@@ -120,6 +121,9 @@ namespace ShawarmaTycoon.UI
         private void Render()
         {
             fill.fillAmount = displayed;
+            int tier = RestaurantMakeoverSystem.GetTierForRatio(displayed);
+            if (caption != null)
+                caption.text = $"SV. {tier} • {RestaurantMakeoverSystem.TierShortName(tier)}";
             // Rounded down, so it only says 100% when the last thing is bought.
             percentLabel.text = Mathf.FloorToInt(displayed * 100f) + "%";
         }
