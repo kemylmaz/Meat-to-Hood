@@ -11,10 +11,10 @@ namespace ShawarmaTycoon
         /// still takes a 2.05 m conveyor between two counters.
         /// </summary>
         [Header("Kitchen")]
-        [SerializeField] private Vector3 meatSource = new(-3.8f, 0.25f, 6.6f);
-        [SerializeField] private Vector3 oven = new(0.6f, 0.25f, 6.6f);
-        [SerializeField] private Vector3 cutting = new(5f, 0.25f, 6.6f);
-        [SerializeField] private Vector3 service = new(9.4f, 0.25f, 6.6f);
+        [SerializeField] private Vector3 meatSource = new(-3.8f, 0.25f, 7.15f);
+        [SerializeField] private Vector3 oven = new(0.6f, 0.25f, 7.15f);
+        [SerializeField] private Vector3 cutting = new(5f, 0.25f, 7.15f);
+        [SerializeField] private Vector3 service = new(9.4f, 0.25f, 7.15f);
 
         /// <summary>
         /// Pads stand beside the thing they build, not on a board somewhere else.

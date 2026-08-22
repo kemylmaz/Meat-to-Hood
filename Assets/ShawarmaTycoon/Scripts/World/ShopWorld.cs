@@ -197,6 +197,7 @@ namespace ShawarmaTycoon
             GameObject visual = new("Visual Root");
             visual.transform.SetParent(root.transform, false);
             BuildKerb(visual.transform, definition.Size, config.DeckThickness);
+            BuildPlotBoundary(visual.transform, config, definition);
 
             GameObject content = new("Content Root");
             content.transform.SetParent(root.transform, false);
@@ -207,6 +208,46 @@ namespace ShawarmaTycoon
                 content.transform, preview, surface.GetComponent<DioramaWalkableSurface>());
             module.SetUnlocked(false, false);
             return module;
+        }
+
+        /// <summary>
+        /// Closes the outside edges of a plot. Only edges with no neighbouring plot
+        /// get one, so the boundary follows the grid however it is shaped, and it
+        /// hangs off the plot's own visual root so it arrives with the plot rather
+        /// than standing over ground nobody has bought.
+        ///
+        /// Without this the floor simply stopped: the plots reach eight metres
+        /// further east than the shell walls do, and everyone who walked out there
+        /// walked off the deck into the road.
+        ///
+        /// The north edge gets a wall because it faces the street and nothing is
+        /// behind it. East and south get the shopfront's knee-high fence instead -
+        /// the camera sits off the shop's south-east corner, and a 2.82 m wall on
+        /// either of those two edges stands between the lens and the floor it is
+        /// meant to be showing.
+        /// </summary>
+        private static void BuildPlotBoundary(
+            Transform parent, DioramaWorldConfig config, DioramaWorldConfig.ExpansionDefinition plot)
+        {
+            float halfX = plot.Size.x * 0.5f;
+            float halfZ = plot.Size.y * 0.5f;
+
+            if (!HasNeighbour(config, plot, new Vector3(0f, 0f, plot.Size.y)))
+                TileWallRun(parent, config.DeckTopY, -halfX, halfX, halfZ, true, 180f, float.NaN, null);
+            if (!HasNeighbour(config, plot, new Vector3(plot.Size.x, 0f, 0f)))
+                BuildFenceRun(parent, halfX, -halfZ, halfZ, config.DeckTopY, true);
+            if (!HasNeighbour(config, plot, new Vector3(0f, 0f, -plot.Size.y)))
+                BuildFenceRun(parent, -halfZ, -halfX, halfX, config.DeckTopY, false);
+        }
+
+        private static bool HasNeighbour(
+            DioramaWorldConfig config, DioramaWorldConfig.ExpansionDefinition plot, Vector3 offset)
+        {
+            Vector3 wanted = plot.Position + offset;
+            foreach (DioramaWorldConfig.ExpansionDefinition other in config.Expansions)
+                if ((other.Position - wanted).sqrMagnitude < 0.01f)
+                    return true;
+            return false;
         }
 
         private static GameObject CreateSurface(
@@ -475,8 +516,8 @@ namespace ShawarmaTycoon
             const float gateHalfWidth = 1.6f;
             float gateX = halfX - 3.6f;
 
-            BuildFenceRun(boundary.transform, -halfX, gateX - gateHalfWidth, deckTop, front);
-            BuildFenceRun(boundary.transform, gateX + gateHalfWidth, halfX, deckTop, front);
+            BuildFenceRun(boundary.transform, front, -halfX, gateX - gateHalfWidth, deckTop, false);
+            BuildFenceRun(boundary.transform, front, gateX + gateHalfWidth, halfX, deckTop, false);
 
             GameObject gate = new("Entrance Gate");
             gate.transform.SetParent(boundary.transform, false);
@@ -504,16 +545,27 @@ namespace ShawarmaTycoon
             return anchor.transform;
         }
 
-        /// <summary>Knee high railing between two X positions on the front edge.</summary>
+        /// <summary>
+        /// Knee high railing along one edge, and the blocker that makes it solid.
+        /// <paramref name="alongZ"/> turns it a quarter turn for a side edge.
+        ///
+        /// It stops people as surely as a wall does - a railing you can see over is
+        /// the point on the two edges the camera looks past - so it carries a
+        /// collider even though it is only knee high.
+        /// </summary>
         private static void BuildFenceRun(
-            Transform parent, float fromX, float toX, float deckTop, float z)
+            Transform parent, float fixedCoordinate, float from, float to, float deckTop, bool alongZ)
         {
-            float span = toX - fromX;
+            float span = to - from;
             if (span <= 0.2f) return;
 
             GameObject run = new("Fence Run");
             run.transform.SetParent(parent, false);
-            run.transform.localPosition = new Vector3((fromX + toX) * 0.5f, deckTop, z);
+            float middle = (from + to) * 0.5f;
+            run.transform.localPosition = alongZ
+                ? new Vector3(fixedCoordinate, deckTop, middle)
+                : new Vector3(middle, deckTop, fixedCoordinate);
+            if (alongZ) run.transform.localEulerAngles = new Vector3(0f, 90f, 0f);
 
             PrototypeVisuals.CreatePrimitive("Rail", PrimitiveType.Cube, run.transform,
                 new Vector3(0f, 0.52f, 0f), new Vector3(span, 0.12f, 0.14f), FenceColor);
@@ -527,6 +579,11 @@ namespace ShawarmaTycoon
                 PrototypeVisuals.CreatePrimitive("Post", PrimitiveType.Cube, run.transform,
                     new Vector3(x, 0.34f, 0f), new Vector3(0.16f, 0.68f, 0.20f), FencePost);
             }
+
+            GameObject blocker = new("Fence Blocker");
+            blocker.transform.SetParent(run.transform, false);
+            blocker.transform.localPosition = Vector3.up * 0.6f;
+            blocker.AddComponent<BoxCollider>().size = new Vector3(span, 1.2f, 0.3f);
         }
 
         private static Transform CreateZone(string name, Transform parent)

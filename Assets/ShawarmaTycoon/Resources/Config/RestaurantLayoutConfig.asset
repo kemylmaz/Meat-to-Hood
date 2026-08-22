@@ -12,10 +12,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4769e3733d273074f94047f64c348c11, type: 3}
   m_Name: RestaurantLayoutConfig
   m_EditorClassIdentifier: Assembly-CSharp::ShawarmaTycoon.RestaurantLayoutConfig
-  meatSource: {x: -3.8, y: 0.25, z: 6.6}
-  oven: {x: 0.6, y: 0.25, z: 6.6}
-  cutting: {x: 5, y: 0.25, z: 6.6}
-  service: {x: 9.4, y: 0.25, z: 6.6}
+  meatSource: {x: -3.8, y: 0.25, z: 7.15}
+  oven: {x: 0.6, y: 0.25, z: 7.15}
+  cutting: {x: 5, y: 0.25, z: 7.15}
+  service: {x: 9.4, y: 0.25, z: 7.15}
   meatBeltPad: {x: -1.6, y: 0.28, z: 4.3}
   ovenBeltPad: {x: 2.8, y: 0.28, z: 4.3}
   cuttingBeltPad: {x: 7.2, y: 0.28, z: 4.3}

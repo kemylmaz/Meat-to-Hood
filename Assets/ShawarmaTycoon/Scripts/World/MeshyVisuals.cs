@@ -128,12 +128,20 @@ namespace ShawarmaTycoon
         /// Places an approved CozyPack prefab at its authored metre scale. These
         /// prefabs already use a bottom-centre pivot and +Z forward; fitting them
         /// into arbitrary boxes made counters undersized and table chairs drift.
+        ///
+        /// <paramref name="scale"/> multiplies the authored size. It exists for the
+        /// kitchen line: the shop's walls went from knee height to 2.82 m when the
+        /// tiled shell went in, and against them counters placed at their authored
+        /// metre read as doll's furniture. It scales the picture only - the
+        /// station's collider and its interaction radius are gameplay and stay
+        /// where they were measured.
         /// </summary>
         public static GameObject TryAttachAuthored(
             Transform parent,
             string assetName,
             Vector3 localPosition,
-            Vector3 localEulerAngles)
+            Vector3 localEulerAngles,
+            float scale = 1f)
         {
             GameObject prefab = Load(assetName);
             if (prefab == null || parent == null) return null;
@@ -148,7 +156,7 @@ namespace ShawarmaTycoon
             GameObject visual = Object.Instantiate(prefab, anchor.transform, false);
             visual.name = assetName;
             visual.transform.SetLocalPositionAndRotation(Vector3.zero, Quaternion.identity);
-            visual.transform.localScale = Vector3.one;
+            visual.transform.localScale = Vector3.one * Mathf.Max(0.01f, scale);
 
             foreach (Collider collider in visual.GetComponentsInChildren<Collider>(true))
                 collider.enabled = false;
@@ -210,7 +218,21 @@ namespace ShawarmaTycoon
             Vector3 localEulerAngles,
             params string[] placeholderNames)
         {
-            GameObject visual = TryAttachAuthored(parent, assetName, localPosition, localEulerAngles);
+            return TryReplaceDirectAuthored(
+                parent, assetName, localPosition, localEulerAngles, 1f, placeholderNames);
+        }
+
+        /// <summary>As above, drawn at <paramref name="scale"/> times authored size.</summary>
+        public static bool TryReplaceDirectAuthored(
+            Transform parent,
+            string assetName,
+            Vector3 localPosition,
+            Vector3 localEulerAngles,
+            float scale,
+            params string[] placeholderNames)
+        {
+            GameObject visual = TryAttachAuthored(
+                parent, assetName, localPosition, localEulerAngles, scale);
             if (visual == null) return false;
             HideDirectRenderers(parent, placeholderNames);
             return true;

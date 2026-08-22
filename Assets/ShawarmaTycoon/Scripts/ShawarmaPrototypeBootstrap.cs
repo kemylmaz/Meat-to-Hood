@@ -28,6 +28,14 @@ namespace ShawarmaTycoon
         private const int TablesPerPlot = 2;
 
         /// <summary>
+        /// How much bigger the kitchen line is drawn than its authored metre. The
+        /// counters were sized against a knee-high perimeter; the tiled shell put a
+        /// 2.82 m wall behind them and left them looking like doll's furniture.
+        /// Visual only - the collider and the interaction radius are gameplay.
+        /// </summary>
+        private const float KitchenVisualScale = 1.3f;
+
+        /// <summary>
         /// Where the tables go, in the order they are bought: two rows of three
         /// across the dining room, then two on each purchasable plot. The plot
         /// entries carry no position of their own - they are placed on the plot
@@ -101,7 +109,7 @@ namespace ShawarmaTycoon
                 ItemType.None, ItemType.RawMeat, 0.5f, 1, 16, 0.65f);
             DecorateMeatSource(meatSource.transform);
             MeshyVisuals.TryReplaceDirect(
-                meatSource.transform, "04_meat_storage_rack", new Vector3(2.4f, 2.25f, 1.75f),
+                meatSource.transform, "04_meat_storage_rack", new Vector3(3.0f, 2.8f, 2.1f),
                 Vector3.zero, new Vector3(0f, 180f, 0f), false,
                 "Counter", "Work Top", "Rack Back", "RawMeat");
             ApplyAuthoredStationLayout(meatSource, 2.9f, -1.05f);
@@ -115,7 +123,7 @@ namespace ShawarmaTycoon
             // middle of the shop, and next to a 2.4 m rack and a 2.2 m counter the
             // model as authored read as a microwave.
             MeshyVisuals.TryReplaceDirect(
-                oven.transform, "06_shawarma_rotisserie", new Vector3(1.9f, 3.2f, 1.4f),
+                oven.transform, "06_shawarma_rotisserie", new Vector3(2.4f, 3.9f, 1.75f),
                 Vector3.zero, FacingCustomer, false,
                 "Counter", "Work Top", "Heater Left", "Heater Right", "Doner Spit");
             ApplyAuthoredStationLayout(oven, 2.55f, -0.82f);
@@ -129,7 +137,7 @@ namespace ShawarmaTycoon
             DecorateCuttingCounter(cutting.transform);
             MeshyVisuals.TryReplaceDirectAuthored(
                 cutting.transform, "08_cutting_station",
-                Vector3.zero, FacingCustomer,
+                Vector3.zero, FacingCustomer, KitchenVisualScale,
                 "Counter", "Work Top", "Cutting Board", "Knife");
             ApplyAuthoredStationLayout(cutting, 1.9f, -0.75f);
             cutting.SetOutputBatchVisual("74_wrap_tray_stack", 4,
@@ -141,7 +149,7 @@ namespace ShawarmaTycoon
                 ItemType.Wrap, ItemType.None, 0.1f, 1, 14, 1f);
             MeshyVisuals.TryReplaceDirectAuthored(
                 service.transform, "12_service_cashier_counter",
-                Vector3.zero, FacingCustomer,
+                Vector3.zero, FacingCustomer, KitchenVisualScale,
                 "Counter", "Work Top");
             Vector3 serviceTray = ApplyAuthoredStationLayout(service, 1.9f, -0.66f);
             service.SetOutputBatchVisual("74_wrap_tray_stack", 3,
