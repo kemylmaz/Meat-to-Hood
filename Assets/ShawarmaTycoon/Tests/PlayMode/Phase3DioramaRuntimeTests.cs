@@ -1,4 +1,5 @@
 #if UNITY_EDITOR
+using System.Collections.Generic;
 using System.Linq;
 using NUnit.Framework;
 using UnityEngine;
@@ -311,6 +312,9 @@ namespace ShawarmaTycoon.Tests
             Assert.That(lockedBelt.GetComponent<PlaceableObject>().IsSelectable, Is.False,
                 "An invisible, unbought belt can still be selected in build mode.");
 
+            RestaurantNavigation navigation = Object.FindFirstObjectByType<RestaurantNavigation>();
+            Assert.That(navigation, Is.Not.Null);
+            int navigationVersion = navigation.Version;
             float timeScale = Time.timeScale;
             try
             {
@@ -332,6 +336,30 @@ namespace ShawarmaTycoon.Tests
             }
             Assert.That(controller.IsActive, Is.False);
             Assert.That(Object.FindFirstObjectByType<MobilePlayerController>().IsBuildModeMovement, Is.False);
+            Assert.That(navigation.Version, Is.GreaterThan(navigationVersion),
+                "Leaving build mode did not refresh customer routes for the new layout.");
+        }
+
+        [Test]
+        public void CustomerNavigation_CarvesFurnitureAndReachesOpeningTables()
+        {
+            RestaurantNavigation navigation = Object.FindFirstObjectByType<RestaurantNavigation>();
+            Assert.That(navigation, Is.Not.Null);
+            Assert.That(navigation.Version, Is.GreaterThan(0));
+
+            CustomerTable[] tables = Object.FindObjectsByType<CustomerTable>(
+                FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+            Assert.That(tables.Length, Is.GreaterThanOrEqualTo(2));
+            Assert.That(tables.All(table => table.IsSeatApproachClear()), Is.True,
+                "An opening table has its chair approach blocked by the authored layout.");
+
+            GameObject queueFront = GameObject.Find("Kuyruk Başı");
+            Assert.That(queueFront, Is.Not.Null);
+            List<Vector3> corners = new();
+            Assert.That(navigation.TryCalculatePath(
+                    queueFront.transform.position, tables[0].SeatApproachPoint, corners),
+                Is.True, "No complete customer route exists from the till to an opening table.");
+            Assert.That(corners.Count, Is.GreaterThanOrEqualTo(2));
         }
 
         [Test]

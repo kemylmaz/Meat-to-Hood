@@ -286,6 +286,9 @@ namespace ShawarmaTycoon
             {
                 CustomerTable table = CreateTable(
                     shopWorld.DiningRoot, $"Masa {i + 1}", MainFloorSlots[i], $"table.{i + 1}");
+                // The south row faces the dining aisle. Facing its chair into the
+                // partition left no standing room between chair and wall.
+                if (i >= 3) table.transform.localRotation = Quaternion.Euler(0f, 180f, 0f);
                 tables.Add(table);
                 if (i >= FreeTables) boughtFloorTables.Add(table.gameObject);
             }
@@ -407,6 +410,14 @@ namespace ShawarmaTycoon
             CreateDecorations(shopWorld.DiningRoot, layout);
             DressKitchenWall(shopWorld.KitchenRoot, layout);
             AnimateStations(oven, cutting, dessertOven);
+
+            // The whole restaurant is runtime-built, so navigation can only be
+            // baked after every floor, counter, table and decoration exists.
+            if (Application.isPlaying)
+            {
+                RestaurantNavigation navigation = root.AddComponent<RestaurantNavigation>();
+                navigation.Rebuild();
+            }
 
             Debug.Log("[ShawarmaTycoon] Prototype ready: rack → spit → carving board → till, with a drive-through on the street side.");
         }

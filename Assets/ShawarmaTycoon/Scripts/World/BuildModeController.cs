@@ -89,6 +89,10 @@ namespace ShawarmaTycoon
             {
                 FinishDrag();
                 Select(null);
+                // Furniture has moved while the simulation was frozen. Rebuild
+                // before customers resume, so nobody follows a path through the
+                // old layout for even one frame.
+                RestaurantNavigation.Instance?.Rebuild();
                 Time.timeScale = previousTimeScale;
                 if (playerMotor != null)
                 {
@@ -304,6 +308,8 @@ namespace ShawarmaTycoon
             if (item == null || walkableRegistry == null) return false;
             Bounds bounds = item.FootprintBounds;
             if (!walkableRegistry.ContainsBoundsXZ(bounds, 0.08f)) return false;
+            CustomerTable table = item.GetComponent<CustomerTable>();
+            if (table != null && !table.IsSeatApproachClear()) return false;
             bool movingConveyor = item.GetComponent<ConveyorLink>() != null;
             bool movingStation = item.GetComponent<ItemStation>() != null;
 

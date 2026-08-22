@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace ShawarmaTycoon
@@ -60,6 +61,11 @@ namespace ShawarmaTycoon
         private bool reachedQueue;
         private int moodStep;
         private float arrivalMultiplier = 1f;
+        private List<Vector3> navigationCorners = new();
+        private int navigationCorner;
+        private int navigationVersion = -1;
+        private Vector3 navigationGoal;
+        private float navigationStuckTimer;
 
         public CustomerState State { get; private set; } = CustomerState.Queueing;
 
@@ -176,6 +182,7 @@ namespace ShawarmaTycoon
                 bill * ReputationSystem.TipRate * MoodPayout[moodStep]));
             // Served: they have what they came for, so the bubble comes down.
             bubble?.Hide();
+            ClearNavigation();
             State = CustomerState.WalkingToTable;
         }
 
@@ -224,12 +231,12 @@ namespace ShawarmaTycoon
                         break;
                     }
 
-                    if (MoveTowards(table.SeatPoint.position))
+                    if (MoveNavigatedTowards(table.SeatApproachPoint))
                     {
                         SetAngryFace(false);
-                        transform.position = table.SeatPoint.position;
-                        transform.rotation = table.SeatPoint.rotation;
+                        WarpTo(table.SeatPoint.position, table.SeatPoint.rotation);
                         eatingTimer = eatingDuration;
+                        ClearNavigation();
                         State = CustomerState.Eating;
                     }
                     break;
@@ -238,7 +245,10 @@ namespace ShawarmaTycoon
                     eatingTimer -= Time.deltaTime;
                     if (eatingTimer <= 0f)
                     {
+                        if (table != null)
+                            WarpTo(table.SeatApproachPoint, table.SeatPoint.rotation);
                         table?.FinishMeal(this, finalPayout);
+                        ClearNavigation();
                         State = CustomerState.Leaving;
                     }
                     break;
@@ -249,11 +259,15 @@ namespace ShawarmaTycoon
                     // marker made the gate decoration.
                     if (hasGate && throughGate)
                     {
-                        if (MoveTowards(gatePoint)) throughGate = false;
+                        if (MoveNavigatedTowards(gatePoint))
+                        {
+                            throughGate = false;
+                            ClearNavigation();
+                        }
                         break;
                     }
 
-                    if (exitPoint == null || MoveTowards(exitPoint.position))
+                    if (exitPoint == null || MoveNavigatedTowards(exitPoint.position))
                         manager?.Despawn(this);
                     break;
             }
@@ -337,6 +351,90 @@ namespace ShawarmaTycoon
                 Quaternion.LookRotation(direction, Vector3.up),
                 12f * Time.deltaTime);
             return false;
+        }
+
+        /// <summary>
+        /// Follows corners around counters and moved furniture. It deliberately
+        /// keeps the existing CharacterController instead of handing motion to a
+        /// NavMeshAgent, so collision and the game's current visual movement stay
+        /// unchanged.
+        /// </summary>
+        private bool MoveNavigatedTowards(Vector3 target)
+        {
+            if (navigationCorners == null) navigationCorners = new List<Vector3>();
+            target.y = transform.position.y;
+            RestaurantNavigation navigation = RestaurantNavigation.Instance;
+            int version = navigation != null ? navigation.Version : -1;
+            bool needsPath = navigationCorners.Count == 0 ||
+                             navigationVersion != version ||
+                             Vector3.SqrMagnitude(navigationGoal - target) > 0.09f;
+            if (needsPath) BuildNavigationPath(navigation, target, version);
+
+            Vector3 waypoint = target;
+            while (navigationCorner < navigationCorners.Count)
+            {
+                waypoint = navigationCorners[navigationCorner];
+                waypoint.y = transform.position.y;
+                if (Vector3.SqrMagnitude(waypoint - transform.position) > 0.05f) break;
+                navigationCorner++;
+            }
+            // The last corner is the nearest reachable point around the goal. A
+            // seat is intentionally off the navmesh, inside its chair, so once
+            // this corner is reached the seating warp completes the last step.
+            if (navigationCorners.Count > 0 && navigationCorner >= navigationCorners.Count)
+                return true;
+            if (navigationCorner >= navigationCorners.Count) waypoint = target;
+
+            Vector3 before = transform.position;
+            bool reachedWaypoint = MoveTowards(waypoint);
+            if (reachedWaypoint && navigationCorner < navigationCorners.Count)
+            {
+                navigationCorner++;
+                return false;
+            }
+
+            float moved = Vector3.SqrMagnitude(transform.position - before);
+            if (moved < 0.000025f && Vector3.SqrMagnitude(target - transform.position) > 0.05f)
+            {
+                navigationStuckTimer += Time.deltaTime;
+                if (navigationStuckTimer >= 0.65f)
+                {
+                    BuildNavigationPath(navigation, target, version);
+                    navigationStuckTimer = 0f;
+                }
+            }
+            else navigationStuckTimer = 0f;
+            return navigationCorner >= navigationCorners.Count &&
+                   Vector3.SqrMagnitude(target - transform.position) <= 0.025f;
+        }
+
+        private void BuildNavigationPath(
+            RestaurantNavigation navigation, Vector3 target, int version)
+        {
+            if (navigationCorners == null) navigationCorners = new List<Vector3>();
+            navigationCorners.Clear();
+            navigationCorner = 0;
+            navigationGoal = target;
+            navigationVersion = version;
+            if (navigation != null)
+                navigation.TryCalculatePath(transform.position, target, navigationCorners);
+        }
+
+        private void ClearNavigation()
+        {
+            if (navigationCorners == null) navigationCorners = new List<Vector3>();
+            navigationCorners.Clear();
+            navigationCorner = 0;
+            navigationVersion = -1;
+            navigationStuckTimer = 0f;
+        }
+
+        private void WarpTo(Vector3 position, Quaternion rotation)
+        {
+            bool wasEnabled = body != null && body.enabled;
+            if (wasEnabled) body.enabled = false;
+            transform.SetPositionAndRotation(position, rotation);
+            if (wasEnabled) body.enabled = true;
         }
 
         private void CreateVipVisual()

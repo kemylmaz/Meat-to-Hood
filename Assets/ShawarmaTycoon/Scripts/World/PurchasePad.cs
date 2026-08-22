@@ -224,6 +224,7 @@ namespace ShawarmaTycoon
             CoinBurst.Spawn(transform.position + Vector3.up * 0.7f, price);
             AudioDirector.Play(GameSfx.Unlock);
             onLevelBought?.Invoke(level, false);
+            RestaurantNavigation.Instance?.Rebuild();
 
             if (SoldOut) gameObject.SetActive(false);
             else Refresh();

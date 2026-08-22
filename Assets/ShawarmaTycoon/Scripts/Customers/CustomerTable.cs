@@ -22,6 +22,8 @@ namespace ShawarmaTycoon
         private bool dirty;
         private int pendingCash;
 
+        private Collider[] seatClearanceHits = new Collider[32];
+
         public bool IsAvailable => gameObject.activeInHierarchy && !reserved && !dirty;
         public bool IsDirty => dirty;
         /// <summary>Money still sitting on the pad, so a cashier has somewhere to go.</summary>
@@ -30,6 +32,51 @@ namespace ShawarmaTycoon
         public Vector3 CashPoint => cashPad != null ? cashPad.transform.position : transform.position;
         public bool IsReserved => reserved;
         public Transform SeatPoint => seatPoint;
+
+        /// <summary>
+        /// A standing point outside the chair collider. Customers walk here, then
+        /// sit down; aiming a CharacterController at the seat itself leaves it
+        /// permanently pressed against the chair half a metre short of its goal.
+        /// </summary>
+        public Vector3 SeatApproachPoint
+        {
+            get
+            {
+                if (seatPoint == null) return transform.position;
+                Vector3 away = seatPoint.position - transform.position;
+                away.y = 0f;
+                if (away.sqrMagnitude < 0.001f) away = -transform.forward;
+                // Half a metre clears the chair without pushing the second table
+                // row into the dining-room partition behind it.
+                return seatPoint.position + away.normalized * 0.52f;
+            }
+        }
+
+        /// <summary>Used by build mode to keep a person-sized aisle at the chair.</summary>
+        public bool IsSeatApproachClear()
+        {
+            if (seatClearanceHits == null) seatClearanceHits = new Collider[32];
+            Vector3 approach = SeatApproachPoint;
+            int count = Physics.OverlapCapsuleNonAlloc(
+                approach + Vector3.up * 0.28f,
+                approach + Vector3.up * 1.42f,
+                0.29f,
+                seatClearanceHits,
+                ~0,
+                QueryTriggerInteraction.Ignore);
+
+            for (int i = 0; i < count; i++)
+            {
+                Collider hit = seatClearanceHits[i];
+                if (hit == null || !hit.enabled || hit.transform.IsChildOf(transform)) continue;
+                if (hit.GetComponentInParent<DioramaWalkableSurface>() != null) continue;
+                if (hit.GetComponentInParent<MobilePlayerController>() != null) continue;
+                if (hit.GetComponentInParent<CustomerAgent>() != null) continue;
+                if (hit.GetComponentInParent<WorkerAgent>() != null) continue;
+                return false;
+            }
+            return true;
+        }
 
         public void Configure(Transform playerTransform, Transform customerSeat)
         {
@@ -217,6 +264,12 @@ namespace ShawarmaTycoon
         {
             Gizmos.color = Color.cyan;
             Gizmos.DrawWireSphere(transform.position, trashPickupRadius);
+            if (seatPoint != null)
+            {
+                Gizmos.color = Color.green;
+                Gizmos.DrawWireSphere(SeatApproachPoint + Vector3.up * 0.3f, 0.29f);
+                Gizmos.DrawLine(SeatApproachPoint, seatPoint.position);
+            }
         }
     }
 }

@@ -330,11 +330,10 @@ namespace ShawarmaTycoon
             }
             if (front == null || !front.HasReachedQueue) return;
 
-            // An order that cannot be filled would hold the whole line up until
-            // the fridge was restocked. Once the customer has waited past patience,
-            // they give up on the extras and take what there is - which still costs
-            // the shop, because a smaller order is a smaller bill.
-            if (front.HasGivenUpOnExtras && front.Order.TrimUnavailableExtras(IsStocked))
+            // Drinks and desserts are optional upsells: an empty side counter
+            // must not freeze the entire queue. The customer drops an unavailable
+            // extra once they reach the till; wraps remain mandatory.
+            if (front.Order.TrimUnavailableExtras(IsStocked))
                 front.RefreshOrderBubble();
 
             if (!CanFill(front.Order)) return;
@@ -342,7 +341,7 @@ namespace ShawarmaTycoon
             CustomerTable freeTable = null;
             for (int i = 0; i < tables.Count; i++)
             {
-                if (tables[i] != null && tables[i].IsAvailable)
+                if (tables[i] != null && tables[i].IsAvailable && tables[i].IsSeatApproachClear())
                 {
                     freeTable = tables[i];
                     break;
