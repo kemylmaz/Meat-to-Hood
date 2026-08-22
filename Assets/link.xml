@@ -1,0 +1,11 @@
+<!--
+  WebGL yayınında motor kodu ayıklanıyor (stripEngineCode). Ayıklayıcı yalnız
+  C# tarafından anılan sınıfları tutuyor; prefab'ların içinde duran ama koddan
+  hiç çağrılmayan bileşenler yayında kayboluyordu. Kalabalığın ve paketlerden
+  gelen nesnelerin capsule/sphere collider'ları böyle düşmüştü: oyun açılıyor,
+  konsol "Can't add component because class 'CapsuleCollider' doesn't exist"
+  diye tekrarlıyordu. Fizik modülünü bütün olarak koruyoruz.
+-->
+<linker>
+  <assembly fullname="UnityEngine.PhysicsModule" preserve="all" />
+</linker>
