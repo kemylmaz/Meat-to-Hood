@@ -23,7 +23,7 @@ namespace ShawarmaTycoon.UI
             BuildModeHUD hud = root.gameObject.AddComponent<BuildModeHUD>();
 
             hud.toggleButton = UIFactory.IconButton(
-                "Build Toggle", root, "▦", "İNŞA", UITheme.Teal, UITheme.Ink,
+                "Build Toggle", root, UITheme.Grid, "İNŞA", UITheme.Teal, UITheme.Ink,
                 () => hud.controller?.ToggleBuildMode());
             UIFactory.Anchor(hud.toggleButton.GetComponent<RectTransform>(),
                 UIFactory.TopRight, UIFactory.TopRight,

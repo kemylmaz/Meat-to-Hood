@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 namespace ShawarmaTycoon.UI
@@ -35,6 +36,11 @@ namespace ShawarmaTycoon.UI
         private static Sprite roundedSprite;
         private static Sprite circleSprite;
         private static Sprite ringSprite;
+        private static Sprite checkSprite;
+        private static Sprite crossSprite;
+        private static Sprite starSprite;
+        private static Sprite noteSprite;
+        private static Sprite gridSprite;
 
         public static Color Hex(uint rgb, float alpha = 1f) => new(
             ((rgb >> 16) & 0xFF) / 255f,
@@ -121,6 +127,162 @@ namespace ShawarmaTycoon.UI
                 ringSprite = BuildCircle("UI Ring", 128, 0.80f);
                 return ringSprite;
             }
+        }
+
+        // ---- button icons ---------------------------------------------------
+        //
+        // These used to be text: "✓", "★", "♪", "▦". The two fonts the game
+        // ships are Latin text faces and carry none of those codepoints, so in
+        // the player the buttons came up bare. The editor hid it, because there
+        // Unity falls back to a Windows font for glyphs a font is missing; the
+        // web build has nothing to fall back to. Drawn here instead, they cost
+        // no download and cannot depend on what a platform happens to install.
+
+        /// <summary>Tick, for the daily tasks tab.</summary>
+        public static Sprite Check
+        {
+            get
+            {
+                if (checkSprite != null) return checkSprite;
+                checkSprite = BuildIcon("UI Check", p =>
+                    OnSegment(p, new Vector2(0.18f, 0.55f), new Vector2(0.41f, 0.28f), 0.085f) ||
+                    OnSegment(p, new Vector2(0.41f, 0.28f), new Vector2(0.82f, 0.75f), 0.085f));
+                return checkSprite;
+            }
+        }
+
+        /// <summary>Diagonal cross: closes a panel, and marks the sound as off.</summary>
+        public static Sprite Cross
+        {
+            get
+            {
+                if (crossSprite != null) return crossSprite;
+                crossSprite = BuildIcon("UI Cross", p =>
+                    OnSegment(p, new Vector2(0.24f, 0.24f), new Vector2(0.76f, 0.76f), 0.085f) ||
+                    OnSegment(p, new Vector2(0.24f, 0.76f), new Vector2(0.76f, 0.24f), 0.085f));
+                return crossSprite;
+            }
+        }
+
+        /// <summary>Five-pointed star, for the records tab.</summary>
+        public static Sprite Star
+        {
+            get
+            {
+                if (starSprite != null) return starSprite;
+                starSprite = BuildIcon("UI Star", p => InPolygon(p, StarPoints));
+                return starSprite;
+            }
+        }
+
+        /// <summary>Quaver, for the sound toggle.</summary>
+        public static Sprite Note
+        {
+            get
+            {
+                if (noteSprite != null) return noteSprite;
+                noteSprite = BuildIcon("UI Note", p =>
+                    InEllipse(p, new Vector2(0.35f, 0.27f), 0.19f, 0.15f) ||
+                    OnSegment(p, new Vector2(0.53f, 0.25f), new Vector2(0.53f, 0.80f), 0.045f) ||
+                    OnSegment(p, new Vector2(0.53f, 0.80f), new Vector2(0.80f, 0.63f), 0.058f));
+                return noteSprite;
+            }
+        }
+
+        /// <summary>Two-by-two grid: the floor plan behind build mode.</summary>
+        public static Sprite Grid
+        {
+            get
+            {
+                if (gridSprite != null) return gridSprite;
+                const float lo = 0.19f;
+                const float hi = 0.81f;
+                const float mid = 0.5f;
+                const float half = 0.045f;
+                gridSprite = BuildIcon("UI Grid", p =>
+                    OnSegment(p, new Vector2(lo, lo), new Vector2(hi, lo), half) ||
+                    OnSegment(p, new Vector2(lo, hi), new Vector2(hi, hi), half) ||
+                    OnSegment(p, new Vector2(lo, lo), new Vector2(lo, hi), half) ||
+                    OnSegment(p, new Vector2(hi, lo), new Vector2(hi, hi), half) ||
+                    OnSegment(p, new Vector2(mid, lo), new Vector2(mid, hi), half) ||
+                    OnSegment(p, new Vector2(lo, mid), new Vector2(hi, mid), half));
+                return gridSprite;
+            }
+        }
+
+        private static readonly Vector2[] StarPoints = BuildStar(new Vector2(0.5f, 0.52f), 0.46f, 0.20f);
+
+        private static Vector2[] BuildStar(Vector2 center, float outer, float inner)
+        {
+            Vector2[] points = new Vector2[10];
+            for (int i = 0; i < points.Length; i++)
+            {
+                // Start at the top so the star sits upright.
+                float angle = Mathf.PI * 0.5f + i * Mathf.PI / 5f;
+                float radius = i % 2 == 0 ? outer : inner;
+                points[i] = center + new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * radius;
+            }
+            return points;
+        }
+
+        /// <summary>
+        /// Rasterises a shape from a coverage test, three by three per pixel.
+        /// The circle above can solve its own edge from a distance, but strokes
+        /// and polygons cannot, and supersampling lets every icon be written as
+        /// one plain description of where the ink goes.
+        /// </summary>
+        private static Sprite BuildIcon(string name, Func<Vector2, bool> inside, int size = 128)
+        {
+            const int samples = 3;
+            Texture2D texture = NewTexture(size, name);
+            Color[] pixels = new Color[size * size];
+            for (int y = 0; y < size; y++)
+            for (int x = 0; x < size; x++)
+            {
+                int hits = 0;
+                for (int sy = 0; sy < samples; sy++)
+                for (int sx = 0; sx < samples; sx++)
+                {
+                    Vector2 point = new(
+                        (x + (sx + 0.5f) / samples) / size,
+                        (y + (sy + 0.5f) / samples) / size);
+                    if (inside(point)) hits++;
+                }
+                pixels[y * size + x] = new Color(1f, 1f, 1f, hits / (float)(samples * samples));
+            }
+            texture.SetPixels(pixels);
+            texture.Apply();
+            Sprite sprite = Sprite.Create(
+                texture, new Rect(0f, 0f, size, size), new Vector2(0.5f, 0.5f), 100f);
+            sprite.name = name;
+            return sprite;
+        }
+
+        private static bool OnSegment(Vector2 point, Vector2 a, Vector2 b, float halfWidth)
+        {
+            Vector2 ab = b - a;
+            float t = Mathf.Clamp01(Vector2.Dot(point - a, ab) / ab.sqrMagnitude);
+            return Vector2.Distance(point, a + ab * t) <= halfWidth;
+        }
+
+        private static bool InEllipse(Vector2 point, Vector2 center, float radiusX, float radiusY)
+        {
+            float dx = (point.x - center.x) / radiusX;
+            float dy = (point.y - center.y) / radiusY;
+            return dx * dx + dy * dy <= 1f;
+        }
+
+        private static bool InPolygon(Vector2 point, Vector2[] polygon)
+        {
+            bool inside = false;
+            for (int i = 0, j = polygon.Length - 1; i < polygon.Length; j = i++)
+            {
+                if (polygon[i].y > point.y == polygon[j].y > point.y) continue;
+                float x = (polygon[j].x - polygon[i].x) * (point.y - polygon[i].y)
+                    / (polygon[j].y - polygon[i].y) + polygon[i].x;
+                if (point.x < x) inside = !inside;
+            }
+            return inside;
         }
 
         private static Sprite BuildCircle(string name, int size, float innerRatio)

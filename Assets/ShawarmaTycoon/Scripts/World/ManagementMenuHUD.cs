@@ -98,10 +98,12 @@ namespace ShawarmaTycoon
             titleLabel = UIFactory.Label("Title", header.transform, "", UITheme.FontLarge, UITheme.CreamLight);
             UIFactory.Stretch(titleLabel.rectTransform, 90f, 0f);
 
-            Button close = UIFactory.Button("Close", header.transform, "✕", UITheme.WarmRed,
+            Button close = UIFactory.Button("Close", header.transform, string.Empty, UITheme.WarmRed,
                 Color.white, UITheme.FontLarge, CloseAll);
             UIFactory.Anchor(close.GetComponent<RectTransform>(), UIFactory.TopRight, UIFactory.TopRight,
                 new Vector2(-14f, -14f), new Vector2(88f, 88f));
+            Image closeIcon = UIFactory.Icon("Glyph", close.transform, UITheme.Cross, Color.white);
+            UIFactory.Stretch(closeIcon.rectTransform, 27f, 27f);
 
             // Nine slots on a three-by-three grid. The HR desk carries both the
             // five hires and the three staff upgrades, and a fixed row of three
@@ -288,14 +290,19 @@ namespace ShawarmaTycoon
             Refresh();
         }
 
+        // A card's level is only ever shown here, so these have to be characters
+        // the shipped fonts actually carry: the filled and hollow circles that
+        // used to be here drew as nothing in the player, leaving every upgrade
+        // card looking unbought. Bullet for spent levels, middle dot for the
+        // ones still to come.
         private static readonly string[] PipStrings =
         {
-            "○ ○ ○ ○ ○",
-            "● ○ ○ ○ ○",
-            "● ● ○ ○ ○",
-            "● ● ● ○ ○",
-            "● ● ● ● ○",
-            "● ● ● ● ●"
+            "· · · · ·",
+            "• · · · ·",
+            "• • · · ·",
+            "• • • · ·",
+            "• • • • ·",
+            "• • • • •"
         };
 
         private static string Pips(int level) => PipStrings[Mathf.Clamp(level, 0, MaxLevel)];

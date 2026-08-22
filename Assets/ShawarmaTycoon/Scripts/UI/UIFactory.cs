@@ -112,11 +112,15 @@ namespace ShawarmaTycoon.UI
             return button;
         }
 
-        /// <summary>Compact mobile tool: one clear glyph with a tiny persistent label.</summary>
+        /// <summary>
+        /// Compact mobile tool: one clear icon with a tiny persistent label.
+        /// The icon is a drawn sprite rather than a character on purpose — see
+        /// the note above the icons in <see cref="UITheme"/>.
+        /// </summary>
         public static Button IconButton(
             string name,
             Transform parent,
-            string glyph,
+            Sprite icon,
             string caption,
             Color background,
             Color foreground,
@@ -132,10 +136,9 @@ namespace ShawarmaTycoon.UI
             UIFactory.Anchor(captionLabel.rectTransform, BottomCenter, BottomCenter,
                 new Vector2(0f, 5f), new Vector2(76f, 22f));
 
-            Text glyphLabel = Label("Glyph", button.transform, glyph, 34, foreground);
-            glyphLabel.fontStyle = FontStyle.Bold;
-            UIFactory.Anchor(glyphLabel.rectTransform, TopCenter, TopCenter,
-                new Vector2(0f, -3f), new Vector2(72f, 52f));
+            Image glyph = Icon("Glyph", button.transform, icon, foreground);
+            UIFactory.Anchor(glyph.rectTransform, TopCenter, TopCenter,
+                new Vector2(0f, -10f), new Vector2(38f, 38f));
             return button;
         }
 
