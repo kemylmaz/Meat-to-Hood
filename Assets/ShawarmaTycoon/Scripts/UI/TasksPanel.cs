@@ -26,30 +26,35 @@ namespace ShawarmaTycoon.UI
             UIFactory.Stretch(root);
             TasksPanel tasks = root.gameObject.AddComponent<TasksPanel>();
 
-            Image card = UIFactory.Panel("Card", root, UITheme.Panel);
+            Image card = UIFactory.Panel("Card", root, UITheme.CounterPaper);
             UIFactory.Anchor(card.rectTransform, UIFactory.TopLeft, UIFactory.TopLeft,
-                new Vector2(186f, -150f), new Vector2(560f, 430f));
-            UIFactory.AddShadow(card, new Color(0f, 0f, 0f, 0.22f), new Vector2(0f, -5f));
+                new Vector2(150f, -150f), new Vector2(560f, 430f));
+            UIFactory.AddCartoonFinish(card, 3f, 8f);
+            card.rectTransform.localEulerAngles = new Vector3(0f, 0f, 0.6f);
             tasks.panel = card.rectTransform;
 
-            tasks.title = UIFactory.Label("Title", card.transform, "", UITheme.FontBody, UITheme.Ink);
+            Image header = UIFactory.Panel("Header", card.transform, UITheme.Green);
+            UIFactory.Anchor(header.rectTransform, UIFactory.TopCenter, UIFactory.TopCenter,
+                new Vector2(0f, -16f), new Vector2(506f, 58f));
+
+            tasks.title = UIFactory.DisplayLabel("Title", header.transform, "", 28, UITheme.CreamLight);
             UIFactory.Anchor(tasks.title.rectTransform, UIFactory.TopCenter, UIFactory.TopCenter,
-                new Vector2(0f, -18f), new Vector2(520f, 44f));
+                new Vector2(0f, 0f), new Vector2(480f, 58f));
 
             tasks.rows = new Text[6];
             for (int i = 0; i < tasks.rows.Length; i++)
             {
                 tasks.rows[i] = UIFactory.Label($"Row{i}", card.transform, "",
-                    UITheme.FontSmall, UITheme.Ink, TextAnchor.MiddleLeft, FontStyle.Normal);
+                    23, UITheme.Ink, TextAnchor.MiddleLeft, FontStyle.Normal);
                 UIFactory.Anchor(tasks.rows[i].rectTransform, UIFactory.TopLeft, UIFactory.TopLeft,
-                    new Vector2(34f, -78f - i * 46f), new Vector2(500f, 42f));
+                    new Vector2(34f, -88f - i * 44f), new Vector2(500f, 40f));
             }
 
             tasks.claimButton = UIFactory.Button("Claim", card.transform, "", UITheme.Green,
-                Color.white, UITheme.FontSmall, tasks.Claim);
+                UITheme.CreamLight, 23, tasks.Claim);
             UIFactory.Anchor(tasks.claimButton.GetComponent<RectTransform>(),
                 UIFactory.BottomCenter, UIFactory.BottomCenter,
-                new Vector2(0f, 22f), new Vector2(360f, 66f));
+                new Vector2(0f, 24f), new Vector2(350f, 64f));
             tasks.claimLabel = tasks.claimButton.GetComponentInChildren<Text>();
 
             tasks.CreateTab(root, "GÖREV", -150f, Mode.Tasks);
@@ -61,10 +66,11 @@ namespace ShawarmaTycoon.UI
 
         private void CreateTab(RectTransform parent, string caption, float y, Mode target)
         {
-            Button button = UIFactory.Button("Tab" + caption, parent, caption, UITheme.Terracotta,
-                Color.white, 24, () => Toggle(target));
+            Color background = target == Mode.Tasks ? UITheme.Green : UITheme.Teal;
+            Button button = UIFactory.Button("Tab" + caption, parent, caption, background,
+                UITheme.CreamLight, 21, () => Toggle(target));
             UIFactory.Anchor(button.GetComponent<RectTransform>(), UIFactory.TopLeft, UIFactory.TopLeft,
-                new Vector2(24f, y), new Vector2(150f, 92f));
+                new Vector2(24f, y), new Vector2(124f, 78f));
         }
 
         private void Toggle(Mode target)

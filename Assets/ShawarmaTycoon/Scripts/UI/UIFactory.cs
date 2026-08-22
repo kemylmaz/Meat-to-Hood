@@ -51,7 +51,7 @@ namespace ShawarmaTycoon.UI
         {
             RectTransform rect = Node(name, parent);
             Text text = rect.gameObject.AddComponent<Text>();
-            text.font = UITheme.Font;
+            text.font = UITheme.BodyFont;
             text.text = content;
             text.fontSize = fontSize;
             text.fontStyle = style;
@@ -61,6 +61,20 @@ namespace ShawarmaTycoon.UI
             text.horizontalOverflow = HorizontalWrapMode.Wrap;
             text.verticalOverflow = VerticalWrapMode.Overflow;
             text.supportRichText = false;
+            return text;
+        }
+
+        public static Text DisplayLabel(
+            string name,
+            Transform parent,
+            string content,
+            int fontSize,
+            Color color,
+            TextAnchor anchor = TextAnchor.MiddleCenter)
+        {
+            Text text = Label(name, parent, content, fontSize, color, anchor);
+            text.font = UITheme.DisplayFont;
+            text.fontStyle = FontStyle.Bold;
             return text;
         }
 
@@ -90,7 +104,11 @@ namespace ShawarmaTycoon.UI
             // was skipped they cached a null and threw on every frame the panel
             // was open.
             Text label = Label("Label", image.transform, caption, fontSize, textColor);
+            label.font = UITheme.DisplayFont;
+            label.fontStyle = FontStyle.Bold;
             Stretch(label.rectTransform, 10f, 6f);
+            AddCartoonFinish(image);
+            image.gameObject.AddComponent<CartoonButtonFeedback>();
             return button;
         }
 
@@ -130,6 +148,18 @@ namespace ShawarmaTycoon.UI
             Shadow shadow = graphic.gameObject.AddComponent<Shadow>();
             shadow.effectColor = color;
             shadow.effectDistance = distance;
+        }
+
+        /// <summary>A dark painted rim plus an offset, toy-like physical shadow.</summary>
+        public static void AddCartoonFinish(Graphic graphic, float outline = 3f, float drop = 7f)
+        {
+            Outline rim = graphic.gameObject.AddComponent<Outline>();
+            rim.effectColor = UITheme.Ink;
+            rim.effectDistance = new Vector2(outline, -outline);
+
+            Shadow shadow = graphic.gameObject.AddComponent<Shadow>();
+            shadow.effectColor = UITheme.DropShadow;
+            shadow.effectDistance = new Vector2(drop, -drop);
         }
     }
 }

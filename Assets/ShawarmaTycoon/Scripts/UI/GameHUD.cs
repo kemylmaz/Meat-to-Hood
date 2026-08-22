@@ -23,6 +23,8 @@ namespace ShawarmaTycoon.UI
         public BuildModeHUD BuildMode { get; private set; }
         public Canvas Canvas { get; private set; }
 
+        private readonly System.Collections.Generic.List<GameObject> gameplayChrome = new();
+
         public static GameHUD Ensure(Transform parent)
         {
             if (Instance != null) return Instance;
@@ -87,17 +89,29 @@ namespace ShawarmaTycoon.UI
             // Order matters: the joystick catcher sits at the bottom of the draw
             // order so every widget above it keeps its own taps.
             Joystick = TouchJoystick.Create(SafeArea, CanvasRect);
+            gameplayChrome.Add(Joystick.gameObject);
 
-            CoinCounter.Create(SafeArea);
-            ShopProgressBar.Create(SafeArea);
-            StatusPanel.Create(SafeArea);
-            TasksPanel.Create(SafeArea);
+            gameplayChrome.Add(CoinCounter.Create(SafeArea).gameObject);
+            gameplayChrome.Add(ShopProgressBar.Create(SafeArea).gameObject);
+            gameplayChrome.Add(StatusPanel.Create(SafeArea).gameObject);
+            gameplayChrome.Add(TasksPanel.Create(SafeArea).gameObject);
             Objective = ObjectiveBanner.Create(SafeArea);
-            MuteButton.Create(SafeArea);
+            gameplayChrome.Add(Objective.gameObject);
+            gameplayChrome.Add(MuteButton.Create(SafeArea).gameObject);
             BuildMode = BuildModeHUD.Create(SafeArea);
 
             ModalLayer = UIFactory.Node("Modals", SafeArea);
             UIFactory.Stretch(ModalLayer);
+        }
+
+        /// <summary>Build mode gets a calm, distraction-free editing surface.</summary>
+        public void SetGameplayChromeVisible(bool visible)
+        {
+            for (int i = 0; i < gameplayChrome.Count; i++)
+            {
+                GameObject item = gameplayChrome[i];
+                if (item != null) item.SetActive(visible);
+            }
         }
     }
 }

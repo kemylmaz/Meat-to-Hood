@@ -3,31 +3,35 @@ using UnityEngine;
 namespace ShawarmaTycoon.UI
 {
     /// <summary>
-    /// Shared cozy palette plus procedurally generated sprites and the builtin
-    /// font. Everything here is created at runtime so the UI needs no imported
-    /// art assets and no TextMeshPro essentials.
+    /// Shared "neighbourhood doner shop" palette, type and procedural shapes.
+    /// The two fonts live in Resources and are OFL licensed; the builtin font is
+    /// kept as a defensive fallback for stripped/test players.
     /// </summary>
     public static class UITheme
     {
-        public static readonly Color Cream = Hex(0xF4DFC0);
-        public static readonly Color CreamLight = Hex(0xFBF1DE);
-        public static readonly Color Terracotta = Hex(0xD97A55);
-        public static readonly Color WarmRed = Hex(0xD9564A);
-        public static readonly Color Teal = Hex(0x55B7AD);
-        public static readonly Color Mustard = Hex(0xF1C557);
-        public static readonly Color DarkBlueGray = Hex(0x44515B);
-        public static readonly Color Ink = Hex(0x3D2A20);
-        public static readonly Color InkSoft = Hex(0x8A6A54);
-        public static readonly Color Panel = Hex(0xFFF6E4);
+        public static readonly Color Cream = Hex(0xF3DCAC);
+        public static readonly Color CreamLight = Hex(0xFFF4D6);
+        public static readonly Color Terracotta = Hex(0xE15D42);
+        public static readonly Color WarmRed = Hex(0xD94436);
+        public static readonly Color Teal = Hex(0x69B6C5);
+        public static readonly Color Mustard = Hex(0xF2BF4B);
+        public static readonly Color DarkBlueGray = Hex(0x365B61);
+        public static readonly Color Ink = Hex(0x38261F);
+        public static readonly Color InkSoft = Hex(0x76584A);
+        public static readonly Color Panel = Hex(0xFFF0C9);
         public static readonly Color Scrim = new(0.08f, 0.05f, 0.04f, 0.55f);
-        public static readonly Color Green = Hex(0x4FA84A);
+        public static readonly Color Green = Hex(0x5B8D4F);
+        public static readonly Color DeepGreen = Hex(0x3F6940);
+        public static readonly Color CounterPaper = Hex(0xFFF8E7);
+        public static readonly Color DropShadow = Hex(0x6D3F2F, 0.55f);
 
         public const int FontHuge = 54;
         public const int FontLarge = 40;
         public const int FontBody = 30;
         public const int FontSmall = 25;
 
-        private static Font font;
+        private static Font bodyFont;
+        private static Font displayFont;
         private static Sprite roundedSprite;
         private static Sprite circleSprite;
         private static Sprite ringSprite;
@@ -38,15 +42,35 @@ namespace ShawarmaTycoon.UI
             (rgb & 0xFF) / 255f,
             alpha);
 
-        public static Font Font
+        public static Font Font => BodyFont;
+
+        public static Font BodyFont
         {
             get
             {
-                if (font != null) return font;
-                font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-                if (font == null) font = Resources.GetBuiltinResource<Font>("Arial.ttf");
-                return font;
+                if (bodyFont != null) return bodyFont;
+                bodyFont = Resources.Load<Font>("Fonts/Nunito-Variable");
+                if (bodyFont == null) bodyFont = BuiltinFont();
+                return bodyFont;
             }
+        }
+
+        public static Font DisplayFont
+        {
+            get
+            {
+                if (displayFont != null) return displayFont;
+                displayFont = Resources.Load<Font>("Fonts/Baloo2-Variable");
+                if (displayFont == null) displayFont = BodyFont;
+                return displayFont;
+            }
+        }
+
+        private static Font BuiltinFont()
+        {
+            Font fallback = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            if (fallback == null) fallback = Resources.GetBuiltinResource<Font>("Arial.ttf");
+            return fallback;
         }
 
         /// <summary>9-sliced rounded rectangle, so one sprite fits every panel size.</summary>

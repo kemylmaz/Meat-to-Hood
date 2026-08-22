@@ -14,28 +14,34 @@ namespace ShawarmaTycoon.UI
 
         public static StatusPanel Create(RectTransform parent)
         {
-            // Sits under the shop progress bar, which owns the very top strip.
-            Image panel = UIFactory.Panel("StatusPanel", parent, UITheme.Panel);
+            // A small order ticket under the shop sign: transient information is
+            // visually secondary to the brand and the player's money.
+            Image panel = UIFactory.Panel("StatusPanel", parent, UITheme.CounterPaper);
             UIFactory.Anchor(panel.rectTransform, UIFactory.TopCenter, UIFactory.TopCenter,
-                new Vector2(0f, -106f), new Vector2(470f, 118f));
-            UIFactory.AddShadow(panel, new Color(0f, 0f, 0f, 0.18f), new Vector2(0f, -4f));
+                new Vector2(0f, -170f), new Vector2(500f, 78f));
+            UIFactory.AddCartoonFinish(panel, 2f, 6f);
 
             StatusPanel status = panel.gameObject.AddComponent<StatusPanel>();
             status.root = panel.rectTransform;
 
             status.rushLabel = UIFactory.Label("Rush", panel.transform, "RUSH --",
-                UITheme.FontBody, UITheme.Terracotta);
-            UIFactory.Anchor(status.rushLabel.rectTransform, UIFactory.TopCenter, UIFactory.TopCenter,
-                new Vector2(0f, -10f), new Vector2(440f, 42f));
+                24, UITheme.Terracotta, TextAnchor.MiddleLeft);
+            UIFactory.Anchor(status.rushLabel.rectTransform, UIFactory.Center, UIFactory.Center,
+                new Vector2(-122f, 0f), new Vector2(220f, 52f));
 
             status.comboLabel = UIFactory.Label("Combo", panel.transform, "KOMBO 0",
-                UITheme.FontSmall, UITheme.InkSoft);
-            UIFactory.Anchor(status.comboLabel.rectTransform, UIFactory.TopCenter, UIFactory.TopCenter,
-                new Vector2(0f, -52f), new Vector2(440f, 34f));
+                19, UITheme.InkSoft, TextAnchor.MiddleRight);
+            UIFactory.Anchor(status.comboLabel.rectTransform, UIFactory.Center, UIFactory.Center,
+                new Vector2(112f, -4f), new Vector2(230f, 48f));
 
-            Image track = UIFactory.Panel("ComboTrack", panel.transform, UITheme.Hex(0xE3D3B8));
-            UIFactory.Anchor(track.rectTransform, UIFactory.BottomCenter, UIFactory.BottomCenter,
-                new Vector2(0f, 14f), new Vector2(410f, 12f));
+            Image divider = UIFactory.Panel("Divider", panel.transform, UITheme.Cream, false);
+            UIFactory.Anchor(divider.rectTransform, UIFactory.Center, UIFactory.Center,
+                new Vector2(0f, 0f), new Vector2(3f, 46f));
+            divider.raycastTarget = false;
+
+            Image track = UIFactory.Panel("ComboTrack", panel.transform, UITheme.Cream);
+            UIFactory.Anchor(track.rectTransform, UIFactory.BottomRight, UIFactory.BottomRight,
+                new Vector2(-22f, 10f), new Vector2(210f, 8f));
             track.raycastTarget = false;
 
             status.comboFill = UIFactory.Panel("ComboFill", track.transform, UITheme.Teal);
@@ -82,7 +88,7 @@ namespace ShawarmaTycoon.UI
 
             bool active = combo.IsActive;
             string reputation = ReputationSystem.Instance != null
-                ? $"   İTİBAR {ReputationSystem.Instance.Score:0}"
+                ? $"  •  İT {ReputationSystem.Instance.Score:0}"
                 : string.Empty;
             comboLabel.text = (active
                 ? $"KOMBO {combo.Streak}   x{combo.Multiplier:0.0}"

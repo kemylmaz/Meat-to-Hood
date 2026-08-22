@@ -20,19 +20,27 @@ namespace ShawarmaTycoon.UI
 
         public static ObjectiveBanner Create(RectTransform parent)
         {
-            Image panel = UIFactory.Panel("Objective", parent, UITheme.Hex(0x3D2A20, 1f));
+            Image panel = UIFactory.Panel("Objective", parent, UITheme.DeepGreen);
             UIFactory.Anchor(panel.rectTransform, UIFactory.BottomCenter, UIFactory.BottomCenter,
-                new Vector2(0f, 42f), new Vector2(820f, 88f));
+                new Vector2(0f, 38f), new Vector2(760f, 80f));
+            UIFactory.AddCartoonFinish(panel, 3f, 8f);
             panel.raycastTarget = false;
+
+            Image marker = UIFactory.Icon("Marker", panel.transform, UITheme.Circle, UITheme.Mustard);
+            UIFactory.Anchor(marker.rectTransform, new Vector2(0f, 0.5f), UIFactory.Center,
+                new Vector2(42f, 0f), new Vector2(34f, 34f));
+
+            Text markerGlyph = UIFactory.DisplayLabel("Marker Glyph", marker.transform, "!", 25, UITheme.Ink);
+            UIFactory.Stretch(markerGlyph.rectTransform);
 
             ObjectiveBanner banner = panel.gameObject.AddComponent<ObjectiveBanner>();
             banner.group = panel.gameObject.AddComponent<CanvasGroup>();
             banner.group.blocksRaycasts = false;
             banner.group.alpha = 0f;
             banner.label = UIFactory.Label("Text", panel.transform, "",
-                UITheme.FontBody, UITheme.CreamLight);
-            UIFactory.Stretch(banner.label.rectTransform, 24f, 8f);
-            UIFactory.AddShadow(banner.label, new Color(0f, 0f, 0f, 0.55f), new Vector2(2f, -2f));
+                27, UITheme.CreamLight, TextAnchor.MiddleLeft);
+            UIFactory.Anchor(banner.label.rectTransform, UIFactory.Center, UIFactory.Center,
+                new Vector2(48f, 0f), new Vector2(620f, 62f));
             return banner;
         }
 
