@@ -391,7 +391,7 @@ namespace ShawarmaTycoon
             till?.Add(front.CounterPayment);
             if (byCashier) ComboSystem.Instance?.RegisterWorkerAction();
             else ComboSystem.Instance?.RegisterManualAction();
-            AudioDirector.Play(GameSfx.Serve, 0.55f, byCashier ? 0.96f : 1.04f);
+            AudioDirector.Play(GameSfx.Drop, 0.55f, byCashier ? 0.96f : 1.04f);
             return true;
         }
 
