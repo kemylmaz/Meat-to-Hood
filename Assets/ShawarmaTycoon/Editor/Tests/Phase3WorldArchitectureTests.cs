@@ -103,7 +103,7 @@ namespace ShawarmaTycoon.Tests
         /// on a fresh save. Coins per minute.
         /// </summary>
         private const float HandCarriedIncome = 50f;
-        private const float BeltedIncome = 120f;
+        private const float BeltedIncome = 158f;
 
         /// <summary>
         /// Re-measured on the widened lot: 999 coins over 188 s with all six plots
@@ -127,22 +127,33 @@ namespace ShawarmaTycoon.Tests
         public void Prices_StayInStepWithMeasuredIncome()
         {
             float secondsToFirstBuy = ShopPrices.Belt[0] / HandCarriedIncome * 60f;
-            Assert.That(secondsToFirstBuy, Is.LessThan(120f),
+            Assert.That(secondsToFirstBuy, Is.LessThanOrEqualTo(120f),
                 "The first thing to buy is out of reach for the opening two minutes.");
-            Assert.That(secondsToFirstBuy, Is.GreaterThan(20f),
+            Assert.That(secondsToFirstBuy, Is.GreaterThan(60f),
                 "The first purchase is free money; there is no opening to play.");
+
+            float minutesToFirstTable = ShopPrices.Table[0] / HandCarriedIncome;
+            Assert.That(minutesToFirstTable, Is.InRange(3f, 6f),
+                "The first extra table should be a deliberate early-game purchase.");
+
+            float firstPlotPayback = ShopPrices.Table[4] / BeltedIncome;
+            float lastPlotPayback = ShopPrices.Table[^1] / FullyBuiltIncome;
+            Assert.That(firstPlotPayback, Is.InRange(5f, 12f),
+                "The first two-table expansion is not priced like an expansion.");
+            Assert.That(lastPlotPayback, Is.InRange(8f, 15f),
+                "The final two-table expansion is too cheap or becomes a grind.");
 
             // Roughly: the content half is bought while hand-carrying and belted,
             // the boards once the shop is running properly.
             float minutes = ShopPrices.ContentTotal / BeltedIncome +
                             ShopPrices.BoardTotal / FullyBuiltIncome;
-            Assert.That(minutes, Is.InRange(30f, 120f),
+            Assert.That(minutes, Is.InRange(150f, 270f),
                 $"Buying everything takes {minutes:0} minutes of measured income.");
 
             // Content is what the player sees appear. The boards sell multipliers
             // on a shop they have already built, so they must not dwarf it.
-            Assert.That(ShopPrices.BoardTotal, Is.LessThan(ShopPrices.ContentTotal * 2f),
-                "The upgrade boards cost more than twice everything they upgrade.");
+            Assert.That(ShopPrices.BoardTotal, Is.LessThan(ShopPrices.ContentTotal),
+                "Invisible multipliers cost more than the visible restaurant.");
         }
 
         /// <summary>

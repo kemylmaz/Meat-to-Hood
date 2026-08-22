@@ -11,7 +11,7 @@ namespace ShawarmaTycoon.UI
         private const int ServeTarget = 5;
         private const int UpgradeTarget = 1;
         private const int TrashTarget = 3;
-        private const int DailyReward = 75;
+        private const int DailyReward = 150;
 
         private Mode mode = Mode.None;
         private RectTransform panel;
