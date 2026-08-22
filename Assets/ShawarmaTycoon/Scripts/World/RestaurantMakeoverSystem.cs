@@ -38,7 +38,9 @@ namespace ShawarmaTycoon
         private bool configured;
 
         public static RestaurantMakeoverSystem Instance { get; private set; }
-        public static int CurrentTier => Instance != null ? Instance.currentTier : GetTierForRatio(UpgradeProgress.Ratio);
+        public static int CurrentTier => Instance != null
+            ? Instance.currentTier
+            : GetTierForRatio(UpgradeProgress.MakeoverRatio);
         public static event Action<int> TierChanged;
 
         public static int GetTierForRatio(float ratio)
@@ -68,7 +70,7 @@ namespace ShawarmaTycoon
             BuildStages();
             UpgradeProgress.Changed += OnProgressChanged;
             configured = true;
-            ApplyTier(GetTierForRatio(UpgradeProgress.Ratio), false);
+            ApplyTier(GetTierForRatio(UpgradeProgress.MakeoverRatio), false);
         }
 
         private void OnDestroy()
@@ -80,7 +82,7 @@ namespace ShawarmaTycoon
         private void OnProgressChanged()
         {
             if (!configured) return;
-            ApplyTier(GetTierForRatio(UpgradeProgress.Ratio), true);
+            ApplyTier(GetTierForRatio(UpgradeProgress.MakeoverRatio), true);
         }
 
 #if UNITY_EDITOR

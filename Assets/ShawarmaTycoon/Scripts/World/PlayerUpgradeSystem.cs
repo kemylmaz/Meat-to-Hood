@@ -48,7 +48,9 @@ namespace ShawarmaTycoon
                      (GeneralManagerUpgradeType[])System.Enum.GetValues(typeof(GeneralManagerUpgradeType)))
             {
                 GeneralManagerUpgradeType captured = type;
-                UpgradeProgress.Register("gm." + type, maxLevel, () => GetLevel(captured));
+                UpgradeProgress.Register(
+                    "gm." + type, maxLevel, () => GetLevel(captured),
+                    contributesToMakeover: false);
             }
             ApplyLevels();
         }

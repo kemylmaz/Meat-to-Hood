@@ -16,16 +16,18 @@ namespace ShawarmaTycoon
     {
         private readonly struct Track
         {
-            public Track(string id, int steps, Func<int> owned)
+            public Track(string id, int steps, Func<int> owned, bool contributesToMakeover)
             {
                 Id = id;
                 Steps = Mathf.Max(1, steps);
                 Owned = owned;
+                ContributesToMakeover = contributesToMakeover;
             }
 
             public string Id { get; }
             public int Steps { get; }
             public Func<int> Owned { get; }
+            public bool ContributesToMakeover { get; }
         }
 
         private static readonly List<Track> Tracks = new();
@@ -64,16 +66,39 @@ namespace ShawarmaTycoon
         }
 
         /// <summary>
+        /// Visual restaurant evolution only counts purchases that build something
+        /// visible in the world. Management-board multipliers still count on the
+        /// completion bar, but cannot suddenly replace floors, rugs and tables.
+        /// </summary>
+        public static float MakeoverRatio
+        {
+            get
+            {
+                int total = 0;
+                int owned = 0;
+                for (int i = 0; i < Tracks.Count; i++)
+                {
+                    Track track = Tracks[i];
+                    if (!track.ContributesToMakeover) continue;
+                    total += track.Steps;
+                    owned += Mathf.Clamp(track.Owned(), 0, track.Steps);
+                }
+                return total <= 0 ? 0f : owned / (float)total;
+            }
+        }
+
+        /// <summary>
         /// Registers one thing that can be bought, in <paramref name="steps"/>
         /// stages. Re-registering the same id replaces it rather than counting it
         /// twice, which matters because the bootstrap can rebuild the whole shop
         /// into a live session.
         /// </summary>
-        public static void Register(string id, int steps, Func<int> ownedLevels)
+        public static void Register(
+            string id, int steps, Func<int> ownedLevels, bool contributesToMakeover = true)
         {
             if (string.IsNullOrWhiteSpace(id) || ownedLevels == null) return;
 
-            Track track = new(id, steps, ownedLevels);
+            Track track = new(id, steps, ownedLevels, contributesToMakeover);
             for (int i = 0; i < Tracks.Count; i++)
             {
                 if (!string.Equals(Tracks[i].Id, id, StringComparison.Ordinal)) continue;

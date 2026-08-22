@@ -268,6 +268,33 @@ namespace ShawarmaTycoon.Tests
             Assert.That(UpgradeProgress.Ratio, Is.Zero);
         }
 
+        [Test]
+        public void RestaurantMakeover_IgnoresManagementBoardLevels()
+        {
+            UpgradeProgress.Reset();
+            try
+            {
+                int visibleLevel = 0;
+                int automationLevel = 0;
+                UpgradeProgress.Register("belt.raw", 4, () => visibleLevel);
+                UpgradeProgress.Register("hr.automation", 5, () => automationLevel,
+                    contributesToMakeover: false);
+
+                automationLevel = 5;
+                Assert.That(UpgradeProgress.Ratio, Is.GreaterThan(0f),
+                    "Management upgrades should remain on the completion bar.");
+                Assert.That(UpgradeProgress.MakeoverRatio, Is.Zero,
+                    "Automation must not change the restaurant furniture theme.");
+
+                visibleLevel = 1;
+                Assert.That(UpgradeProgress.MakeoverRatio, Is.EqualTo(0.25f).Within(0.0001f));
+            }
+            finally
+            {
+                UpgradeProgress.Reset();
+            }
+        }
+
         [TestCase(0f, 1)]
         [TestCase(0.149f, 1)]
         [TestCase(0.15f, 2)]

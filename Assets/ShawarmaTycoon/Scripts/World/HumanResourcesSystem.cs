@@ -49,7 +49,9 @@ namespace ShawarmaTycoon
                      (EmployeeUpgradeType[])System.Enum.GetValues(typeof(EmployeeUpgradeType)))
             {
                 EmployeeUpgradeType captured = type;
-                UpgradeProgress.Register("hr." + type, maxLevel, () => GetLevel(captured));
+                UpgradeProgress.Register(
+                    "hr." + type, maxLevel, () => GetLevel(captured),
+                    contributesToMakeover: false);
             }
             ApplyAutomationLevel();
         }
