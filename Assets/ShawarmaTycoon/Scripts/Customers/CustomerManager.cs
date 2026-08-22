@@ -6,6 +6,12 @@ namespace ShawarmaTycoon
     public sealed class CustomerManager : MonoBehaviour
     {
         [SerializeField, Min(0.2f)] private float spawnInterval = 1.7f;
+        public const float MinimumDiningSeconds = 15f;
+        public const float MaximumDiningSeconds = 21f;
+        [SerializeField, Min(5f)] private float minimumDiningSeconds = MinimumDiningSeconds;
+        [SerializeField, Min(5f)] private float maximumDiningSeconds = MaximumDiningSeconds;
+        [SerializeField, Min(0.5f)] private float manualCheckoutRadius = 1.65f;
+        [SerializeField, Min(0.1f)] private float baseManualCheckoutInterval = 0.9f;
 
         /// <summary>
         /// Queue length and patience have to agree, or the back of the line is
@@ -40,6 +46,7 @@ namespace ShawarmaTycoon
         [SerializeField, Min(2f)] private float approachDistance = 13f;
 
         private ItemStation serviceStation;
+        private Transform player;
         /// <summary>Where each thing on an order is taken from, keyed by what it is.</summary>
         private readonly Dictionary<ItemType, ItemStation> counters = new();
         private CashPile till;
@@ -54,6 +61,7 @@ namespace ShawarmaTycoon
         private int customerIndex;
         private int nextVipCustomer;
         private bool vipCustomersEnabled = true;
+        private float manualCheckoutTimer;
 
         public int ActiveCustomers => customers.Count;
         public int ActiveVipCustomers
@@ -80,6 +88,7 @@ namespace ShawarmaTycoon
         }
 
         public void Configure(
+            Transform playerTransform,
             ItemStation service,
             CashPile counterTill,
             Transform entry,
@@ -89,6 +98,7 @@ namespace ShawarmaTycoon
             Vector3 queueLineDirection,
             IEnumerable<CustomerTable> customerTables)
         {
+            player = playerTransform;
             serviceStation = service;
             counters[ItemType.Wrap] = service;
             till = counterTill;
@@ -103,6 +113,7 @@ namespace ShawarmaTycoon
             tables.Clear();
             tables.AddRange(customerTables);
             spawnTimer = 0.5f;
+            manualCheckoutTimer = 0f;
 
             nextVipCustomer = Random.Range(8, 12);
             GameCatalogs.Initialize();
@@ -184,7 +195,15 @@ namespace ShawarmaTycoon
             if (Time.timeScale <= 0f) return;
             UpdateSpawning();
             UpdateQueue();
-            TryServeFrontCustomer();
+            manualCheckoutTimer -= Time.deltaTime;
+            if (manualCheckoutTimer <= 0f && player != null && till != null &&
+                Vector3.SqrMagnitude(player.position - till.CollectPoint) <=
+                manualCheckoutRadius * manualCheckoutRadius &&
+                TryServeNextCustomer(false))
+            {
+                manualCheckoutTimer = baseManualCheckoutInterval *
+                                      PlayerUpgradeSystem.ManualCheckoutIntervalMultiplier;
+            }
         }
 
         private void UpdateSpawning()
@@ -197,11 +216,12 @@ namespace ShawarmaTycoon
             for (int i = 0; i < customers.Count; i++)
                 if (customers[i] != null && customers[i].State == CustomerState.Queueing) waitingCount++;
 
-            int activeTableCount = 0;
+            int activeSeatCount = 0;
             for (int i = 0; i < tables.Count; i++)
-                if (tables[i] != null && tables[i].gameObject.activeInHierarchy) activeTableCount++;
+                if (tables[i] != null && tables[i].gameObject.activeInHierarchy)
+                    activeSeatCount += tables[i].SeatCapacity;
 
-            if (waitingCount >= maxQueueLength || customers.Count >= activeTableCount + maxQueueLength)
+            if (waitingCount >= maxQueueLength || customers.Count >= activeSeatCount + maxQueueLength)
                 return;
 
             SpawnCustomer(false);
@@ -277,7 +297,10 @@ namespace ShawarmaTycoon
             // Stepped through three heights along the queue, which is what keeps
             // full-size bubbles off each other's neighbours.
             agent.SetBubbleLift(spawnNumber % 3 * 0.36f);
-            agent.Configure(this, exitPoint, 2.4f, 4.5f, 24, patience, vip, arrivalMood,
+            float diningSeconds = Random.Range(
+                Mathf.Min(minimumDiningSeconds, maximumDiningSeconds),
+                Mathf.Max(minimumDiningSeconds, maximumDiningSeconds));
+            agent.Configure(this, exitPoint, 2.4f, diningSeconds, 24, patience, vip, arrivalMood,
                 BuildOrder(vip));
             if (approachCorner != null) agent.SetApproachCorner(approachCorner.position);
             if (gatePoint != null) agent.SetGatePoint(gatePoint.position);
@@ -317,18 +340,24 @@ namespace ShawarmaTycoon
             }
         }
 
-        private void TryServeFrontCustomer()
+        public bool HasCustomerWaitingAtRegister
         {
-            CustomerAgent front = null;
-            for (int i = 0; i < customers.Count; i++)
+            get
             {
-                if (customers[i] != null && customers[i].State == CustomerState.Queueing)
-                {
-                    front = customers[i];
-                    break;
-                }
+                CustomerAgent front = FrontCustomer();
+                return front != null && front.HasReachedQueue;
             }
-            if (front == null || !front.HasReachedQueue) return;
+        }
+
+        /// <summary>
+        /// Completes one checkout. The player triggers this by standing at the
+        /// register; a hired cashier triggers the same transaction on arrival.
+        /// Customers can no longer take food from the counter by themselves.
+        /// </summary>
+        public bool TryServeNextCustomer(bool byCashier)
+        {
+            CustomerAgent front = FrontCustomer();
+            if (front == null || !front.HasReachedQueue) return false;
 
             // Drinks and desserts are optional upsells: an empty side counter
             // must not freeze the entire queue. The customer drops an unavailable
@@ -336,29 +365,42 @@ namespace ShawarmaTycoon
             if (front.Order.TrimUnavailableExtras(IsStocked))
                 front.RefreshOrderBubble();
 
-            if (!CanFill(front.Order)) return;
+            if (!CanFill(front.Order)) return false;
 
             CustomerTable freeTable = null;
             for (int i = 0; i < tables.Count; i++)
             {
-                if (tables[i] != null && tables[i].IsAvailable && tables[i].IsSeatApproachClear())
+                if (tables[i] != null && tables[i].HasReservableSeat)
                 {
                     freeTable = tables[i];
                     break;
                 }
             }
-            if (freeTable == null) return;
-            if (!freeTable.TryReserve(front)) return;
+            if (freeTable == null) return false;
+            if (!freeTable.TryReserve(front)) return false;
 
             if (!TakeOrder(front.Order))
             {
                 freeTable.CancelReservation(front);
-                return;
+                return false;
             }
 
-            front.Serve(freeTable);
+            float checkoutReward = byCashier ? 1f : PlayerUpgradeSystem.ManualServiceRewardMultiplier;
+            front.Serve(freeTable, checkoutReward);
             // Paid over the counter here and now; the rest is left on the table.
             till?.Add(front.CounterPayment);
+            if (byCashier) ComboSystem.Instance?.RegisterWorkerAction();
+            else ComboSystem.Instance?.RegisterManualAction();
+            AudioDirector.Play(GameSfx.Drop, 0.55f, byCashier ? 0.96f : 1.04f);
+            return true;
+        }
+
+        private CustomerAgent FrontCustomer()
+        {
+            for (int i = 0; i < customers.Count; i++)
+                if (customers[i] != null && customers[i].State == CustomerState.Queueing)
+                    return customers[i];
+            return null;
         }
 
         private bool CanFill(CustomerOrder order)

@@ -34,6 +34,7 @@ namespace ShawarmaTycoon
         private readonly Dictionary<GameSfx, AudioClip> clips = new();
         private readonly Dictionary<GameSfx, float> lastPlayed = new();
         private AudioSource[] voices;
+        private AudioSource musicVoice;
         private int nextVoice;
         private float masterVolume = 0.8f;
 
@@ -64,6 +65,15 @@ namespace ShawarmaTycoon
                 source.dopplerLevel = 0f;
                 voices[i] = source;
             }
+
+            musicVoice = gameObject.AddComponent<AudioSource>();
+            musicVoice.playOnAwake = false;
+            musicVoice.loop = true;
+            musicVoice.spatialBlend = 0f;
+            musicVoice.dopplerLevel = 0f;
+            musicVoice.volume = masterVolume * 0.38f;
+            musicVoice.clip = Resources.Load<AudioClip>("Audio/Music/meat_and_eat_main_loop");
+            if (musicVoice.clip != null && masterVolume > 0f) musicVoice.Play();
         }
 
         private void OnDestroy()
@@ -77,6 +87,12 @@ namespace ShawarmaTycoon
         {
             masterVolume = muted ? 0f : 0.8f;
             GameProgress.SetInt("audio.muted", muted ? 1 : 0);
+            if (musicVoice != null)
+            {
+                musicVoice.volume = masterVolume * 0.38f;
+                if (muted) musicVoice.Pause();
+                else if (musicVoice.clip != null) musicVoice.UnPause();
+            }
         }
 
         public static void Play(GameSfx sfx, float volume = 1f, float pitch = 1f)
@@ -111,6 +127,10 @@ namespace ShawarmaTycoon
 
         private static AudioClip BuildClip(GameSfx sfx)
         {
+            AudioClip authored = Resources.Load<AudioClip>(
+                "Audio/SFX/" + ResourceName(sfx));
+            if (authored != null) return authored;
+
             switch (sfx)
             {
                 case GameSfx.Pickup:
@@ -167,6 +187,24 @@ namespace ShawarmaTycoon
                 default:
                     return SfxSynth.Build("sfx_customer",
                         new SfxSynth.Tone(Waveform.Sine, 784f, 1046f, 0f, 0.12f, 0.24f));
+            }
+        }
+
+        private static string ResourceName(GameSfx sfx)
+        {
+            switch (sfx)
+            {
+                case GameSfx.Pickup: return "pickup";
+                case GameSfx.Drop: return "drop";
+                case GameSfx.Cook: return "cook";
+                case GameSfx.Coin: return "coin";
+                case GameSfx.CashRegister: return "cash_register";
+                case GameSfx.ComboUp: return "combo_up";
+                case GameSfx.Error: return "error";
+                case GameSfx.Unlock: return "unlock";
+                case GameSfx.Reward: return "reward";
+                case GameSfx.Trash: return "trash";
+                default: return "customer_arrive";
             }
         }
     }

@@ -18,16 +18,17 @@ namespace ShawarmaTycoon
     /// to run variance is wide because it depends on how early the tables jam.
     ///
     /// The old ladder let one ordinary sale almost buy a belt or a table. This
-    /// pass targets a firmer tycoon pace: roughly two minutes to the first belt,
+    /// pass targets a firmer tycoon pace: roughly four minutes to the first belt,
     /// four to the first table, and three hours for a well-run full build.
     /// </summary>
     public static class ShopPrices
     {
         // --- things that change what the shop is -----------------------------
 
-        // A belt purchase builds the visible belt. Further invisible pad levels
-        // were removed; shared automation upgrades remain the speed progression.
-        public static readonly int[] Belt = { 90 };
+        // Each entry is one different visible belt, from raw meat to the serving
+        // counter. The steeper curve prevents one early sale from automating the
+        // whole kitchen while keeping every purchase visually meaningful.
+        public static readonly int[] Belt = { 180, 520, 1300 };
 
         /// <summary>
         /// The third table through to the tenth. Seating is what the whole shop
@@ -112,7 +113,7 @@ namespace ShawarmaTycoon
 
         /// <summary>Everything the player can buy that adds to the shop itself.</summary>
         public static int ContentTotal =>
-            Sum(Belt) * 3 + Sum(Table) + Sum(Decoration) +
+            Sum(Belt) + Sum(Table) + Sum(Decoration) +
             HumanResourcesOffice + GeneralManagerOffice + DriveThru +
             Fridge + DessertOven + Courier +
             HireCashier + HireDriveThruCashier + HireRunner + HireBusser + HireSecondBusser;

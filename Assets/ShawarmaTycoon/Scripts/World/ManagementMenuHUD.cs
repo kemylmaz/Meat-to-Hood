@@ -193,7 +193,7 @@ namespace ShawarmaTycoon
         // ---- content --------------------------------------------------------
 
         private static readonly string[] EmployeeTitles = { "Hareket\nHızı", "Kapasite", "Otomasyon" };
-        private static readonly string[] PlayerTitles = { "Hareket\nHızı", "Kapasite", "Gelir\nArtışı" };
+        private static readonly string[] PlayerTitles = { "Hareket\nHızı", "Tepsi &\nServis", "Gelir\nArtışı" };
         private static readonly string[] RecruitTitles =
         {
             "Kasiyer", "Drive-Thru\nKasiyeri", "Drive-Thru\nKoşucusu",

@@ -293,18 +293,19 @@ namespace ShawarmaTycoon.Tests
         [Test]
         public void ConveyorPads_BuildOnce_AndStationWorkerPadsAreAbsent()
         {
-            Assert.That(ShopPrices.Belt, Has.Length.EqualTo(1),
-                "A belt pad still sells invisible levels after building the belt.");
+            Assert.That(ShopPrices.Belt, Has.Length.EqualTo(3),
+                "The three visible belts need their own progression prices.");
 
             string[] beltPads = { "Et Bandı Pedi", "Ocak Bandı Pedi", "Kesim Bandı Pedi" };
-            foreach (string padName in beltPads)
+            for (int i = 0; i < beltPads.Length; i++)
             {
+                string padName = beltPads[i];
                 GameObject padObject = GameObject.Find(padName);
                 Assert.That(padObject, Is.Not.Null, $"'{padName}' was removed with the upgrades.");
                 PurchasePad pad = padObject.GetComponent<PurchasePad>();
                 Assert.That(pad, Is.Not.Null);
                 Assert.That(pad.Level, Is.Zero);
-                Assert.That(pad.CurrentCost, Is.EqualTo(ShopPrices.Belt[0]));
+                Assert.That(pad.CurrentCost, Is.EqualTo(ShopPrices.Belt[i]));
             }
 
             PurchasePad[] pads = Object.FindObjectsByType<PurchasePad>(
@@ -316,6 +317,45 @@ namespace ShawarmaTycoon.Tests
                 .SelectMany(s => s.GetComponentsInChildren<Transform>(true))
                 .Any(t => t.name == "İşçi"), Is.False,
                 "A removed station worker is still standing beside a machine.");
+        }
+
+        [Test]
+        public void DiningTable_ReservesTwoIndependentSeats()
+        {
+            CustomerTable table = Object.FindObjectsByType<CustomerTable>(
+                    FindObjectsInactive.Exclude, FindObjectsSortMode.None)
+                .First(candidate => candidate.HasReservableSeat);
+            GameObject firstObject = new("Seat test customer A");
+            GameObject secondObject = new("Seat test customer B");
+            GameObject thirdObject = new("Seat test customer C");
+            try
+            {
+                CustomerAgent first = firstObject.AddComponent<CustomerAgent>();
+                CustomerAgent second = secondObject.AddComponent<CustomerAgent>();
+                CustomerAgent third = thirdObject.AddComponent<CustomerAgent>();
+
+                Assert.That(table.SeatCapacity, Is.EqualTo(2));
+                Assert.That(table.TryReserve(first), Is.True);
+                Assert.That(table.TryReserve(second), Is.True);
+                Assert.That(table.GetSeatPoint(first), Is.Not.Null);
+                Assert.That(table.GetSeatPoint(second), Is.Not.Null);
+                Assert.That(table.GetSeatPoint(first), Is.Not.SameAs(table.GetSeatPoint(second)));
+                Assert.That(table.OccupiedSeatCount, Is.EqualTo(2));
+                Assert.That(table.TryReserve(third), Is.False);
+
+                table.CancelReservation(first);
+                Assert.That(table.OccupiedSeatCount, Is.EqualTo(1));
+                Assert.That(table.TryReserve(third), Is.True,
+                    "Freeing one cover should not eject or block the other diner.");
+                table.CancelReservation(second);
+                table.CancelReservation(third);
+            }
+            finally
+            {
+                Object.DestroyImmediate(firstObject);
+                Object.DestroyImmediate(secondObject);
+                Object.DestroyImmediate(thirdObject);
+            }
         }
 
         [Test]

@@ -194,11 +194,11 @@ namespace ShawarmaTycoon
                 shopWorld.KitchenRoot, "Kesim Bandı", cutting, service, layout.Cutting, layout.Service);
             MarkPlaceable(cuttingBelt.gameObject, "belt.cutting", "Kesim Bandı");
             CreateConveyorPad(shopWorld.KitchenRoot, "Et Bandı Pedi",
-                layout.MeatBeltPad, "belt.raw", rawBelt);
+                layout.MeatBeltPad, "belt.raw", rawBelt, 0);
             CreateConveyorPad(shopWorld.KitchenRoot, "Ocak Bandı Pedi",
-                layout.OvenBeltPad, "belt.oven", ovenBelt);
+                layout.OvenBeltPad, "belt.oven", ovenBelt, 1);
             CreateConveyorPad(shopWorld.KitchenRoot, "Kesim Bandı Pedi",
-                layout.CuttingBeltPad, "belt.cutting", cuttingBelt);
+                layout.CuttingBeltPad, "belt.cutting", cuttingBelt, 2);
 
             // --- utilities ----------------------------------------------------
             GameObject trashBinObject = CreateTrashBin(shopWorld.UtilityRoot, layout.TrashBin);
@@ -357,7 +357,7 @@ namespace ShawarmaTycoon
             GameObject customerRoot = new("Müşteriler");
             customerRoot.transform.SetParent(shopWorld.CustomerFlowRoot, false);
             CustomerManager customerManager = customerRoot.AddComponent<CustomerManager>();
-            customerManager.Configure(service, till, entry, exit,
+            customerManager.Configure(playerTransform, service, till, entry, exit,
                 shopWorld.EntranceAnchor, queueFront, Vector3.back, tables);
             customerManager.SetApproachRoute(
                 CreateMarker(shopWorld.CustomerFlowRoot, "Yaklaşma Başı", ApproachStart(layout)),
@@ -679,10 +679,12 @@ namespace ShawarmaTycoon
         }
 
         private void CreateConveyorPad(
-            Transform parent, string padName, Vector3 position, string saveKey, ConveyorLink belt)
+            Transform parent, string padName, Vector3 position, string saveKey, ConveyorLink belt,
+            int priceIndex)
         {
             CreatePurchasePad(parent, padName, position, saveKey,
-                ShopPrices.Belt, (level, _) => belt.SetLevel(level),
+                new[] { ShopPrices.Belt[Mathf.Clamp(priceIndex, 0, ShopPrices.Belt.Length - 1)] },
+                (level, _) => belt.SetLevel(level),
                 previewAsset: "13_conveyor_straight",
                 previewSize: new Vector3(0.90f, 0.30f, 0.52f));
         }
@@ -1509,14 +1511,19 @@ namespace ShawarmaTycoon
             CreateDiningChair(tableObject.transform, "Customer Chair", -1.02f, 0f);
             CreateDiningChair(tableObject.transform, "Guest Chair", 1.02f, 180f);
 
-            GameObject seat = new("Customer Seat");
+            GameObject seat = new("Customer Seat A");
             seat.transform.SetParent(tableObject.transform, false);
             seat.transform.localPosition = new Vector3(0f, 0f, -1.05f);
             // The seat is south of the table, so looking north is looking at it.
             seat.transform.localRotation = Quaternion.identity;
 
+            GameObject secondSeat = new("Customer Seat B");
+            secondSeat.transform.SetParent(tableObject.transform, false);
+            secondSeat.transform.localPosition = new Vector3(0f, 0f, 1.05f);
+            secondSeat.transform.localRotation = Quaternion.Euler(0f, 180f, 0f);
+
             CustomerTable table = tableObject.AddComponent<CustomerTable>();
-            table.Configure(playerTransform, seat.transform);
+            table.Configure(playerTransform, seat.transform, secondSeat.transform);
 
             bool swapped = MeshyVisuals.TryReplaceDirectAuthored(
                 tableObject.transform, "15_dining_table_clean",
@@ -1529,6 +1536,25 @@ namespace ShawarmaTycoon
                 {
                     Vector3 localSeat = tableObject.transform.InverseTransformPoint(authoredSeat.position);
                     seat.transform.localPosition = new Vector3(localSeat.x, 0f, localSeat.z);
+                    Vector3 towardTable = -seat.transform.localPosition;
+                    towardTable.y = 0f;
+                    if (towardTable.sqrMagnitude > 0.001f)
+                        seat.transform.localRotation = Quaternion.LookRotation(towardTable, Vector3.up);
+
+                    if (MeshyVisuals.TryFindAnchor(
+                            tableObject.transform, "SEAT_B", out Transform authoredSecondSeat))
+                    {
+                        Vector3 localSecond = tableObject.transform.InverseTransformPoint(
+                            authoredSecondSeat.position);
+                        secondSeat.transform.localPosition = new Vector3(localSecond.x, 0f, localSecond.z);
+                    }
+                    else secondSeat.transform.localPosition = -seat.transform.localPosition;
+
+                    Vector3 secondTowardTable = -secondSeat.transform.localPosition;
+                    secondTowardTable.y = 0f;
+                    if (secondTowardTable.sqrMagnitude > 0.001f)
+                        secondSeat.transform.localRotation = Quaternion.LookRotation(
+                            secondTowardTable, Vector3.up);
                 }
 
                 // Both states are authored, so the table swaps whole models

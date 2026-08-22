@@ -18,6 +18,18 @@ namespace ShawarmaTycoon
         private int incomeLevel;
 
         public static float IncomeMultiplier => Instance == null ? 1f : 1f + Instance.incomeLevel * 0.12f;
+        /// <summary>
+        /// Capacity is also counter skill: better tray handling lets the player
+        /// hand over complete orders faster and earns a small personal-service
+        /// bonus. It therefore keeps value after the kitchen is automated.
+        /// </summary>
+        public static float ManualCheckoutIntervalMultiplier => Instance == null
+            ? 1f
+            : 1f / (1f + Instance.capacityLevel * 0.18f);
+
+        public static float ManualServiceRewardMultiplier => Instance == null
+            ? 1f
+            : 1f + Instance.capacityLevel * 0.05f;
 
         private void Awake()
         {

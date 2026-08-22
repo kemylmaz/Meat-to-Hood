@@ -9,31 +9,43 @@ namespace ShawarmaTycoon
         [SerializeField, Min(0.3f)] private float cashPadRadius = 0.95f;
 
         private Transform player;
-        private Transform seatPoint;
-        private CustomerAgent occupant;
+        private readonly Transform[] seatPoints = new Transform[2];
+        private readonly CustomerAgent[] occupants = new CustomerAgent[2];
         private GameObject cleanVisual;
         private GameObject dirtyVisual;
-        private GameObject dirtyIndicator;
+        private readonly GameObject[] dirtyIndicators = new GameObject[2];
         private GameObject cashPad;
         private GameObject cashStack;
         private readonly GameObject[] makeoverVisuals = new GameObject[6];
         private WorldCashMarker cashMarker;
         private TextMesh statusLabel;
-        private bool reserved;
-        private bool dirty;
+        private readonly bool[] dirtySeats = new bool[2];
         private int pendingCash;
         private int makeoverTier = 1;
 
         private Collider[] seatClearanceHits = new Collider[32];
 
-        public bool IsAvailable => gameObject.activeInHierarchy && !reserved && !dirty;
-        public bool IsDirty => dirty;
+        public bool IsAvailable => HasReservableSeat;
+        public bool HasReservableSeat
+        {
+            get
+            {
+                if (!gameObject.activeInHierarchy) return false;
+                for (int i = 0; i < seatPoints.Length; i++)
+                    if (seatPoints[i] != null && occupants[i] == null && !dirtySeats[i] &&
+                        IsSeatApproachClear(i)) return true;
+                return false;
+            }
+        }
+        public bool IsDirty => dirtySeats[0] || dirtySeats[1];
         /// <summary>Money still sitting on the pad, so a cashier has somewhere to go.</summary>
         public bool HasUncollectedCash => pendingCash > 0;
         /// <summary>Where the money actually is, which is not the table centre.</summary>
         public Vector3 CashPoint => cashPad != null ? cashPad.transform.position : transform.position;
-        public bool IsReserved => reserved;
-        public Transform SeatPoint => seatPoint;
+        public bool IsReserved => occupants[0] != null || occupants[1] != null;
+        public int SeatCapacity => (seatPoints[0] != null ? 1 : 0) + (seatPoints[1] != null ? 1 : 0);
+        public int OccupiedSeatCount => (occupants[0] != null ? 1 : 0) + (occupants[1] != null ? 1 : 0);
+        public Transform SeatPoint => seatPoints[0];
 
         /// <summary>
         /// A standing point outside the chair collider. Customers walk here, then
@@ -44,21 +56,44 @@ namespace ShawarmaTycoon
         {
             get
             {
-                if (seatPoint == null) return transform.position;
-                Vector3 away = seatPoint.position - transform.position;
-                away.y = 0f;
-                if (away.sqrMagnitude < 0.001f) away = -transform.forward;
-                // Half a metre clears the chair without pushing the second table
-                // row into the dining-room partition behind it.
-                return seatPoint.position + away.normalized * 0.52f;
+                return SeatApproachPointFor(0);
             }
+        }
+
+        public Transform GetSeatPoint(CustomerAgent customer)
+        {
+            int index = SeatIndex(customer);
+            return index >= 0 ? seatPoints[index] : null;
+        }
+
+        public Vector3 GetSeatApproachPoint(CustomerAgent customer)
+        {
+            int index = SeatIndex(customer);
+            return index >= 0 ? SeatApproachPointFor(index) : transform.position;
+        }
+
+        private Vector3 SeatApproachPointFor(int index)
+        {
+            Transform point = index >= 0 && index < seatPoints.Length ? seatPoints[index] : null;
+            if (point == null) return transform.position;
+            Vector3 away = point.position - transform.position;
+            away.y = 0f;
+            if (away.sqrMagnitude < 0.001f) away = -transform.forward;
+            return point.position + away.normalized * 0.52f;
         }
 
         /// <summary>Used by build mode to keep a person-sized aisle at the chair.</summary>
         public bool IsSeatApproachClear()
         {
+            for (int i = 0; i < seatPoints.Length; i++)
+                if (seatPoints[i] != null && !IsSeatApproachClear(i)) return false;
+            return true;
+        }
+
+        private bool IsSeatApproachClear(int seatIndex)
+        {
             if (seatClearanceHits == null) seatClearanceHits = new Collider[32];
-            Vector3 approach = SeatApproachPoint;
+            Vector3 approach = SeatApproachPointFor(seatIndex);
             int count = Physics.OverlapCapsuleNonAlloc(
                 approach + Vector3.up * 0.28f,
                 approach + Vector3.up * 1.42f,
@@ -80,14 +115,21 @@ namespace ShawarmaTycoon
             return true;
         }
 
-        public void Configure(Transform playerTransform, Transform customerSeat)
+        public void Configure(
+            Transform playerTransform, Transform firstCustomerSeat, Transform secondCustomerSeat = null)
         {
             player = playerTransform;
-            seatPoint = customerSeat;
+            seatPoints[0] = firstCustomerSeat;
+            seatPoints[1] = secondCustomerSeat;
 
-            dirtyIndicator = PrototypeVisuals.CreatePrimitive("Dirty Plate", PrimitiveType.Cylinder, transform,
-                new Vector3(-0.384f, 0.94f, 0f), new Vector3(0.36f, 0.035f, 0.36f), PrototypeVisuals.Red);
-            dirtyIndicator.SetActive(false);
+            for (int i = 0; i < dirtyIndicators.Length; i++)
+            {
+                dirtyIndicators[i] = PrototypeVisuals.CreatePrimitive(
+                    "Dirty Plate " + (i + 1), PrimitiveType.Cylinder, transform,
+                    new Vector3(-0.28f, 0.94f, i == 0 ? -0.20f : 0.20f),
+                    new Vector3(0.32f, 0.035f, 0.32f), PrototypeVisuals.Red);
+                dirtyIndicators[i].SetActive(false);
+            }
 
             statusLabel = PrototypeVisuals.CreateLabel("Table", transform, new Vector3(0f, 1.25f, 0f), 0.12f);
             statusLabel.gameObject.SetActive(false);
@@ -234,40 +276,48 @@ namespace ShawarmaTycoon
             bool themed = makeoverTier > 1 && makeoverVisuals[makeoverTier] != null;
             if (swaps)
             {
-                cleanVisual.SetActive(!themed && !dirty);
-                dirtyVisual.SetActive(!themed && dirty);
+                bool fullyDirty = dirtySeats[0] && dirtySeats[1];
+                cleanVisual.SetActive(!themed && !fullyDirty);
+                dirtyVisual.SetActive(!themed && fullyDirty);
             }
 
             // A themed table keeps its coherent furniture set and uses the clear
             // red plate marker to communicate dirt instead of swapping back to
             // the starter-table model.
-            if (dirtyIndicator != null)
-                dirtyIndicator.SetActive(dirty && (!swaps || themed));
+            bool authoredDirtyShown = swaps && !themed && dirtySeats[0] && dirtySeats[1];
+            for (int i = 0; i < dirtyIndicators.Length; i++)
+                if (dirtyIndicators[i] != null)
+                    dirtyIndicators[i].SetActive(dirtySeats[i] && !authoredDirtyShown);
         }
 
         public bool TryReserve(CustomerAgent customer)
         {
-            if (!IsAvailable || customer == null) return false;
-            occupant = customer;
-            reserved = true;
-            UpdateLabel();
-            return true;
+            if (customer == null || SeatIndex(customer) >= 0) return false;
+            for (int i = 0; i < seatPoints.Length; i++)
+            {
+                if (seatPoints[i] == null || occupants[i] != null || dirtySeats[i] ||
+                    !IsSeatApproachClear(i)) continue;
+                occupants[i] = customer;
+                UpdateLabel();
+                return true;
+            }
+            return false;
         }
 
         public void CancelReservation(CustomerAgent customer)
         {
-            if (occupant != customer) return;
-            occupant = null;
-            reserved = false;
+            int index = SeatIndex(customer);
+            if (index < 0) return;
+            occupants[index] = null;
             UpdateLabel();
         }
 
         public void FinishMeal(CustomerAgent customer, int payout)
         {
-            if (occupant != customer) return;
-            occupant = null;
-            reserved = false;
-            dirty = true;
+            int index = SeatIndex(customer);
+            if (index < 0) return;
+            occupants[index] = null;
+            dirtySeats[index] = true;
             pendingCash += Mathf.Max(0, payout);
             GameProgress.RecordServed(customer.IsVip, false);
             RefreshDirtyVisual();
@@ -302,13 +352,19 @@ namespace ShawarmaTycoon
 
         private void TryPickUpTrash()
         {
-            if (!dirty || player == null) return;
+            if (!IsDirty || player == null) return;
             if (Vector3.SqrMagnitude(player.position - transform.position) > trashPickupRadius * trashPickupRadius) return;
 
             CarryInventory inventory = player.GetComponent<CarryInventory>();
-            if (inventory == null || !inventory.TryAdd(ItemType.Trash)) return;
-
-            dirty = false;
+            if (inventory == null) return;
+            bool pickedUp = false;
+            for (int i = 0; i < dirtySeats.Length; i++)
+            {
+                if (!dirtySeats[i] || !inventory.TryAdd(ItemType.Trash)) continue;
+                dirtySeats[i] = false;
+                pickedUp = true;
+            }
+            if (!pickedUp) return;
             RefreshDirtyVisual();
             UpdateLabel();
             AudioDirector.Play(GameSfx.Pickup);
@@ -324,8 +380,9 @@ namespace ShawarmaTycoon
 
         public bool TryAutoCleanTrash()
         {
-            if (!dirty) return false;
-            dirty = false;
+            int dirtyIndex = dirtySeats[0] ? 0 : dirtySeats[1] ? 1 : -1;
+            if (dirtyIndex < 0) return false;
+            dirtySeats[dirtyIndex] = false;
             GameProgress.RecordTrash(1);
             ComboSystem.Instance?.RegisterWorkerAction();
             RefreshDirtyVisual();
@@ -361,15 +418,25 @@ namespace ShawarmaTycoon
             statusLabel.text = string.Empty;
         }
 
+        private int SeatIndex(CustomerAgent customer)
+        {
+            if (customer == null) return -1;
+            for (int i = 0; i < occupants.Length; i++)
+                if (occupants[i] == customer) return i;
+            return -1;
+        }
+
         private void OnDrawGizmosSelected()
         {
             Gizmos.color = Color.cyan;
             Gizmos.DrawWireSphere(transform.position, trashPickupRadius);
-            if (seatPoint != null)
+            for (int i = 0; i < seatPoints.Length; i++)
             {
+                if (seatPoints[i] == null) continue;
                 Gizmos.color = Color.green;
-                Gizmos.DrawWireSphere(SeatApproachPoint + Vector3.up * 0.3f, 0.29f);
-                Gizmos.DrawLine(SeatApproachPoint, seatPoint.position);
+                Vector3 approach = SeatApproachPointFor(i);
+                Gizmos.DrawWireSphere(approach + Vector3.up * 0.3f, 0.29f);
+                Gizmos.DrawLine(approach, seatPoints[i].position);
             }
         }
     }

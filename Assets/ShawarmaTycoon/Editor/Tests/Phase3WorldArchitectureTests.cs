@@ -126,11 +126,21 @@ namespace ShawarmaTycoon.Tests
         [Test]
         public void Prices_StayInStepWithMeasuredIncome()
         {
+            Assert.That(CustomerManager.MinimumDiningSeconds, Is.GreaterThanOrEqualTo(15f),
+                "Customers leave before two-cover table capacity becomes meaningful.");
+            Assert.That(CustomerManager.MaximumDiningSeconds,
+                Is.GreaterThan(CustomerManager.MinimumDiningSeconds));
+
             float secondsToFirstBuy = ShopPrices.Belt[0] / HandCarriedIncome * 60f;
-            Assert.That(secondsToFirstBuy, Is.LessThanOrEqualTo(120f),
-                "The first thing to buy is out of reach for the opening two minutes.");
-            Assert.That(secondsToFirstBuy, Is.GreaterThan(60f),
-                "The first purchase is free money; there is no opening to play.");
+            Assert.That(secondsToFirstBuy, Is.LessThanOrEqualTo(300f),
+                "The first belt is out of reach for the opening five minutes.");
+            Assert.That(secondsToFirstBuy, Is.GreaterThan(180f),
+                "The first belt skips the hand-carry opening before it has time to matter.");
+
+            Assert.That(ShopPrices.Belt[1], Is.GreaterThanOrEqualTo(ShopPrices.Belt[0] * 2),
+                "The second belt does not ask the player to grow the restaurant first.");
+            Assert.That(ShopPrices.Belt[2], Is.GreaterThanOrEqualTo(ShopPrices.Belt[1] * 2),
+                "The final belt is still a trivial follow-up purchase.");
 
             float minutesToFirstTable = ShopPrices.Table[0] / HandCarriedIncome;
             Assert.That(minutesToFirstTable, Is.InRange(3f, 6f),

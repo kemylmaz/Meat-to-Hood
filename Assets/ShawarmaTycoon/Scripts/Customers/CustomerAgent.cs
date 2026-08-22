@@ -154,7 +154,7 @@ namespace ShawarmaTycoon
         /// <summary>The bill, paid at the till the moment they are served.</summary>
         public int CounterPayment { get; private set; }
 
-        public void Serve(CustomerTable assignedTable)
+        public void Serve(CustomerTable assignedTable, float checkoutRewardMultiplier = 1f)
         {
             table = assignedTable;
             bool fast = moodStep == 0;
@@ -171,7 +171,8 @@ namespace ShawarmaTycoon
             // A bag with a drink and a dessert in it is worth more than a wrap on
             // its own, so what they walked out with sets the size of the bill.
             int bill = RewardCalculator.Calculate(
-                mealPayout, serviceMultiplier * Order.ValueMultiplier);
+                mealPayout, serviceMultiplier * Order.ValueMultiplier *
+                            Mathf.Max(1f, checkoutRewardMultiplier));
 
             // The bill is paid at the till, and paid now, so a moving queue earns
             // while it moves. What is left on the table afterwards is the tip: how
@@ -225,16 +226,17 @@ namespace ShawarmaTycoon
                     break;
 
                 case CustomerState.WalkingToTable:
-                    if (table == null || table.SeatPoint == null)
+                    Transform assignedSeat = table != null ? table.GetSeatPoint(this) : null;
+                    if (table == null || assignedSeat == null)
                     {
                         State = CustomerState.Leaving;
                         break;
                     }
 
-                    if (MoveNavigatedTowards(table.SeatApproachPoint))
+                    if (MoveNavigatedTowards(table.GetSeatApproachPoint(this)))
                     {
                         SetAngryFace(false);
-                        WarpTo(table.SeatPoint.position, table.SeatPoint.rotation);
+                        WarpTo(assignedSeat.position, assignedSeat.rotation);
                         eatingTimer = eatingDuration;
                         ClearNavigation();
                         State = CustomerState.Eating;
@@ -245,8 +247,9 @@ namespace ShawarmaTycoon
                     eatingTimer -= Time.deltaTime;
                     if (eatingTimer <= 0f)
                     {
-                        if (table != null)
-                            WarpTo(table.SeatApproachPoint, table.SeatPoint.rotation);
+                        Transform finishedSeat = table != null ? table.GetSeatPoint(this) : null;
+                        if (finishedSeat != null)
+                            WarpTo(table.GetSeatApproachPoint(this), finishedSeat.rotation);
                         table?.FinishMeal(this, finalPayout);
                         ClearNavigation();
                         State = CustomerState.Leaving;

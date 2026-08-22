@@ -155,14 +155,19 @@ namespace ShawarmaTycoon
         }
 
         /// <summary>
-        /// The till first, then the tables. Most of a bill is paid over the
-        /// counter now, so a cashier who only cleared tables left the takings
-        /// piling up where the money actually lands.
+        /// Checkout first, then the till and tables. A cashier is the automation
+        /// for serving the queue; customers never pull wraps off the counter on
+        /// their own. Cash collection remains their secondary duty.
         /// </summary>
         private bool DispatchCashier()
         {
             WorkerAgent agent = AgentFor(RecruitRole.Cashier);
             if (agent == null || agent.IsBusy) return false;
+
+            if (customers != null && customers.HasCustomerWaitingAtRegister && till != null)
+                return agent.Dispatch(till.CollectPoint,
+                    () => customers.TryServeNextCustomer(true),
+                    ItemType.None, Vector3.zero, null);
 
             if (till != null && till.HasCash)
                 return agent.Dispatch(till.CollectPoint,
