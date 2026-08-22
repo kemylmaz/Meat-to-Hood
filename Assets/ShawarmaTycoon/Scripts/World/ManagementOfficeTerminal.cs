@@ -30,6 +30,7 @@ namespace ShawarmaTycoon
 
         private void Update()
         {
+            if (Time.timeScale <= 0f) return;
             if (player == null || menu == null) return;
             bool nearby = Vector3.SqrMagnitude(player.position - transform.position) <= activationRadius * activationRadius;
             if (label != null) label.gameObject.SetActive(nearby);

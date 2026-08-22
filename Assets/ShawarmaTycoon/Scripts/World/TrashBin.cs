@@ -23,6 +23,7 @@ namespace ShawarmaTycoon
 
         private void Update()
         {
+            if (Time.timeScale <= 0f) return;
             cooldown -= Time.deltaTime;
             if (player == null || inventory == null) return;
 

@@ -89,7 +89,6 @@ namespace ShawarmaTycoon.UI
             // Order matters: the joystick catcher sits at the bottom of the draw
             // order so every widget above it keeps its own taps.
             Joystick = TouchJoystick.Create(SafeArea, CanvasRect);
-            gameplayChrome.Add(Joystick.gameObject);
 
             gameplayChrome.Add(CoinCounter.Create(SafeArea).gameObject);
             gameplayChrome.Add(ShopProgressBar.Create(SafeArea).gameObject);

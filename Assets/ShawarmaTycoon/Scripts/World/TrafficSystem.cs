@@ -84,6 +84,7 @@ namespace ShawarmaTycoon
 
         private void Update()
         {
+            if (Time.timeScale <= 0f) return;
             if (layout == null) return;
 
             // A car waits at the window exactly as long as the order does, rather

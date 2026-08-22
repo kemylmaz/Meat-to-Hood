@@ -22,6 +22,7 @@ namespace ShawarmaTycoon.UI
         private Image catcher;
         private Vector2 origin;
         private int activePointerId = int.MinValue;
+        private bool buildMode;
 
         public Vector2 Value { get; private set; }
         public bool IsActive => activePointerId != int.MinValue;
@@ -68,6 +69,33 @@ namespace ShawarmaTycoon.UI
             enabled = inputEnabled;
             if (catcher != null) catcher.raycastTarget = inputEnabled;
             if (inputEnabled) return;
+            ResetInput();
+        }
+
+        /// <summary>
+        /// During layout editing only the lower-left touch zone belongs to
+        /// movement; the rest of the transparent catcher yields to furniture.
+        /// Mouse users keep the whole restaurant selectable and move with WASD.
+        /// </summary>
+        public void SetBuildMode(bool active)
+        {
+            buildMode = active;
+            ResetInput();
+        }
+
+        public bool ClaimsBuildModePointer(Vector2 screenPosition, bool isTouchPointer) =>
+            buildMode && isTouchPointer && InBuildMovementZone(screenPosition);
+
+        private static bool InBuildMovementZone(Vector2 screenPosition)
+        {
+            // Use the shorter screen edge so portrait does not turn almost half
+            // the display into a joystick and hide furniture from touch editing.
+            float extent = Mathf.Min(Screen.width, Screen.height) * 0.36f;
+            return screenPosition.x <= extent && screenPosition.y <= extent;
+        }
+
+        private void ResetInput()
+        {
             activePointerId = int.MinValue;
             Value = Vector2.zero;
             if (group != null) group.alpha = 0f;
@@ -76,6 +104,7 @@ namespace ShawarmaTycoon.UI
         public void OnPointerDown(PointerEventData eventData)
         {
             if (IsActive) return;
+            if (buildMode && (eventData.pointerId < 0 || !InBuildMovementZone(eventData.position))) return;
             activePointerId = eventData.pointerId;
             origin = ToCanvas(eventData);
             baseRect.anchoredPosition = origin;

@@ -55,6 +55,7 @@ namespace ShawarmaTycoon
 
         private void Update()
         {
+            if (Time.timeScale <= 0f) return;
             countdown -= Time.deltaTime;
             if (countdown > 0f)
                 return;

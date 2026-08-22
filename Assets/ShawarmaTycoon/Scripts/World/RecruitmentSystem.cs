@@ -135,6 +135,7 @@ namespace ShawarmaTycoon
         /// </summary>
         private void Update()
         {
+            if (Time.timeScale <= 0f) return;
             float assist = HumanResourcesSystem.AssistIntervalMultiplier;
 
             Step(RecruitRole.Cashier, cashierInterval, assist, DispatchCashier);

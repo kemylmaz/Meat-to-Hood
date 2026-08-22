@@ -68,6 +68,7 @@ namespace ShawarmaTycoon
 
         private void Update()
         {
+            if (Time.timeScale <= 0f) return;
             if (!unlocked || source == null || destination == null) return;
             timer -= Time.deltaTime;
             if (timer > 0f) return;

@@ -112,6 +112,7 @@ namespace ShawarmaTycoon
 
         private void Update()
         {
+            if (Time.timeScale <= 0f) return;
             transferCooldown -= Time.deltaTime;
 
             if (pendingOrder)

@@ -19,6 +19,7 @@ namespace ShawarmaTycoon
         private float edgeSafetyRadius = 0.28f;
         private float baseMoveSpeed;
         private Vector3 safePosition;
+        private bool buildModeMovement;
         /// <summary>
         /// Largest drop the player will step down; anything deeper is a ledge.
         /// The lot and the plots stand 25 cm over the pavement and everything the
@@ -28,6 +29,7 @@ namespace ShawarmaTycoon
         [SerializeField, Min(0.05f)] private float maxStepDown = 0.15f;
 
         public Vector2 JoystickValue => joystick != null ? joystick.Value : Vector2.zero;
+        public bool IsBuildModeMovement => buildModeMovement;
         public DioramaWalkableRegistry WalkableRegistry => walkableRegistry;
         public Bounds MovementBounds => walkableRegistry != null
             ? walkableRegistry.ActiveBounds
@@ -38,6 +40,17 @@ namespace ShawarmaTycoon
 
         /// <summary>The on-screen stick now lives in the uGUI HUD, not in OnGUI.</summary>
         public void SetJoystick(TouchJoystick stick) => joystick = stick;
+
+        /// <summary>
+        /// Build mode pauses the restaurant clock, so the player alone advances
+        /// with unscaled time while the CharacterController keeps normal walls
+        /// and walkable-surface constraints.
+        /// </summary>
+        public void SetBuildModeMovement(bool active)
+        {
+            buildModeMovement = active;
+            if (active) verticalVelocity = -1f;
+        }
 
         private void Awake()
         {
@@ -79,6 +92,7 @@ namespace ShawarmaTycoon
 
         private void Update()
         {
+            float deltaTime = buildModeMovement ? Time.unscaledDeltaTime : Time.deltaTime;
             Vector2 input = ReadKeyboardInput();
             if (input.sqrMagnitude < 0.01f) input = JoystickValue;
 
@@ -91,12 +105,12 @@ namespace ShawarmaTycoon
             right.Normalize();
 
             Vector3 direction = Vector3.ClampMagnitude(right * input.x + forward * input.y, 1f);
-            Vector3 horizontal = direction * (moveSpeed * Time.deltaTime);
+            Vector3 horizontal = direction * (moveSpeed * deltaTime);
 
             if (characterController.isGrounded && verticalVelocity < 0f)
                 verticalVelocity = -1f;
             else
-                verticalVelocity += Physics.gravity.y * Time.deltaTime;
+                verticalVelocity += Physics.gravity.y * deltaTime;
 
             Vector3 desired = transform.position + horizontal;
             if (walkableRegistry == null)
@@ -107,7 +121,7 @@ namespace ShawarmaTycoon
             Vector3 constrainedHorizontal = ResolveFooting(
                 new Vector3(desired.x - transform.position.x, 0f, desired.z - transform.position.z));
 
-            characterController.Move(constrainedHorizontal + Vector3.up * (verticalVelocity * Time.deltaTime));
+            characterController.Move(constrainedHorizontal + Vector3.up * (verticalVelocity * deltaTime));
 
             if (characterController.isGrounded &&
                 (walkableRegistry == null ||
@@ -119,7 +133,7 @@ namespace ShawarmaTycoon
             if (direction.sqrMagnitude > 0.01f)
             {
                 Quaternion targetRotation = Quaternion.LookRotation(direction, Vector3.up);
-                transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, rotationSpeed * Time.deltaTime);
+                transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, rotationSpeed * deltaTime);
             }
         }
 

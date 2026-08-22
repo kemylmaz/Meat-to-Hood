@@ -52,6 +52,7 @@ namespace ShawarmaTycoon
 
         private void Update()
         {
+            if (Time.timeScale <= 0f) return;
             if (Broken != null)
             {
                 UpdateRepair();

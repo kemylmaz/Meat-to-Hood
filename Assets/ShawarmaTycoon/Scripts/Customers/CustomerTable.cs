@@ -132,6 +132,7 @@ namespace ShawarmaTycoon
 
         private void Update()
         {
+            if (Time.timeScale <= 0f) return;
             if (player == null) return;
             CollectCashIfNearby();
             TryPickUpTrash();

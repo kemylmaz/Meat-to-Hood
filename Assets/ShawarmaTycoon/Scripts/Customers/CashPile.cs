@@ -85,6 +85,7 @@ namespace ShawarmaTycoon
 
         private void Update()
         {
+            if (Time.timeScale <= 0f) return;
             if (pending <= 0 || player == null) return;
             if (Vector3.SqrMagnitude(player.position - CollectPoint) >
                 pickupRadius * pickupRadius) return;

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using ShawarmaTycoon.UI;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -17,6 +18,7 @@ namespace ShawarmaTycoon
         private const float RayDistance = 250f;
         private readonly RaycastHit[] rayHits = new RaycastHit[96];
         private readonly Collider[] overlapHits = new Collider[128];
+        private readonly List<RaycastResult> uiHits = new();
 
         private Camera worldCamera;
         private MobilePlayerController playerMotor;
@@ -75,10 +77,12 @@ namespace ShawarmaTycoon
                 if (playerMotor != null)
                 {
                     playerWasEnabled = playerMotor.enabled;
-                    playerMotor.enabled = false;
+                    playerMotor.enabled = true;
+                    playerMotor.SetBuildModeMovement(true);
                 }
-                joystick?.SetInputEnabled(false);
-                message = "Bir eşyaya dokunup sürükle";
+                joystick?.SetInputEnabled(true);
+                joystick?.SetBuildMode(true);
+                message = "Sol alttan yürü • Eşyaya dokunup sürükle";
                 AudioDirector.Play(GameSfx.Pickup, 0.65f);
             }
             else
@@ -86,7 +90,12 @@ namespace ShawarmaTycoon
                 FinishDrag();
                 Select(null);
                 Time.timeScale = previousTimeScale;
-                if (playerMotor != null) playerMotor.enabled = playerWasEnabled;
+                if (playerMotor != null)
+                {
+                    playerMotor.SetBuildModeMovement(false);
+                    playerMotor.enabled = playerWasEnabled;
+                }
+                joystick?.SetBuildMode(false);
                 joystick?.SetInputEnabled(true);
                 GameProgress.FlushNow();
             }
@@ -98,7 +107,12 @@ namespace ShawarmaTycoon
             if (!IsActive) return;
             IsActive = false;
             Time.timeScale = previousTimeScale;
-            if (playerMotor != null) playerMotor.enabled = playerWasEnabled;
+            if (playerMotor != null)
+            {
+                playerMotor.SetBuildModeMovement(false);
+                playerMotor.enabled = playerWasEnabled;
+            }
+            joystick?.SetBuildMode(false);
             joystick?.SetInputEnabled(true);
         }
 
@@ -123,7 +137,9 @@ namespace ShawarmaTycoon
 
             if (pointer.press.wasPressedThisFrame)
             {
-                if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject()) return;
+                if (joystick != null &&
+                    joystick.ClaimsBuildModePointer(screenPosition, pointer is Touchscreen)) return;
+                if (IsPointerOverBlockingUI(screenPosition)) return;
                 BeginPointer(screenPosition);
             }
             else if (dragging && pointer.press.isPressed)
@@ -133,6 +149,23 @@ namespace ShawarmaTycoon
                 FinishDrag();
 
             UpdateIndicator();
+        }
+
+        /// <summary>The joystick catcher is transparent UI, but it must not hide furniture rays.</summary>
+        private bool IsPointerOverBlockingUI(Vector2 screenPosition)
+        {
+            EventSystem events = EventSystem.current;
+            if (events == null) return false;
+
+            uiHits.Clear();
+            events.RaycastAll(new PointerEventData(events) { position = screenPosition }, uiHits);
+            for (int i = 0; i < uiHits.Count; i++)
+            {
+                GameObject hit = uiHits[i].gameObject;
+                if (hit != null && hit.GetComponentInParent<TouchJoystick>() != null) continue;
+                return true;
+            }
+            return false;
         }
 
         private void BeginPointer(Vector2 screenPosition)

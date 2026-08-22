@@ -66,6 +66,7 @@ namespace ShawarmaTycoon
 
         private void Update()
         {
+            if (Time.timeScale <= 0f) return;
             handoverCooldown -= Time.deltaTime;
 
             if (!hasOrder)

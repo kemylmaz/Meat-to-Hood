@@ -317,8 +317,13 @@ namespace ShawarmaTycoon.Tests
                 controller.SetBuildMode(true);
                 Assert.That(controller.IsActive, Is.True);
                 Assert.That(Time.timeScale, Is.Zero, "Restaurant simulation keeps running during layout edits.");
-                Assert.That(Object.FindFirstObjectByType<MobilePlayerController>().enabled, Is.False,
-                    "Player movement is still active under build-mode dragging.");
+                MobilePlayerController player = Object.FindFirstObjectByType<MobilePlayerController>();
+                Assert.That(player.enabled, Is.True,
+                    "The player should remain controllable while the restaurant is paused.");
+                Assert.That(player.IsBuildModeMovement, Is.True,
+                    "The player is not using unscaled movement during the paused build mode.");
+                Assert.That(UI.GameHUD.Instance.Joystick.enabled, Is.True,
+                    "Mobile movement input was disabled during build mode.");
             }
             finally
             {
@@ -326,6 +331,7 @@ namespace ShawarmaTycoon.Tests
                 Time.timeScale = timeScale;
             }
             Assert.That(controller.IsActive, Is.False);
+            Assert.That(Object.FindFirstObjectByType<MobilePlayerController>().IsBuildModeMovement, Is.False);
         }
 
         [Test]

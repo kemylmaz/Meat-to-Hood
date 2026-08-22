@@ -153,6 +153,7 @@ namespace ShawarmaTycoon
 
         private void Update()
         {
+            if (Time.timeScale <= 0f) return;
             if (SoldOut || player == null) return;
 
             bool onPad =
