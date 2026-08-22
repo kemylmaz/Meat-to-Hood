@@ -253,9 +253,9 @@ namespace ShawarmaTycoon
             orderLight = PrototypeVisuals.CreatePrimitive(
                 "Order Light", PrimitiveType.Sphere, transform,
                 new Vector3(0.43f, 1.16f, -0.05f), new Vector3(0.20f, 0.20f, 0.20f), teal);
-            orderLabel = PrototypeVisuals.CreateLabel(
-                "PAKET", transform, new Vector3(0f, 1.70f, 0f), 0.105f);
-            orderLabel.fontStyle = FontStyle.Bold;
+            orderLabel = PrototypeVisuals.CreateCozyBadge(
+                "PAKET", transform, new Vector3(0f, 1.70f, 0f), 1.12f,
+                UI.UITheme.Mustard, UI.UITheme.Ink);
 
             cashPad = new GameObject("Takeaway Cash Pad");
             cashPad.transform.SetParent(transform, false);

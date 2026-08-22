@@ -17,7 +17,9 @@ namespace ShawarmaTycoon
         {
             player = playerTransform;
             inventory = playerInventory;
-            label = PrototypeVisuals.CreateLabel("", transform, Vector3.up * 1.05f, 0.12f);
+            label = PrototypeVisuals.CreateCozyBadge(
+                "AT", transform, Vector3.up * 1.25f, 0.74f,
+                UI.UITheme.CreamLight, UI.UITheme.Ink);
             label.gameObject.SetActive(false);
         }
 
@@ -32,7 +34,6 @@ namespace ShawarmaTycoon
             if (label != null)
             {
                 label.gameObject.SetActive(nearby && carrying);
-                if (nearby && carrying) label.text = "AT";
             }
             dwell = nearby ? dwell + Time.deltaTime : 0f;
             if (!nearby || !carrying || cooldown > 0f) return;

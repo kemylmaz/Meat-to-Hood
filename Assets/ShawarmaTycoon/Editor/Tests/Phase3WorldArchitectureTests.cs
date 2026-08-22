@@ -275,6 +275,32 @@ namespace ShawarmaTycoon.Tests
             Assert.That(RestaurantMakeoverSystem.TierShortName(expectedTier), Is.Not.Empty);
         }
 
+        [Test]
+        public void WorldLabels_UseTheCozyDisplayFontAndCompactBadgeGeometry()
+        {
+            GameObject parent = new("World Label Test");
+            try
+            {
+                TextMesh label = PrototypeVisuals.CreateLabel("MAX", parent.transform, Vector3.zero, 0.14f);
+                Assert.That(label.font, Is.EqualTo(ShawarmaTycoon.UI.UITheme.DisplayFont));
+                Assert.That(label.characterSize, Is.LessThan(0.06f),
+                    "Legacy world-label size would spill across the floor.");
+
+                TextMesh badge = PrototypeVisuals.CreateCozyBadge(
+                    "DOLU", parent.transform, Vector3.up, 1.02f);
+                Assert.That(badge.font, Is.EqualTo(ShawarmaTycoon.UI.UITheme.DisplayFont));
+                Assert.That(badge.transform.childCount, Is.EqualTo(6),
+                    "The cozy chip needs a paper silhouette and its offset shadow.");
+                foreach (Collider collider in badge.GetComponentsInChildren<Collider>(true))
+                    Assert.That(collider.enabled, Is.False,
+                        "A status badge must never affect navigation or interaction.");
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(parent);
+            }
+        }
+
         /// <summary>
         /// Pads drain coins while the player stands on one, so two within reach of
         /// a single spot take payment for two different things at once.

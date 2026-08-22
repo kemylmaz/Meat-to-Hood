@@ -450,9 +450,8 @@ namespace ShawarmaTycoon
                 new Vector3(0f, 2.02f, 0f), new Vector3(0.13f, 0.28f, 0.13f), gold);
             PrototypeVisuals.CreatePrimitive("Crown Right", PrimitiveType.Sphere, crown.transform,
                 new Vector3(0.16f, 1.96f, 0f), new Vector3(0.13f, 0.22f, 0.13f), gold);
-            TextMesh vipLabel = PrototypeVisuals.CreateLabel("VIP", crown.transform, new Vector3(0f, 2.34f, 0f), 0.13f);
-            vipLabel.color = new Color(0.82f, 0.42f, 0.04f);
-            vipLabel.fontStyle = FontStyle.Bold;
+            // The crown already communicates VIP from across the room. A second
+            // floating word only added visual noise and used the old label style.
         }
 
         private void SetAngryFace(bool visible)

@@ -24,7 +24,10 @@ namespace ShawarmaTycoon
             player = playerTransform;
             menu = menuHud;
             type = menuType;
-            label = PrototypeVisuals.CreateLabel(displayName, transform, Vector3.up * 1.58f, 0.12f);
+            float badgeWidth = Mathf.Clamp(0.75f + displayName.Length * 0.075f, 1.15f, 2.10f);
+            label = PrototypeVisuals.CreateCozyBadge(
+                displayName, transform, Vector3.up * 1.58f, badgeWidth,
+                UI.UITheme.CreamLight, UI.UITheme.Ink);
             label.gameObject.SetActive(false);
         }
 

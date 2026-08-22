@@ -271,10 +271,85 @@ namespace ShawarmaTycoon
             label.text = text;
             label.anchor = TextAnchor.MiddleCenter;
             label.alignment = TextAlignment.Center;
-            label.characterSize = size;
-            label.fontSize = 48;
-            label.color = new Color(0.25f, 0.13f, 0.10f);
+            label.font = UI.UITheme.DisplayFont;
+            label.fontSize = 64;
+            // Legacy TextMesh sizing was calibrated for the built-in Arial font.
+            // Baloo's glyphs are much wider, which is what produced the enormous
+            // salmon "MAX" labels. Keep the caller-facing size values compatible
+            // while drawing them at a world-space scale that fits the diorama.
+            label.characterSize = size * 0.38f;
+            label.fontStyle = FontStyle.Bold;
+            label.color = UI.UITheme.Ink;
+            Renderer renderer = label.GetComponent<Renderer>();
+            if (renderer != null && label.font != null)
+            {
+                renderer.sharedMaterial = label.font.material;
+                renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            }
             return label;
+        }
+
+        /// <summary>
+        /// A small physical status chip for short, persistent world messages.
+        /// It uses the same warm paper, ink and offset shadow language as the HUD,
+        /// instead of leaving bare text floating across the restaurant floor.
+        /// </summary>
+        public static TextMesh CreateCozyBadge(
+            string text,
+            Transform parent,
+            Vector3 localPosition,
+            float width = 1.05f,
+            Color? panelColor = null,
+            Color? textColor = null)
+        {
+            width = Mathf.Max(0.68f, width);
+            GameObject root = new("Cartoon Durum Rozeti");
+            root.transform.SetParent(parent, false);
+            root.transform.localPosition = localPosition;
+            root.transform.localEulerAngles = new Vector3(55f, 0f, 0f);
+
+            Color paper = panelColor ?? UI.UITheme.CreamLight;
+            Color ink = textColor ?? UI.UITheme.Ink;
+            const float height = 0.34f;
+            float middleWidth = Mathf.Max(0.18f, width - height * 0.82f);
+
+            // Chunky offset shadow plus circular end caps give the card a soft,
+            // sticker-like silhouette without importing another UI texture.
+            CreateBadgeShape(root.transform, "Rozet Gölgesi", width, height,
+                new Vector3(0.035f, -0.035f, 0.060f), UI.UITheme.DropShadow);
+            CreateBadgeShape(root.transform, "Rozet Kağıdı", width, height,
+                new Vector3(0f, 0f, 0.025f), paper);
+
+            TextMesh label = root.AddComponent<TextMesh>();
+            label.text = text;
+            label.anchor = TextAnchor.MiddleCenter;
+            label.alignment = TextAlignment.Center;
+            label.font = UI.UITheme.DisplayFont;
+            label.fontSize = 64;
+            label.characterSize = Mathf.Min(0.043f, middleWidth / Mathf.Max(8f, text.Length * 4.5f));
+            label.fontStyle = FontStyle.Bold;
+            label.color = ink;
+            Renderer renderer = label.GetComponent<Renderer>();
+            if (renderer != null && label.font != null)
+            {
+                renderer.sharedMaterial = label.font.material;
+                renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            }
+            return label;
+        }
+
+        private static void CreateBadgeShape(
+            Transform parent, string name, float width, float height, Vector3 offset, Color color)
+        {
+            float cap = height * 0.5f;
+            CreatePrimitive(name + " Orta", PrimitiveType.Cube, parent, offset,
+                new Vector3(Mathf.Max(0.12f, width - height), height, 0.055f), color);
+            CreatePrimitive(name + " Sol", PrimitiveType.Sphere, parent,
+                offset + Vector3.left * (width * 0.5f - cap),
+                new Vector3(height, height, 0.055f), color);
+            CreatePrimitive(name + " Sağ", PrimitiveType.Sphere, parent,
+                offset + Vector3.right * (width * 0.5f - cap),
+                new Vector3(height, height, 0.055f), color);
         }
     }
 }

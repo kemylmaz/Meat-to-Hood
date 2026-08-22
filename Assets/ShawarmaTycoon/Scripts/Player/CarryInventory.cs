@@ -39,8 +39,9 @@ namespace ShawarmaTycoon
 
             stackPulse = stackRoot.GetComponent<FeedbackPulse>() ?? stackRoot.gameObject.AddComponent<FeedbackPulse>();
 
-            capacityLabel = PrototypeVisuals.CreateLabel("MAX", transform, new Vector3(0f, 2.75f, 0f), 0.14f);
-            capacityLabel.color = PrototypeVisuals.Red;
+            capacityLabel = PrototypeVisuals.CreateCozyBadge(
+                "DOLU", transform, new Vector3(0f, 2.34f, 0f), 1.02f,
+                UI.UITheme.Mustard, UI.UITheme.Ink);
             capacityLabel.gameObject.SetActive(false);
         }
 
