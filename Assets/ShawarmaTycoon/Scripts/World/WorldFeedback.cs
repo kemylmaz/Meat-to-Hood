@@ -106,7 +106,10 @@ namespace ShawarmaTycoon
             arc.from = start;
             arc.to = end;
             root.transform.position = start;
-            GameObject visual = PrototypeVisuals.CreateItemVisual(type, root.transform, Vector3.zero, 0.72f);
+            // The arc is the only frame where the player can see what actually
+            // moved between stations, so it must not shrink an already small food
+            // model. A slight presentation boost makes the hand-off legible.
+            GameObject visual = PrototypeVisuals.CreateItemVisual(type, root.transform, Vector3.zero, 1.08f);
             PaymentFlyer.DisablePhysicsAndShadows(visual);
         }
 

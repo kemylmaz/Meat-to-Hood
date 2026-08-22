@@ -301,6 +301,22 @@ namespace ShawarmaTycoon.Tests
             }
         }
 
+        [Test]
+        public void PreparedFoodModels_AreReadableButStacksStayCompact()
+        {
+            Vector3 cooked = PrototypeVisuals.ItemSize(ItemType.CookedMeat);
+            Vector3 sliced = PrototypeVisuals.ItemSize(ItemType.SlicedMeat);
+            Vector3 wrap = PrototypeVisuals.ItemSize(ItemType.Wrap);
+
+            Assert.That(cooked.y, Is.GreaterThanOrEqualTo(0.20f));
+            Assert.That(sliced.x, Is.GreaterThanOrEqualTo(0.45f));
+            Assert.That(wrap.x, Is.GreaterThanOrEqualTo(0.50f));
+            Assert.That(wrap.y, Is.GreaterThanOrEqualTo(0.16f));
+
+            Assert.That(PrototypeVisuals.StackStep(ItemType.CookedMeat), Is.LessThanOrEqualTo(0.14f));
+            Assert.That(PrototypeVisuals.StackStep(ItemType.Wrap), Is.LessThanOrEqualTo(0.14f));
+        }
+
         /// <summary>
         /// Pads drain coins while the player stands on one, so two within reach of
         /// a single spot take payment for two different things at once.

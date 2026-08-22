@@ -94,10 +94,13 @@ namespace ShawarmaTycoon
         {
             // The line's three states, in the order the shop makes them: a raw
             // steak off the rack, cut into cubes at the spit, wrapped at the board.
-            { ItemType.RawMeat, ("232_food_meat_raw", 0.045f, SideOn) },
-            { ItemType.CookedMeat, ("187_shop_steak_cubes", 0.115f, 0f) },
-            { ItemType.SlicedMeat, ("234_food_meat_sliced", 0.045f, SideOn) },
-            { ItemType.Wrap, ("230_food_wrap", 0.094f, SideOn) },
+            { ItemType.RawMeat, ("232_food_meat_raw", 0.060f, SideOn) },
+            // Food Kit assets are authored at real-food scale. In the isometric
+            // restaurant that made the prepared states read as crumbs beside a
+            // 2 m counter, especially after transfer effects scaled them again.
+            { ItemType.CookedMeat, ("187_shop_steak_cubes", 0.220f, 0f) },
+            { ItemType.SlicedMeat, ("234_food_meat_sliced", 0.095f, SideOn) },
+            { ItemType.Wrap, ("230_food_wrap", 0.180f, SideOn) },
             { ItemType.Drink, ("235_food_soda", 0.17f, 0f) },
             { ItemType.Dessert, ("238_food_cake", 0.13f, 0f) },
             // The shop's rubbish is dirty crockery, so the model is literally
@@ -147,7 +150,9 @@ namespace ShawarmaTycoon
         /// </summary>
         public static float StackStep(ItemType type, float scale = 1f)
         {
-            return Mathf.Max(0.05f, ItemSize(type).y * scale * 1.15f);
+            // Large, readable portions should not turn a twelve-item carry stack
+            // into a tower taller than the player. Slight overlap reads as a pile.
+            return Mathf.Clamp(ItemSize(type).y * scale * 1.15f, 0.05f, 0.14f);
         }
 
         public static GameObject CreateItemVisual(ItemType type, Transform parent, Vector3 localPosition, float scale = 1f)
