@@ -25,6 +25,10 @@ room tone, long reverb tail, or silence at the beginning.
 
 > Cozy cartoon food handoff and tray placement, gentle ceramic tap with a warm soft thunk and a very small success sparkle, 0.25 seconds, clean isolated one-shot, no reverb, no voice, never harsh.
 
+### `serve.mp3`
+
+> Cozy cartoon cashier food handoff, a soft paper-wrap rustle and gentle tray tap followed by one tiny welcoming chime, 0.35 seconds, clean isolated one-shot, no background ambience, no voice, suitable for frequent checkout repetition.
+
 ### `cook.wav`
 
 > Short appetizing shawarma cooking cue, quick warm grill sizzle with a playful rising wooden tick, 0.45 seconds, cozy stylized cartoon sound, clean isolated one-shot, no fire roar, no music, no voice.

@@ -7,6 +7,7 @@ namespace ShawarmaTycoon
     {
         Pickup,
         Drop,
+        Serve,
         Cook,
         Coin,
         CashRegister,
@@ -141,6 +142,11 @@ namespace ShawarmaTycoon
                     return SfxSynth.Build("sfx_drop",
                         new SfxSynth.Tone(Waveform.Sine, 470f, 300f, 0f, 0.10f, 0.42f));
 
+                case GameSfx.Serve:
+                    return SfxSynth.Build("sfx_serve",
+                        new SfxSynth.Tone(Waveform.Triangle, 520f, 720f, 0f, 0.12f, 0.32f),
+                        new SfxSynth.Tone(Waveform.Sine, 880f, 880f, 0.08f, 0.12f, 0.20f));
+
                 case GameSfx.Cook:
                     return SfxSynth.Build("sfx_cook",
                         new SfxSynth.Tone(Waveform.Triangle, 320f, 560f, 0f, 0.16f, 0.34f),
@@ -196,6 +202,7 @@ namespace ShawarmaTycoon
             {
                 case GameSfx.Pickup: return "pickup";
                 case GameSfx.Drop: return "drop";
+                case GameSfx.Serve: return "serve";
                 case GameSfx.Cook: return "cook";
                 case GameSfx.Coin: return "coin";
                 case GameSfx.CashRegister: return "cash_register";
