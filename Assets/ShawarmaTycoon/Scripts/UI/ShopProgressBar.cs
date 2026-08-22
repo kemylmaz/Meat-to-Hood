@@ -27,26 +27,26 @@ namespace ShawarmaTycoon.UI
         {
             Image pill = UIFactory.Panel("ShopProgress", parent, UITheme.Terracotta);
             UIFactory.Anchor(pill.rectTransform, UIFactory.TopCenter, UIFactory.TopCenter,
-                new Vector2(0f, -28f), new Vector2(520f, 126f));
-            UIFactory.AddCartoonFinish(pill, 4f, 9f);
+                new Vector2(0f, -22f), new Vector2(420f, 96f));
+            UIFactory.AddCartoonFinish(pill, 3f, 7f);
             pill.rectTransform.localEulerAngles = new Vector3(0f, 0f, -1.2f);
 
             ShopProgressBar bar = pill.gameObject.AddComponent<ShopProgressBar>();
             bar.root = pill.rectTransform;
 
             Text title = UIFactory.DisplayLabel("Shop Name", pill.transform, "MEAT & EAT",
-                UITheme.FontLarge, UITheme.CreamLight);
+                31, UITheme.CreamLight);
             UIFactory.Anchor(title.rectTransform, UIFactory.TopCenter, UIFactory.TopCenter,
-                new Vector2(0f, -5f), new Vector2(480f, 58f));
+                new Vector2(0f, -2f), new Vector2(390f, 43f));
 
             Text caption = UIFactory.Label("Caption", pill.transform, "DÜKKÂN GELİŞİMİ",
-                19, UITheme.CreamLight, TextAnchor.MiddleLeft, FontStyle.Bold);
+                14, UITheme.CreamLight, TextAnchor.MiddleLeft, FontStyle.Bold);
             UIFactory.Anchor(caption.rectTransform, UIFactory.BottomLeft, UIFactory.BottomLeft,
-                new Vector2(26f, 14f), new Vector2(154f, 30f));
+                new Vector2(22f, 10f), new Vector2(126f, 25f));
 
             Image track = UIFactory.Panel("Track", pill.transform, UITheme.Ink);
             UIFactory.Anchor(track.rectTransform, UIFactory.BottomLeft, UIFactory.BottomLeft,
-                new Vector2(186f, 18f), new Vector2(258f, 22f));
+                new Vector2(150f, 15f), new Vector2(210f, 16f));
             track.raycastTarget = false;
 
             bar.fill = UIFactory.Panel("Fill", track.transform, UITheme.Mustard);
@@ -61,9 +61,9 @@ namespace ShawarmaTycoon.UI
             bar.fill.fillAmount = 0f;
 
             bar.percentLabel = UIFactory.DisplayLabel("Percent", pill.transform, "0%",
-                22, UITheme.CreamLight, TextAnchor.MiddleRight);
+                17, UITheme.CreamLight, TextAnchor.MiddleRight);
             UIFactory.Anchor(bar.percentLabel.rectTransform, UIFactory.BottomRight, UIFactory.BottomRight,
-                new Vector2(-20f, 10f), new Vector2(58f, 38f));
+                new Vector2(-16f, 7f), new Vector2(48f, 30f));
             return bar;
         }
 

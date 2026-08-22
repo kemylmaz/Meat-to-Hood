@@ -22,50 +22,50 @@ namespace ShawarmaTycoon.UI
             UIFactory.Stretch(root);
             BuildModeHUD hud = root.gameObject.AddComponent<BuildModeHUD>();
 
-            hud.toggleButton = UIFactory.Button(
-                "Build Toggle", root, "İNŞA", UITheme.Teal, UITheme.Ink,
-                22, () => hud.controller?.ToggleBuildMode());
+            hud.toggleButton = UIFactory.IconButton(
+                "Build Toggle", root, "▦", "İNŞA", UITheme.Teal, UITheme.Ink,
+                () => hud.controller?.ToggleBuildMode());
             UIFactory.Anchor(hud.toggleButton.GetComponent<RectTransform>(),
                 UIFactory.TopRight, UIFactory.TopRight,
-                new Vector2(-28f, -226f), new Vector2(156f, 78f));
-            hud.toggleLabel = hud.toggleButton.GetComponentInChildren<Text>();
+                new Vector2(-28f, -216f), new Vector2(88f, 88f));
+            hud.toggleLabel = hud.toggleButton.transform.Find("Caption").GetComponent<Text>();
 
             Image banner = UIFactory.Panel("Build Banner", root, UITheme.Mustard);
             UIFactory.Anchor(banner.rectTransform, UIFactory.TopCenter, UIFactory.TopCenter,
-                new Vector2(0f, -32f), new Vector2(650f, 118f));
-            UIFactory.AddCartoonFinish(banner, 4f, 9f);
+                new Vector2(0f, -24f), new Vector2(480f, 88f));
+            UIFactory.AddCartoonFinish(banner, 3f, 7f);
             banner.rectTransform.localEulerAngles = new Vector3(0f, 0f, 1f);
             hud.modeBanner = banner.rectTransform;
 
             hud.selectionLabel = UIFactory.Label(
-                "Selection", banner.transform, "İNŞA MODU", 32, UITheme.Ink);
+                "Selection", banner.transform, "İNŞA MODU", 25, UITheme.Ink);
             hud.selectionLabel.font = UITheme.DisplayFont;
             hud.selectionLabel.fontStyle = FontStyle.Bold;
             UIFactory.Anchor(hud.selectionLabel.rectTransform, UIFactory.TopCenter, UIFactory.TopCenter,
-                new Vector2(0f, -8f), new Vector2(580f, 42f));
+                new Vector2(0f, -5f), new Vector2(440f, 34f));
 
             hud.messageLabel = UIFactory.Label(
                 "Message", banner.transform, "Bir eşyaya dokunup sürükle",
-                23, UITheme.InkSoft, TextAnchor.MiddleCenter, FontStyle.Normal);
+                17, UITheme.InkSoft, TextAnchor.MiddleCenter, FontStyle.Normal);
             UIFactory.Anchor(hud.messageLabel.rectTransform, UIFactory.BottomCenter, UIFactory.BottomCenter,
-                new Vector2(0f, 10f), new Vector2(580f, 46f));
+                new Vector2(0f, 8f), new Vector2(440f, 34f));
 
             Image toolbar = UIFactory.Panel("Build Toolbar", root, UITheme.CounterPaper);
             UIFactory.Anchor(toolbar.rectTransform, UIFactory.BottomCenter, UIFactory.BottomCenter,
-                new Vector2(0f, 40f), new Vector2(690f, 116f));
-            UIFactory.AddCartoonFinish(toolbar, 3f, 8f);
+                new Vector2(0f, 30f), new Vector2(510f, 88f));
+            UIFactory.AddCartoonFinish(toolbar, 2f, 6f);
 
             hud.rotateButton = UIFactory.Button(
                 "Rotate", toolbar.transform, "90° DÖNDÜR", UITheme.Teal, Color.white,
-                23, () => hud.controller?.RotateSelected());
+                17, () => hud.controller?.RotateSelected());
             UIFactory.Anchor(hud.rotateButton.GetComponent<RectTransform>(),
-                UIFactory.Center, UIFactory.Center, new Vector2(-165f, 0f), new Vector2(290f, 78f));
+                UIFactory.Center, UIFactory.Center, new Vector2(-120f, 0f), new Vector2(216f, 58f));
 
             hud.resetButton = UIFactory.Button(
                 "Reset", toolbar.transform, "SIFIRLA", UITheme.Terracotta, Color.white,
-                23, () => hud.controller?.ResetSelected());
+                17, () => hud.controller?.ResetSelected());
             UIFactory.Anchor(hud.resetButton.GetComponent<RectTransform>(),
-                UIFactory.Center, UIFactory.Center, new Vector2(165f, 0f), new Vector2(290f, 78f));
+                UIFactory.Center, UIFactory.Center, new Vector2(120f, 0f), new Vector2(216f, 58f));
 
             hud.modeBanner.gameObject.SetActive(false);
             toolbar.gameObject.SetActive(false);
@@ -107,7 +107,7 @@ namespace ShawarmaTycoon.UI
             // actually selected object is currently in an invalid position.
             messageLabel.color = selected != null && !controller.PlacementValid
                 ? UITheme.WarmRed
-                : UITheme.InkSoft;
+                : UITheme.Ink;
             bool hasSelection = selected != null && selected.CanMove;
             rotateButton.interactable = hasSelection;
             resetButton.interactable = hasSelection;

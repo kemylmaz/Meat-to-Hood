@@ -112,6 +112,33 @@ namespace ShawarmaTycoon.UI
             return button;
         }
 
+        /// <summary>Compact mobile tool: one clear glyph with a tiny persistent label.</summary>
+        public static Button IconButton(
+            string name,
+            Transform parent,
+            string glyph,
+            string caption,
+            Color background,
+            Color foreground,
+            Action onClick)
+        {
+            Button button = Button(name, parent, string.Empty, background, foreground, 14, onClick);
+            Text captionLabel = button.GetComponentInChildren<Text>();
+            captionLabel.name = "Caption";
+            captionLabel.text = caption;
+            captionLabel.font = UITheme.BodyFont;
+            captionLabel.fontSize = 13;
+            captionLabel.fontStyle = FontStyle.Bold;
+            UIFactory.Anchor(captionLabel.rectTransform, BottomCenter, BottomCenter,
+                new Vector2(0f, 5f), new Vector2(76f, 22f));
+
+            Text glyphLabel = Label("Glyph", button.transform, glyph, 34, foreground);
+            glyphLabel.fontStyle = FontStyle.Bold;
+            UIFactory.Anchor(glyphLabel.rectTransform, TopCenter, TopCenter,
+                new Vector2(0f, -3f), new Vector2(72f, 52f));
+            return button;
+        }
+
         // ---- layout helpers -------------------------------------------------
 
         public static RectTransform Stretch(RectTransform rect, float paddingX = 0f, float paddingY = 0f)

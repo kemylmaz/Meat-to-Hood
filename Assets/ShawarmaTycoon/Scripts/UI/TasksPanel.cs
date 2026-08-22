@@ -57,20 +57,21 @@ namespace ShawarmaTycoon.UI
                 new Vector2(0f, 24f), new Vector2(350f, 64f));
             tasks.claimLabel = tasks.claimButton.GetComponentInChildren<Text>();
 
-            tasks.CreateTab(root, "GÖREV", -150f, Mode.Tasks);
-            tasks.CreateTab(root, "REKOR", -260f, Mode.Records);
+            tasks.CreateTab(root, "✓", "GÖREV", -142f, Mode.Tasks);
+            tasks.CreateTab(root, "★", "REKOR", -242f, Mode.Records);
 
             card.gameObject.SetActive(false);
             return tasks;
         }
 
-        private void CreateTab(RectTransform parent, string caption, float y, Mode target)
+        private void CreateTab(
+            RectTransform parent, string glyph, string caption, float y, Mode target)
         {
             Color background = target == Mode.Tasks ? UITheme.Green : UITheme.Teal;
-            Button button = UIFactory.Button("Tab" + caption, parent, caption, background,
-                UITheme.CreamLight, 21, () => Toggle(target));
+            Button button = UIFactory.IconButton("Tab" + caption, parent, glyph, caption,
+                background, UITheme.CreamLight, () => Toggle(target));
             UIFactory.Anchor(button.GetComponent<RectTransform>(), UIFactory.TopLeft, UIFactory.TopLeft,
-                new Vector2(24f, y), new Vector2(124f, 78f));
+                new Vector2(24f, y), new Vector2(86f, 86f));
         }
 
         private void Toggle(Mode target)

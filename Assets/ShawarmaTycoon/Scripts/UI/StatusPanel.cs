@@ -18,30 +18,30 @@ namespace ShawarmaTycoon.UI
             // visually secondary to the brand and the player's money.
             Image panel = UIFactory.Panel("StatusPanel", parent, UITheme.CounterPaper);
             UIFactory.Anchor(panel.rectTransform, UIFactory.TopCenter, UIFactory.TopCenter,
-                new Vector2(0f, -170f), new Vector2(500f, 78f));
-            UIFactory.AddCartoonFinish(panel, 2f, 6f);
+                new Vector2(0f, -128f), new Vector2(400f, 58f));
+            UIFactory.AddCartoonFinish(panel, 2f, 5f);
 
             StatusPanel status = panel.gameObject.AddComponent<StatusPanel>();
             status.root = panel.rectTransform;
 
             status.rushLabel = UIFactory.Label("Rush", panel.transform, "RUSH --",
-                24, UITheme.Terracotta, TextAnchor.MiddleLeft);
+                18, UITheme.Terracotta, TextAnchor.MiddleLeft);
             UIFactory.Anchor(status.rushLabel.rectTransform, UIFactory.Center, UIFactory.Center,
-                new Vector2(-122f, 0f), new Vector2(220f, 52f));
+                new Vector2(-98f, 0f), new Vector2(174f, 42f));
 
             status.comboLabel = UIFactory.Label("Combo", panel.transform, "KOMBO 0",
-                19, UITheme.InkSoft, TextAnchor.MiddleRight);
+                15, UITheme.InkSoft, TextAnchor.MiddleRight);
             UIFactory.Anchor(status.comboLabel.rectTransform, UIFactory.Center, UIFactory.Center,
-                new Vector2(112f, -4f), new Vector2(230f, 48f));
+                new Vector2(91f, -3f), new Vector2(184f, 38f));
 
             Image divider = UIFactory.Panel("Divider", panel.transform, UITheme.Cream, false);
             UIFactory.Anchor(divider.rectTransform, UIFactory.Center, UIFactory.Center,
-                new Vector2(0f, 0f), new Vector2(3f, 46f));
+                new Vector2(0f, 0f), new Vector2(2f, 34f));
             divider.raycastTarget = false;
 
             Image track = UIFactory.Panel("ComboTrack", panel.transform, UITheme.Cream);
             UIFactory.Anchor(track.rectTransform, UIFactory.BottomRight, UIFactory.BottomRight,
-                new Vector2(-22f, 10f), new Vector2(210f, 8f));
+                new Vector2(-17f, 7f), new Vector2(168f, 6f));
             track.raycastTarget = false;
 
             status.comboFill = UIFactory.Panel("ComboFill", track.transform, UITheme.Teal);
