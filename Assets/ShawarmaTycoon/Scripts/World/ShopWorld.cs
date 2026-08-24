@@ -514,7 +514,10 @@ namespace ShawarmaTycoon
 
             float halfX = size.x * 0.5f;
             const float gateHalfWidth = 1.6f;
-            float gateX = halfX - 3.6f;
+            // The storefront is the visual centre of the restaurant. Keeping its
+            // gate on that same centre line makes the first approach legible and
+            // leaves equal fence runs on either side.
+            const float gateX = 0f;
 
             BuildFenceRun(boundary.transform, front, -halfX, gateX - gateHalfWidth, deckTop, false);
             BuildFenceRun(boundary.transform, front, gateX + gateHalfWidth, halfX, deckTop, false);

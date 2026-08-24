@@ -7,10 +7,10 @@ namespace ShawarmaTycoon
     /// Stand on it and the money drains out of the wallet into whatever the pad
     /// buys, with a green bar showing how far the payment has got.
     ///
-    /// The price is the only thing written on a pad. The old pads popped a
-    /// caption the moment you walked past - "GENİŞLET", "ISCI LV.2", "TAKEAWAY" -
-    /// so you had to read a word to find out what the pad beside an empty table
-    /// slot was for. Standing it next to the thing it builds says that already.
+    /// A pad writes only the concrete object name and its price on the ground.
+    /// The old pads popped abstract captions the moment you walked past -
+    /// "GENİŞLET", "ISCI LV.2", "TAKEAWAY" - so you had to decode a menu label
+    /// instead of seeing "Masa" beside a floating table preview.
     /// </summary>
     public sealed class PurchasePad : MonoBehaviour
     {
@@ -54,16 +54,26 @@ namespace ShawarmaTycoon
         private Vector3 lastPlayerPosition;
         private float nextPaymentFeedback;
 
-        private Transform barFill;
-        private TextMesh priceLabel;
+        // A pad remains in the world so it can watch its prerequisite, but its
+        // renderers and original colliders stay hidden until that prerequisite
+        // is met. This makes the shop reveal its next decision instead of
+        // covering the opening floor with every late-game purchase at once.
+        private Func<bool> availabilityCondition;
+        private bool available = true;
+        private bool availabilityInitialized;
+        private Renderer[] gatedRenderers = Array.Empty<Renderer>();
+        private Collider[] gatedColliders = Array.Empty<Collider>();
+        private bool[] gatedColliderStates = Array.Empty<bool>();
+
+        private WorldCashMarker priceMarker;
         private FeedbackPulse gaugePulse;
         private int shownPrice = -1;
-        private float shownProgress = -1f;
 
         public int Level => level;
         public bool SoldOut => costs == null || level >= costs.Length;
         public int CurrentCost => SoldOut ? 0 : costs[level];
         public int Remaining => Mathf.Max(0, CurrentCost - paid);
+        public bool IsAvailable => available;
 
         /// <summary>
         /// Wires the pad to what it builds. <paramref name="onLevelBought"/> runs
@@ -75,8 +85,7 @@ namespace ShawarmaTycoon
             Transform playerTransform,
             string progressKey,
             int[] levelCosts,
-            Action<int, bool> levelBought,
-            string padAsset = "19_upgrade_pad")
+            Action<int, bool> levelBought)
         {
             player = playerTransform;
             saveKey = string.IsNullOrWhiteSpace(progressKey) ? "pad." + name : progressKey;
@@ -87,7 +96,7 @@ namespace ShawarmaTycoon
             paid = Mathf.Clamp(GameProgress.GetInt(saveKey + ".paid", 0), 0, CurrentCost);
             UpgradeProgress.Register(saveKey, costs.Length, () => level);
 
-            BuildVisuals(padAsset);
+            BuildVisuals();
             for (int owned = 1; owned <= level; owned++)
                 onLevelBought?.Invoke(owned, true);
 
@@ -96,62 +105,63 @@ namespace ShawarmaTycoon
         }
 
         /// <summary>
-        /// The pad, and a small sign standing over it carrying the price and the
-        /// progress bar. Both are on one plate tilted to face the isometric rig:
-        /// left flat they read as a smear across the floor, and at the size world
-        /// labels use elsewhere the number was wider than the pad it belonged to.
+        /// Keeps this purchase hidden until an earlier shop milestone is owned.
+        /// The condition is checked at runtime, so the next pad appears immediately
+        /// after the purchase that unlocks it and restored saves rebuild correctly.
         /// </summary>
-        private void BuildVisuals(string padAsset)
+        public void SetAvailability(Func<bool> condition)
         {
-            GameObject placeholder = PrototypeVisuals.CreatePrimitive(
-                "Pad Surface", PrimitiveType.Cylinder, transform,
-                Vector3.zero, new Vector3(0.76f, 0.05f, 0.76f), new Color(0.95f, 0.80f, 0.32f));
-            if (!string.IsNullOrEmpty(padAsset))
+            availabilityCondition = condition;
+            gatedRenderers = GetComponentsInChildren<Renderer>(true);
+            gatedColliders = GetComponentsInChildren<Collider>(true);
+            gatedColliderStates = new bool[gatedColliders.Length];
+            for (int i = 0; i < gatedColliders.Length; i++)
+                gatedColliderStates[i] = gatedColliders[i] != null && gatedColliders[i].enabled;
+
+            EvaluateAvailability(false);
+        }
+
+        private void EvaluateAvailability(bool celebrate)
+        {
+            bool shouldBeAvailable = availabilityCondition == null || availabilityCondition();
+            if (availabilityInitialized && shouldBeAvailable == available) return;
+
+            bool wasAvailable = availabilityInitialized && available;
+            availabilityInitialized = true;
+            available = shouldBeAvailable;
+
+            for (int i = 0; i < gatedRenderers.Length; i++)
+                if (gatedRenderers[i] != null) gatedRenderers[i].enabled = available;
+            for (int i = 0; i < gatedColliders.Length; i++)
+                if (gatedColliders[i] != null)
+                    gatedColliders[i].enabled = available && gatedColliderStates[i];
+
+            if (available && !wasAvailable && celebrate)
             {
-                MeshyVisuals.TryReplaceDirect(
-                    transform, padAsset, new Vector3(1.02f, 0.30f, 1.02f),
-                    Vector3.down * 0.03f, Vector3.zero, false, placeholder.name);
+                UnlockCelebration.Spawn(transform.position + Vector3.up * 0.25f);
+                AudioDirector.Play(GameSfx.Unlock, 0.7f);
             }
+        }
 
-            GameObject gauge = new("Gösterge");
-            gauge.transform.SetParent(transform, false);
-            gauge.transform.localPosition = Vector3.up * 0.76f;
-            gauge.transform.localEulerAngles = new Vector3(55f, 0f, 0f);
-            gaugePulse = gauge.AddComponent<FeedbackPulse>();
+        /// <summary>
+        /// The pad is negative space framed by four white ground corners. Its
+        /// object name, banknote and price lie directly on the floor like the
+        /// reference; there is deliberately no circular base or receipt card.
+        /// The floating unlock preview is built separately below.
+        /// </summary>
+        private void BuildVisuals()
+        {
+            priceMarker = WorldCashMarker.CreatePurchase(transform, FriendlyName(name));
+            gaugePulse = priceMarker.gameObject.AddComponent<FeedbackPulse>();
+        }
 
-            PrototypeVisuals.CreatePrimitive(
-                "Plaka", PrimitiveType.Cube, gauge.transform,
-                Vector3.zero, new Vector3(0.86f, 0.42f, 0.04f), PrototypeVisuals.Cream);
-
-            PrototypeVisuals.CreatePrimitive(
-                "Bar Track", PrimitiveType.Cube, gauge.transform,
-                new Vector3(0f, -0.13f, -0.03f), new Vector3(0.74f, 0.10f, 0.03f),
-                new Color(0.30f, 0.25f, 0.22f));
-
-            // Pivoted at the left end of the track, so scaling the pivot along X
-            // grows the bar rightwards instead of out of both ends at once.
-            GameObject fillPivot = new("Bar Fill");
-            fillPivot.transform.SetParent(gauge.transform, false);
-            fillPivot.transform.localPosition = new Vector3(-0.35f, -0.13f, -0.045f);
-            barFill = fillPivot.transform;
-            PrototypeVisuals.CreatePrimitive(
-                "Bar Fill Body", PrimitiveType.Cube, fillPivot.transform,
-                new Vector3(0.35f, 0f, 0f), new Vector3(0.70f, 0.075f, 0.03f),
-                PrototypeVisuals.Green);
-
-            // Built here rather than through PrototypeVisuals.CreateLabel: that
-            // helper applies the camera tilt itself, and on a plate that is already
-            // tilted it would be applied twice.
-            GameObject labelObject = new("Fiyat");
-            labelObject.transform.SetParent(gauge.transform, false);
-            labelObject.transform.localPosition = new Vector3(0f, 0.06f, -0.05f);
-            priceLabel = labelObject.AddComponent<TextMesh>();
-            priceLabel.anchor = TextAnchor.MiddleCenter;
-            priceLabel.alignment = TextAlignment.Center;
-            priceLabel.characterSize = 0.045f;
-            priceLabel.fontSize = 64;
-            priceLabel.color = new Color(0.14f, 0.40f, 0.19f);
-            priceLabel.fontStyle = FontStyle.Bold;
+        private static string FriendlyName(string padName)
+        {
+            if (string.IsNullOrWhiteSpace(padName)) return "Yükseltme";
+            string label = padName.EndsWith(" Pedi", StringComparison.Ordinal)
+                ? padName[..^5]
+                : padName;
+            return label == "Masa Ekle" ? "Masa" : label;
         }
 
         /// <summary>
@@ -197,6 +207,8 @@ namespace ShawarmaTycoon
 
         private void Update()
         {
+            EvaluateAvailability(true);
+            if (!available) return;
             if (Time.timeScale <= 0f) return;
             if (SoldOut || player == null) return;
 
@@ -286,18 +298,13 @@ namespace ShawarmaTycoon
 
         private void Refresh()
         {
-            float progress = CurrentCost <= 0 ? 0f : Mathf.Clamp01(paid / (float)CurrentCost);
-            if (barFill != null && !Mathf.Approximately(progress, shownProgress))
-            {
-                shownProgress = progress;
-                barFill.localScale = new Vector3(Mathf.Max(0.0001f, progress), 1f, 1f);
-            }
-
             int outstanding = Remaining;
-            if (priceLabel != null && outstanding != shownPrice)
+            if (priceMarker != null && outstanding != shownPrice)
             {
                 shownPrice = outstanding;
-                priceLabel.text = "₺" + outstanding;
+                // Drain already supplies its own deliberate pulse cadence. Avoid
+                // punching the card on every tiny countdown step as well.
+                priceMarker.SetAmount(outstanding, false);
             }
         }
 

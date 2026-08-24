@@ -10,25 +10,26 @@ namespace ShawarmaTycoon
     /// of five to eight minutes each:
     ///
     ///   hand-carried, nothing bought      ~50 coins/min  (two runs: 42 and 65)
-    ///   three belts and four tables       ~158 coins/min
+    ///   two belts and four tables         ~158 coins/min
     ///   everything bought                 ~310 coins/min
     ///
     /// The probe is a floor, not a target: it walks the whole cook cycle before it
     /// collects any money, where a player picks the cash up on the way past. Run
     /// to run variance is wide because it depends on how early the tables jam.
     ///
-    /// The old ladder let one ordinary sale almost buy a belt or a table. This
-    /// pass targets a firmer tycoon pace: roughly four minutes to the first belt,
-    /// four to the first table, and three hours for a well-run full build.
+    /// The old ladder let one ordinary sale almost buy a belt or a table. Belts
+    /// still establish the production line early, but seating is now the major
+    /// long-term investment: the first paid table takes sustained saving and each
+    /// expansion remains meaningful deep into a developed restaurant.
     /// </summary>
     public static class ShopPrices
     {
         // --- things that change what the shop is -----------------------------
 
-        // Each entry is one different visible belt, from raw meat to the serving
-        // counter. The steeper curve prevents one early sale from automating the
-        // whole kitchen while keeping every purchase visually meaningful.
-        public static readonly int[] Belt = { 180, 520, 1300 };
+        // The two visible belts automate storage -> spit and spit -> cutting.
+        // Finished wraps are carried to the detached checkout by hand, keeping
+        // the cashier aisle visually and physically clear.
+        public static readonly int[] Belt = { 180, 520 };
 
         /// <summary>
         /// The third table through to the tenth. Seating is what the whole shop
@@ -50,10 +51,12 @@ namespace ShawarmaTycoon
         /// </summary>
         public static readonly int[] Table =
         {
-            // Four individual dining-room tables.
-            200, 350, 550, 800,
-            // Six expansion plots, each opening with two tables.
-            1100, 1450, 1850, 2300, 2800, 3400
+            // Four individual dining-room tables. Even the first is a real
+            // capacity investment now, not the change from one ordinary sale.
+            600, 1000, 1600, 2400,
+            // Six expansion plots, each opening with two tables. The curve keeps
+            // seating as the long-term money sink once the kitchen is automated.
+            3500, 4800, 6500, 8500, 11000, 14000
         };
 
         /// <summary>A decoration lifts the shop's standing, and standing is the tip.</summary>

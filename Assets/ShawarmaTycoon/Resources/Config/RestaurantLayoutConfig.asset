@@ -12,23 +12,22 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4769e3733d273074f94047f64c348c11, type: 3}
   m_Name: RestaurantLayoutConfig
   m_EditorClassIdentifier: Assembly-CSharp::ShawarmaTycoon.RestaurantLayoutConfig
-  meatSource: {x: -3.8, y: 0.25, z: 7.15}
-  oven: {x: 0.6, y: 0.25, z: 7.15}
-  cutting: {x: 5, y: 0.25, z: 7.15}
-  service: {x: 9.4, y: 0.25, z: 7.15}
-  meatBeltPad: {x: -1.6, y: 0.28, z: 4.3}
-  ovenBeltPad: {x: 2.8, y: 0.28, z: 4.3}
-  cuttingBeltPad: {x: 7.2, y: 0.28, z: 4.3}
-  tablePad: {x: 0.6, y: 0.28, z: -0.4}
-  decorationPad: {x: -10.4, y: 0.28, z: -1.4}
-  customerEntry: {x: 7.68, y: 0.25, z: -11.6}
+  meatSource: {x: -5.9, y: 0.25, z: 7}
+  oven: {x: -2.5, y: 0.25, z: 7}
+  cutting: {x: 1.1, y: 0.25, z: 7}
+  service: {x: 4.9, y: 0.25, z: 5.35}
+  meatBeltPad: {x: -4.2, y: 0.28, z: 4.3}
+  ovenBeltPad: {x: -0.7, y: 0.28, z: 4.3}
+  tablePad: {x: 5.2, y: 0.28, z: 0}
+  decorationPad: {x: 5.2, y: 0.28, z: -3.2}
+  customerEntry: {x: 0, y: 0.25, z: -11.6}
   customerExit: {x: 9.9, y: 0.25, z: -11.9}
-  queueFront: {x: 9.4, y: 0.25, z: 4.2}
-  trashBin: {x: -10.3, y: 0.25, z: 4.2}
+  queueFront: {x: 4.9, y: 0.25, z: 2.35}
+  trashBin: {x: -5.9, y: 0.25, z: -2.1}
   driveThruCounter: {x: -6.82, y: 0.25, z: 7.5}
   driveThruUnlockPad: {x: -6.82, y: 0.28, z: 5.4}
   drinkCrate: {x: 10.6, y: 0.25, z: -2.6}
-  fridge: {x: 10.6, y: 0.25, z: 1.1}
+  fridge: {x: 7.3, y: 0.25, z: 7}
   fridgePad: {x: 7.8, y: 0.28, z: 1.1}
   dessertOven: {x: 8.8, y: 0.25, z: -5.4}
   dessertPad: {x: 7.4, y: 0.28, z: -7.2}

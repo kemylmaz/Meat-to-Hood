@@ -112,5 +112,15 @@ namespace ShawarmaTycoon.UI
                 if (item != null) item.SetActive(visible);
             }
         }
+
+        /// <summary>
+        /// Startup presentation owns the screen before play begins. Disabling
+        /// the canvas keeps tutorial cards and touch controls from flashing
+        /// through it while preserving their runtime state for the first frame.
+        /// </summary>
+        public void SetCanvasVisible(bool visible)
+        {
+            if (Canvas != null) Canvas.enabled = visible;
+        }
     }
 }

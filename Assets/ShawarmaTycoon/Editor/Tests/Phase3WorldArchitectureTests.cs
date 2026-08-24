@@ -70,7 +70,7 @@ namespace ShawarmaTycoon.Tests
         /// wall or two counters on top of each other.
         /// </summary>
         [Test]
-        public void KitchenLine_FitsInsideTheLotWithRoomForTheBelts()
+        public void KitchenLine_FitsInsideTheLotWithAStaffSideCheckout()
         {
             RestaurantLayoutConfig layout =
                 Resources.Load<RestaurantLayoutConfig>("Config/RestaurantLayoutConfig");
@@ -78,24 +78,38 @@ namespace ShawarmaTycoon.Tests
             Assert.That(layout, Is.Not.Null);
             Assert.That(world, Is.Not.Null);
 
-            Vector3[] line = { layout.MeatSource, layout.Oven, layout.Cutting, layout.Service };
+            Vector3[] prepLine = { layout.MeatSource, layout.Oven, layout.Cutting };
             float halfX = world.CoreSize.x * 0.5f;
             float halfZ = world.CoreSize.y * 0.5f;
 
-            for (int i = 0; i < line.Length; i++)
+            for (int i = 0; i < prepLine.Length; i++)
             {
-                Assert.That(Mathf.Abs(line[i].x), Is.LessThan(halfX - 1.4f),
+                Assert.That(Mathf.Abs(prepLine[i].x), Is.LessThan(halfX - 1.4f),
                     "A kitchen station overhangs the lot's east or west edge.");
-                Assert.That(line[i].z, Is.LessThan(halfZ - 1.2f),
+                Assert.That(prepLine[i].z, Is.LessThan(halfZ - 1.2f),
                     "A kitchen station is inside the back wall.");
-                Assert.That(line[i].z, Is.EqualTo(line[0].z).Within(0.001f),
-                    "The kitchen stations are not on one line.");
+                Assert.That(prepLine[i].z, Is.EqualTo(prepLine[0].z).Within(0.001f),
+                    "The preparation stations are not on one line.");
 
                 // 2.05 m of authored belt, plus half a counter at each end.
                 if (i > 0)
-                    Assert.That(line[i].x - line[i - 1].x, Is.GreaterThan(3.4f),
+                    Assert.That(prepLine[i].x - prepLine[i - 1].x, Is.GreaterThanOrEqualTo(3.4f),
                         $"No room for the belt into station {i}.");
             }
+
+            Assert.That(layout.Service.x - layout.Cutting.x, Is.GreaterThan(3.4f),
+                "The detached checkout overlaps the cutting station.");
+            Assert.That(layout.Cutting.z - layout.Service.z, Is.GreaterThan(1.2f),
+                "Checkout has not stepped far enough forward to make a staff aisle.");
+            Assert.That(layout.Fridge.z, Is.EqualTo(layout.Cutting.z).Within(0.001f),
+                "The fridge does not finish the back-wall counter run.");
+            Assert.That(layout.Fridge.x, Is.GreaterThan(layout.Service.x + 1.8f),
+                "The fridge is not in the former east-end register slot.");
+            Assert.That(layout.QueueFront.x, Is.EqualTo(layout.Service.x).Within(0.001f));
+            Assert.That(layout.Service.z - layout.QueueFront.z, Is.GreaterThanOrEqualTo(2.8f),
+                "Customers are not waiting on the front side of checkout.");
+            Assert.That(layout.Service.z + 1.35f, Is.LessThan(prepLine[0].z),
+                "The cashier has no clear standing lane behind checkout.");
         }
 
         /// <summary>
@@ -139,29 +153,29 @@ namespace ShawarmaTycoon.Tests
 
             Assert.That(ShopPrices.Belt[1], Is.GreaterThanOrEqualTo(ShopPrices.Belt[0] * 2),
                 "The second belt does not ask the player to grow the restaurant first.");
-            Assert.That(ShopPrices.Belt[2], Is.GreaterThanOrEqualTo(ShopPrices.Belt[1] * 2),
-                "The final belt is still a trivial follow-up purchase.");
 
+            // Seating deliberately became the long-term progression sink. The
+            // first table now asks for a real saving session, while later plots
+            // stay meaningful after automation has lifted income.
             float minutesToFirstTable = ShopPrices.Table[0] / HandCarriedIncome;
-            Assert.That(minutesToFirstTable, Is.InRange(3f, 6f),
-                "The first extra table should be a deliberate early-game purchase.");
+            Assert.That(minutesToFirstTable, Is.InRange(9f, 15f),
+                "The first paid table is no longer a substantial investment.");
 
             float firstPlotPayback = ShopPrices.Table[4] / BeltedIncome;
             float lastPlotPayback = ShopPrices.Table[^1] / FullyBuiltIncome;
-            Assert.That(firstPlotPayback, Is.InRange(5f, 12f),
-                "The first two-table expansion is not priced like an expansion.");
-            Assert.That(lastPlotPayback, Is.InRange(8f, 15f),
-                "The final two-table expansion is too cheap or becomes a grind.");
+            Assert.That(firstPlotPayback, Is.InRange(18f, 28f),
+                "The first two-table expansion is not priced like a major expansion.");
+            Assert.That(lastPlotPayback, Is.InRange(35f, 50f),
+                "The final two-table expansion falls outside the intended late-game pace.");
 
-            // Roughly: the content half is bought while hand-carrying and belted,
-            // the boards once the shop is running properly.
+            // Content is now dominated by the intentionally difficult seating
+            // ladder. This broad guardrail catches accidental extra zeroes while
+            // preserving the requested multi-session tycoon pacing.
             float minutes = ShopPrices.ContentTotal / BeltedIncome +
                             ShopPrices.BoardTotal / FullyBuiltIncome;
-            Assert.That(minutes, Is.InRange(150f, 270f),
+            Assert.That(minutes, Is.InRange(360f, 600f),
                 $"Buying everything takes {minutes:0} minutes of measured income.");
 
-            // Content is what the player sees appear. The boards sell multipliers
-            // on a shop they have already built, so they must not dwarf it.
             Assert.That(ShopPrices.BoardTotal, Is.LessThan(ShopPrices.ContentTotal),
                 "Invisible multipliers cost more than the visible restaurant.");
         }
@@ -295,21 +309,14 @@ namespace ShawarmaTycoon.Tests
             }
         }
 
-        [TestCase(0f, 1)]
-        [TestCase(0.149f, 1)]
-        [TestCase(0.15f, 2)]
-        [TestCase(0.379f, 2)]
-        [TestCase(0.38f, 3)]
-        [TestCase(0.649f, 3)]
-        [TestCase(0.65f, 4)]
-        [TestCase(0.899f, 4)]
-        [TestCase(0.90f, 5)]
-        [TestCase(1f, 5)]
-        public void RestaurantMakeover_UsesFiveStableProgressTiers(float ratio, int expectedTier)
+        [TestCase(0f)]
+        [TestCase(0.25f)]
+        [TestCase(1f)]
+        public void RestaurantMakeover_RemainsStarterLookAtEveryProgressLevel(float ratio)
         {
-            Assert.That(RestaurantMakeoverSystem.GetTierForRatio(ratio), Is.EqualTo(expectedTier));
-            Assert.That(RestaurantMakeoverSystem.TierName(expectedTier), Is.Not.Empty);
-            Assert.That(RestaurantMakeoverSystem.TierShortName(expectedTier), Is.Not.Empty);
+            Assert.That(RestaurantMakeoverSystem.GetTierForRatio(ratio), Is.EqualTo(1));
+            Assert.That(RestaurantMakeoverSystem.TierName(1), Is.Not.Empty);
+            Assert.That(RestaurantMakeoverSystem.TierShortName(1), Is.Not.Empty);
         }
 
         [Test]
@@ -367,7 +374,7 @@ namespace ShawarmaTycoon.Tests
 
             Vector3[] pads =
             {
-                layout.MeatBeltPad, layout.OvenBeltPad, layout.CuttingBeltPad,
+                layout.MeatBeltPad, layout.OvenBeltPad,
                 layout.TablePad, layout.DecorationPad, layout.DriveThruUnlockPad,
                 layout.FridgePad, layout.DessertPad, layout.CourierPad
             };

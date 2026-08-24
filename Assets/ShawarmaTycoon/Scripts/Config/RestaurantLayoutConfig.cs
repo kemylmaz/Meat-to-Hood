@@ -6,15 +6,16 @@ namespace ShawarmaTycoon
     public sealed class RestaurantLayoutConfig : ScriptableObject
     {
         /// <summary>
-        /// Kitchen line, west to east along the back of the lot: rack, spit,
-        /// carving board, till. Spacing is 4.4 m, which is the narrowest gap that
-        /// still takes a 2.05 m conveyor between two counters.
+        /// The prep line sits along the back wall, shifted west to leave the east
+        /// end for the fridge. Checkout steps forward from that line: customers
+        /// wait on its south side while the cashier has a real working aisle on
+        /// the north side.
         /// </summary>
         [Header("Kitchen")]
-        [SerializeField] private Vector3 meatSource = new(-3.8f, 0.25f, 7.15f);
-        [SerializeField] private Vector3 oven = new(0.6f, 0.25f, 7.15f);
-        [SerializeField] private Vector3 cutting = new(5f, 0.25f, 7.15f);
-        [SerializeField] private Vector3 service = new(9.4f, 0.25f, 7.15f);
+        [SerializeField] private Vector3 meatSource = new(-5.9f, 0.25f, 7f);
+        [SerializeField] private Vector3 oven = new(-2.5f, 0.25f, 7f);
+        [SerializeField] private Vector3 cutting = new(1.1f, 0.25f, 7f);
+        [SerializeField] private Vector3 service = new(4.9f, 0.25f, 5.35f);
 
         /// <summary>
         /// Pads stand beside the thing they build, not on a board somewhere else.
@@ -22,17 +23,18 @@ namespace ShawarmaTycoon
         /// reach of one spot.
         /// </summary>
         [Header("Purchase Pads")]
-        [SerializeField] private Vector3 meatBeltPad = new(-1.6f, 0.28f, 4.3f);
-        [SerializeField] private Vector3 ovenBeltPad = new(2.8f, 0.28f, 4.3f);
-        [SerializeField] private Vector3 cuttingBeltPad = new(7.2f, 0.28f, 4.3f);
-        [SerializeField] private Vector3 tablePad = new(0.6f, 0.28f, -0.4f);
-        [SerializeField] private Vector3 decorationPad = new(-10.4f, 0.28f, -1.4f);
+        [SerializeField] private Vector3 meatBeltPad = new(-4.2f, 0.28f, 4.3f);
+        [SerializeField] private Vector3 ovenBeltPad = new(-0.7f, 0.28f, 4.3f);
+        [SerializeField] private Vector3 tablePad = new(5.2f, 0.28f, 0f);
+        [SerializeField] private Vector3 decorationPad = new(5.2f, 0.28f, -3.2f);
 
         [Header("Dining and Flow")]
-        [SerializeField] private Vector3 customerEntry = new(7.68f, 0.25f, -11.6f);
+        [SerializeField] private Vector3 customerEntry = new(0f, 0.25f, -11.6f);
         [SerializeField] private Vector3 customerExit = new(9.9f, 0.25f, -11.9f);
-        [SerializeField] private Vector3 queueFront = new(9.4f, 0.25f, 4.2f);
-        [SerializeField] private Vector3 trashBin = new(-10.3f, 0.25f, 4.2f);
+        [SerializeField] private Vector3 queueFront = new(4.9f, 0.25f, 2.35f);
+        // Centred between the two east-facing office doors, with enough room on
+        // both sides for their approaches and a clear aisle to the nearest table.
+        [SerializeField] private Vector3 trashBin = new(-5.9f, 0.25f, -2.1f);
 
         /// <summary>
         /// Only the heights are read from these: the window and its pad are pinned
@@ -44,14 +46,13 @@ namespace ShawarmaTycoon
         [SerializeField] private Vector3 driveThruUnlockPad = new(-6.82f, 0.28f, 5.4f);
 
         /// <summary>
-        /// The second counter row, along the south-east of the floor: drink crate,
-        /// fridge, dessert oven, and the courier bay in the corner. Well clear of
-        /// the kitchen line and the queue, so restocking is its own errand rather
-        /// than something done in passing.
+        /// Drinks use two storage points: the crate remains in the south-east,
+        /// while the fridge finishes the back-wall counter run in the checkout's
+        /// former slot. Dessert and courier utilities remain in the east wing.
         /// </summary>
         [Header("Drinks, Desserts and Couriers")]
         [SerializeField] private Vector3 drinkCrate = new(10.6f, 0.25f, -2.6f);
-        [SerializeField] private Vector3 fridge = new(10.6f, 0.25f, 1.1f);
+        [SerializeField] private Vector3 fridge = new(7.3f, 0.25f, 7f);
         [SerializeField] private Vector3 fridgePad = new(7.8f, 0.28f, 1.1f);
         [SerializeField] private Vector3 dessertOven = new(8.8f, 0.25f, -5.4f);
         [SerializeField] private Vector3 dessertPad = new(7.4f, 0.28f, -7.2f);
@@ -64,7 +65,6 @@ namespace ShawarmaTycoon
         public Vector3 Service => service;
         public Vector3 MeatBeltPad => meatBeltPad;
         public Vector3 OvenBeltPad => ovenBeltPad;
-        public Vector3 CuttingBeltPad => cuttingBeltPad;
         public Vector3 TablePad => tablePad;
         public Vector3 DecorationPad => decorationPad;
         public Vector3 CustomerEntry => customerEntry;

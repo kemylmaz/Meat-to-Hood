@@ -5,15 +5,12 @@ using UnityEngine;
 namespace ShawarmaTycoon
 {
     /// <summary>
-    /// Converts the abstract shop-completion percentage into a restaurant the
-    /// player can see growing. Every tier is a complete visual direction: floor,
-    /// wainscot, sign, lighting, dining rug and dressing change together.
-    /// Gameplay roots and colliders never move, so the makeover cannot invalidate
-    /// navigation or a player-authored build-mode layout.
+    /// Owns the restaurant's fixed visual direction. Alternate tiers remain as
+    /// editor-only art previews, but runtime progress always keeps the approved
+    /// starter shop: purchases must never repaint the floor, walls or furniture.
     /// </summary>
     public sealed class RestaurantMakeoverSystem : MonoBehaviour
     {
-        private static readonly float[] Thresholds = { 0f, 0.15f, 0.38f, 0.65f, 0.90f };
         private static readonly string[] Names =
         {
             string.Empty,
@@ -35,21 +32,13 @@ namespace ShawarmaTycoon
         private DioramaWorld world;
         private Transform player;
         private int currentTier;
-        private bool configured;
 
         public static RestaurantMakeoverSystem Instance { get; private set; }
-        public static int CurrentTier => Instance != null
-            ? Instance.currentTier
-            : GetTierForRatio(UpgradeProgress.MakeoverRatio);
+        public static int CurrentTier => Instance != null ? Instance.currentTier : 1;
         public static event Action<int> TierChanged;
 
-        public static int GetTierForRatio(float ratio)
-        {
-            ratio = Mathf.Clamp01(ratio);
-            for (int tier = 5; tier >= 2; tier--)
-                if (ratio >= Thresholds[tier - 1]) return tier;
-            return 1;
-        }
+        /// <summary>Runtime appearance is intentionally independent of progress.</summary>
+        public static int GetTierForRatio(float ratio) => 1;
 
         public static string TierName(int tier) => Names[Mathf.Clamp(tier, 1, 5)];
         public static string TierShortName(int tier) => ShortNames[Mathf.Clamp(tier, 1, 5)];
@@ -68,21 +57,12 @@ namespace ShawarmaTycoon
 
             Instance = this;
             BuildStages();
-            UpgradeProgress.Changed += OnProgressChanged;
-            configured = true;
-            ApplyTier(GetTierForRatio(UpgradeProgress.MakeoverRatio), false);
+            ApplyTier(1, false);
         }
 
         private void OnDestroy()
         {
-            UpgradeProgress.Changed -= OnProgressChanged;
             if (Instance == this) Instance = null;
-        }
-
-        private void OnProgressChanged()
-        {
-            if (!configured) return;
-            ApplyTier(GetTierForRatio(UpgradeProgress.MakeoverRatio), true);
         }
 
 #if UNITY_EDITOR
@@ -307,7 +287,7 @@ namespace ShawarmaTycoon
         private void BuildEntrance(Transform parent, int tier, Color accent, Color panel)
         {
             Vector3 centre = world.BaseModule.transform.localPosition;
-            float entranceX = centre.x + world.DeckSize.x * 0.5f - 3.6f;
+            float entranceX = centre.x;
             float front = centre.z - world.DeckSize.y * 0.5f + 0.02f;
             float signY = world.DeckTopY + (tier >= 4 ? 2.52f : 2.34f);
             float width = tier == 1 ? 2.7f : tier >= 4 ? 4.1f : 3.45f;
@@ -368,7 +348,7 @@ namespace ShawarmaTycoon
         private void BuildWelcomeMat(Transform parent, Color color)
         {
             Vector3 centre = world.BaseModule.transform.localPosition;
-            float entranceX = centre.x + world.DeckSize.x * 0.5f - 3.6f;
+            float entranceX = centre.x;
             float front = centre.z - world.DeckSize.y * 0.5f + 1.12f;
             CreateStrip(parent, "Hoş Geldin Paspası",
                 new Vector3(entranceX, world.DeckTopY + 0.025f, front),

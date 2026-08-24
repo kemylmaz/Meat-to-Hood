@@ -16,6 +16,7 @@ namespace ShawarmaTycoon.Tests
         public void BuildCleanPrototypeForFixture()
         {
             DestroyRuntimeIfPresent();
+            UI.StartupPresentation.BypassGameplayPauseForTests = true;
             SaveRepository.ResetStateForTests();
             SaveRepository.InitializeForTests(new MemorySaveProvider());
             GameProgress.SetInt("expansion", 0);
@@ -44,6 +45,7 @@ namespace ShawarmaTycoon.Tests
         {
             DestroyRuntimeIfPresent();
             if (bootstrapHost != null) Object.DestroyImmediate(bootstrapHost);
+            UI.StartupPresentation.BypassGameplayPauseForTests = false;
             SaveRepository.ResetStateForTests();
         }
 
@@ -79,6 +81,32 @@ namespace ShawarmaTycoon.Tests
                 Assert.That(module.transform.localScale, Is.EqualTo(Vector3.one));
                 Assert.That(module.SurfaceRoot.localScale, Is.EqualTo(Vector3.one));
             }
+        }
+
+        [Test]
+        public void StartupPresentation_FramesTheShopBeforeGameplayBegins()
+        {
+            UI.StartupPresentation presentation =
+                Object.FindFirstObjectByType<UI.StartupPresentation>(FindObjectsInactive.Include);
+            Assert.That(presentation, Is.Not.Null);
+            Assert.That(presentation.BlocksGameplay, Is.True);
+            Assert.That(
+                presentation.Stage == UI.StartupPresentation.PresentationStage.InitialLoading ||
+                presentation.Stage == UI.StartupPresentation.PresentationStage.MainMenu,
+                Is.True);
+
+            Canvas startupCanvas = presentation.GetComponentInChildren<Canvas>(true);
+            Assert.That(startupCanvas, Is.Not.Null);
+            Assert.That(startupCanvas.sortingOrder, Is.GreaterThan(UI.GameHUD.Instance.Canvas.sortingOrder));
+            Assert.That(presentation.transform.Find("Startup Canvas/Safe Area/Loading Screen"), Is.Not.Null);
+            Assert.That(presentation.transform.Find("Startup Canvas/Safe Area/Main Menu"), Is.Not.Null);
+            Assert.That(presentation.GetComponentsInChildren<Transform>(true)
+                    .Count(item => item.name == "Loading Screen" || item.name == "Main Menu"),
+                Is.EqualTo(2));
+            Assert.That(presentation.WorldReady, Is.True);
+            Assert.That(presentation.transform.Find(
+                "Startup Canvas/Safe Area/Main Menu/Neighbourhood Green/Menu Content/Open Shop"),
+                Is.Not.Null, "The opening presentation has no primary action.");
         }
 
         [Test]
@@ -193,8 +221,8 @@ namespace ShawarmaTycoon.Tests
         {
             ConveyorLink[] belts = Object.FindObjectsByType<ConveyorLink>(
                 FindObjectsInactive.Include, FindObjectsSortMode.None);
-            Assert.That(belts, Has.Length.EqualTo(3),
-                "The line is rack, spit, carving board and till: three belts.");
+            Assert.That(belts, Has.Length.EqualTo(2),
+                "Only storage-to-spit and spit-to-cutting should have belts.");
             foreach (ConveyorLink belt in belts)
             {
                 Assert.That(belt.IsUnlocked, Is.False);
@@ -213,7 +241,37 @@ namespace ShawarmaTycoon.Tests
                     "The room shell should be standing even before it is furnished.");
                 Assert.That(office.GetComponentInChildren<ManagementOfficeTerminal>(true), Is.Null,
                     "An empty office has no desk to open a menu from.");
+
+                Transform tapedFootprint = office.transform.Find("Boş Oda İşareti");
+                GameObject officePadObject = GameObject.Find(office.name + " Pedi");
+                Assert.That(tapedFootprint, Is.Not.Null);
+                Assert.That(officePadObject, Is.Not.Null);
+                PurchasePad officePad = officePadObject.GetComponent<PurchasePad>();
+                Assert.That(officePad, Is.Not.Null);
+                Assert.That(Vector2.Distance(
+                        new Vector2(officePad.transform.position.x, officePad.transform.position.z),
+                        new Vector2(tapedFootprint.position.x, tapedFootprint.position.z)),
+                    Is.LessThan(0.02f),
+                    $"'{officePad.name}' is not centred inside its yellow desk outline.");
+
+                Transform doorLeaf = office.GetComponentsInChildren<Transform>(true)
+                    .First(transform => transform.name == "Kanat");
+                Assert.That(doorLeaf.parent.forward.x, Is.GreaterThan(0.9f),
+                    "The full office was not rotated: its doorway does not face east into dining.");
+                Assert.That(doorLeaf.forward.x, Is.LessThan(-0.1f),
+                    "The east-wall office door opens into dining instead of westward into its room.");
             }
+
+            Vector3[] officeDoorPositions = offices
+                .Select(office => office.GetComponentsInChildren<Transform>(true)
+                    .First(transform => transform.name == "Kapı").position)
+                .OrderBy(position => position.z)
+                .ToArray();
+            Assert.That(officeDoorPositions[1].x, Is.EqualTo(officeDoorPositions[0].x).Within(0.05f),
+                "The two east-wall doors are not on the same north-south line.");
+            Assert.That(officeDoorPositions[1].z - officeDoorPositions[0].z,
+                Is.EqualTo(6f).Within(0.05f),
+                "The full two-office block was not rotated into two adjacent six-metre rooms.");
 
             TakeawaySystem window = Object.FindFirstObjectByType<TakeawaySystem>(
                 FindObjectsInactive.Include);
@@ -223,6 +281,49 @@ namespace ShawarmaTycoon.Tests
             TrafficSystem traffic = Object.FindFirstObjectByType<TrafficSystem>();
             Assert.That(traffic.ServiceLaneOpen, Is.False,
                 "Cars must not use the lane past the window before it is bought.");
+        }
+
+        [Test]
+        public void FurnishedOffice_UsesACompactDeskInsteadOfACubicleWall()
+        {
+            GameObject testRoom = new("Compact Office Furniture Test");
+            testRoom.transform.position = new Vector3(100f, 0f, 100f);
+            try
+            {
+                GameObject dummyPlayer = new("Dummy Office Player");
+                dummyPlayer.transform.SetParent(testRoom.transform, false);
+                dummyPlayer.transform.localPosition = new Vector3(20f, 0f, 0f);
+
+                ManagementOffice office = testRoom.AddComponent<ManagementOffice>();
+                office.Configure(dummyPlayer.transform, null, ManagementMenu.HumanResources,
+                    "218_office_desk", "TEST", Vector3.zero, 90f);
+                office.Furnish();
+
+                Transform desk = testRoom.transform.Find("Mobilya/Masa");
+                Assert.That(desk, Is.Not.Null);
+                Transform deskVisual = desk.Find("218_office_desk Visual");
+                Assert.That(deskVisual, Is.Not.Null,
+                    "The oversized all-in-one manager cubicle is still furnishing the office.");
+                Assert.That(desk.Find("217_office_monitor Visual"), Is.Not.Null,
+                    "The compact modular desk has no readable management monitor.");
+
+                Renderer[] deskRenderers = deskVisual.GetComponentsInChildren<Renderer>(true)
+                    .Where(renderer => renderer.enabled && renderer.gameObject.activeInHierarchy)
+                    .ToArray();
+                Assert.That(deskRenderers, Is.Not.Empty);
+                Bounds bounds = deskRenderers[0].bounds;
+                for (int i = 1; i < deskRenderers.Length; i++)
+                    bounds.Encapsulate(deskRenderers[i].bounds);
+
+                Assert.That(bounds.size.x, Is.LessThan(1.0f));
+                Assert.That(bounds.size.z, Is.LessThan(1.75f));
+                Assert.That(bounds.size.y, Is.LessThan(0.8f),
+                    "The office desk has grown back into a wall-height cubicle partition.");
+            }
+            finally
+            {
+                Object.DestroyImmediate(testRoom);
+            }
         }
 
         /// <summary>
@@ -241,6 +342,8 @@ namespace ShawarmaTycoon.Tests
             Bounds lot = world.BaseModule.WalkableBounds;
             Vector3 gate = world.EntranceAnchor.position;
 
+            Assert.That(gate.x, Is.EqualTo(lot.center.x).Within(0.05f),
+                "The storefront entrance is not centred on the restaurant frontage.");
             Assert.That(gate.z, Is.GreaterThan(lot.min.z),
                 "The gate anchor should stand just inside the lot's front edge.");
             Assert.That(gate.z, Is.LessThan(lot.min.z + 2f));
@@ -297,10 +400,10 @@ namespace ShawarmaTycoon.Tests
         [Test]
         public void ConveyorPads_BuildOnce_AndStationWorkerPadsAreAbsent()
         {
-            Assert.That(ShopPrices.Belt, Has.Length.EqualTo(3),
-                "The three visible belts need their own progression prices.");
+            Assert.That(ShopPrices.Belt, Has.Length.EqualTo(2),
+                "The two visible belts need their own progression prices.");
 
-            string[] beltPads = { "Et Bandı Pedi", "Ocak Bandı Pedi", "Kesim Bandı Pedi" };
+            string[] beltPads = { "Et Bandı Pedi", "Ocak Bandı Pedi" };
             for (int i = 0; i < beltPads.Length; i++)
             {
                 string padName = beltPads[i];
@@ -310,10 +413,25 @@ namespace ShawarmaTycoon.Tests
                 Assert.That(pad, Is.Not.Null);
                 Assert.That(pad.Level, Is.Zero);
                 Assert.That(pad.CurrentCost, Is.EqualTo(ShopPrices.Belt[i]));
+                Assert.That(pad.IsAvailable, Is.EqualTo(i == 0),
+                    "A fresh shop should reveal only the first belt stage.");
             }
+
+            Assert.That(GameObject.Find("Kesim Bandı"), Is.Null,
+                "The removed cutting-to-checkout belt is still in the scene.");
+            Assert.That(GameObject.Find("Kesim Bandı Pedi"), Is.Null,
+                "The removed belt still has a purchase pad.");
 
             PurchasePad[] pads = Object.FindObjectsByType<PurchasePad>(
                 FindObjectsInactive.Include, FindObjectsSortMode.None);
+            Assert.That(pads.Count(p => p.IsAvailable), Is.EqualTo(4),
+                "A fresh shop should show the first belt, table and both office upgrades.");
+            Assert.That(pads.Single(p => p.name == "Masa Ekle").IsAvailable, Is.True,
+                "The opening table upgrade should be visible beside the first belt pad.");
+            Assert.That(pads.Single(p => p.name == "İK Odası Pedi").IsAvailable, Is.True,
+                "The HR office upgrade should be visible from the beginning.");
+            Assert.That(pads.Single(p => p.name == "GM Odası Pedi").IsAvailable, Is.True,
+                "The GM office upgrade should be visible from the beginning.");
             Assert.That(pads.Any(p => p.name == "Ocak İşçisi" || p.name == "Kesim İşçisi"),
                 Is.False, "A decorative station-worker purchase pad is still in the shop.");
             Assert.That(Object.FindObjectsByType<ItemStation>(
@@ -429,9 +547,43 @@ namespace ShawarmaTycoon.Tests
             Assert.That(queueFront, Is.Not.Null);
             List<Vector3> corners = new();
             Assert.That(navigation.TryCalculatePath(
-                    queueFront.transform.position, tables[0].SeatApproachPoint, corners),
-                Is.True, "No complete customer route exists from the till to an opening table.");
-            Assert.That(corners.Count, Is.GreaterThanOrEqualTo(2));
+                    world.EntranceAnchor.position, queueFront.transform.position, corners),
+                Is.True, "The centred entrance no longer reaches the service queue.");
+
+            foreach (CustomerTable table in tables)
+            {
+                corners.Clear();
+                Assert.That(navigation.TryCalculatePath(
+                        queueFront.transform.position, table.SeatApproachPoint, corners),
+                    Is.True, $"No complete route exists from the till to '{table.name}'.");
+                Assert.That(corners.Count, Is.GreaterThanOrEqualTo(2));
+            }
+        }
+
+        [Test]
+        public void Checkout_HasSeparateCustomerAndCashierSides_WithFridgeAtTheWallEnd()
+        {
+            ItemStation service = FindStation("SERVİS");
+            ItemStation cutting = FindStation("KESİM");
+            ItemStation fridge = FindStation("BUZDOLABI");
+            GameObject queueFront = GameObject.Find("Kuyruk Başı");
+            CashPile till = Object.FindObjectsByType<CashPile>(
+                    FindObjectsInactive.Include, FindObjectsSortMode.None)
+                .Single(pile => pile.transform.IsChildOf(service.transform));
+
+            Assert.That(new Object[] { service, cutting, fridge, queueFront, till }, Has.None.Null);
+            Assert.That(queueFront.transform.position.z,
+                Is.LessThan(service.transform.position.z - 2.8f),
+                "The customer queue is not on the front side of checkout.");
+            Assert.That(till.CollectPoint.z,
+                Is.GreaterThan(service.transform.position.z + 1.2f),
+                "Standing in front of the register can still complete a sale.");
+            Assert.That(fridge.transform.position.z,
+                Is.EqualTo(cutting.transform.position.z).Within(0.01f),
+                "The fridge is not against the back-wall station run.");
+            Assert.That(fridge.transform.position.x,
+                Is.GreaterThan(service.transform.position.x + 1.8f),
+                "The fridge is not occupying the former east-end till slot.");
         }
 
         [Test]
@@ -489,8 +641,215 @@ namespace ShawarmaTycoon.Tests
         }
 
         [Test]
+        public void PurchasePads_UseBracketedMoneyMarkersAndKeepFloatingPreviews()
+        {
+            PurchasePad pad = Object.FindObjectsByType<PurchasePad>(
+                    FindObjectsInactive.Include, FindObjectsSortMode.None)
+                .First(candidate => candidate.IsAvailable);
+            WorldCashMarker marker = pad.GetComponentInChildren<WorldCashMarker>(true);
+
+            Assert.That(marker, Is.Not.Null,
+                "The purchase price is not using the bracketed money-marker language.");
+            Assert.That(marker.IsGroundedPurchase, Is.True);
+            Assert.That(marker.AmountText, Is.EqualTo(pad.Remaining.ToString()),
+                "The banknote already identifies currency; the grounded price should be digits only.");
+            string expectedTitle = pad.name.EndsWith(" Pedi")
+                ? pad.name.Substring(0, pad.name.Length - 5)
+                : pad.name;
+            if (expectedTitle == "Masa Ekle") expectedTitle = "Masa";
+            Assert.That(marker.TitleText, Is.EqualTo(expectedTitle));
+            Assert.That(marker.GetComponentsInChildren<Transform>(true)
+                    .Count(item => item.name == "Köşe Yatay" || item.name == "Köşe Dikey"),
+                Is.EqualTo(8), "The pad is missing the four white reference corners.");
+            Assert.That(marker.transform.Find("Zemin Bilgisi/Nesne Adı"), Is.Not.Null);
+            Assert.That(marker.transform.Find("Zemin Bilgisi/Banknot"), Is.Not.Null);
+            Assert.That(marker.transform.Find("Zemin Bilgisi/Fiyat"), Is.Not.Null);
+            Assert.That(marker.transform.Find("Fiş Kartı"), Is.Null,
+                "The table-takings receipt card is still floating over a purchase pad.");
+            Assert.That(pad.GetComponentsInChildren<Transform>(true)
+                    .Any(item => item.name == "Gösterge" || item.name == "Pad Surface" ||
+                                 item.name == "Kart" || item.name == "Kart Gölgesi"),
+                Is.False, "An opaque plate is still covering the ground-price treatment.");
+            float markerTop = marker.GetComponentsInChildren<Renderer>(true)
+                .Max(renderer => renderer.bounds.max.y);
+            Assert.That(markerTop, Is.LessThan(pad.transform.position.y + 0.40f),
+                "The purchase price is still standing in the air instead of lying by the floor.");
+            Assert.That(pad.GetComponentInChildren<PurchasePreviewBob>(true), Is.Not.Null,
+                "The floating 3D unlock preview was removed with the old price plate.");
+        }
+
+        [Test]
+        public void TrashBin_IsVisibleAccessibleAndNotHiddenBehindTheOffices()
+        {
+            TrashBin bin = Object.FindFirstObjectByType<TrashBin>();
+            Assert.That(bin, Is.Not.Null);
+            Assert.That(bin.gameObject.activeInHierarchy, Is.True);
+            Assert.That(bin.transform.position.x, Is.EqualTo(-5.9f).Within(0.02f));
+            Assert.That(bin.transform.position.z, Is.EqualTo(-2.1f).Within(0.02f));
+            Assert.That(Mathf.Abs(Mathf.DeltaAngle(bin.transform.eulerAngles.y, 90f)),
+                Is.LessThan(0.5f), "The long side of the dumpster is not parallel to the office doors.");
+            Assert.That(bin.transform.Find("124_street_dumpster Visual/124_street_dumpster"),
+                Is.Not.Null, "The large industrial dumpster asset was not attached.");
+            Assert.That(bin.transform.Find("İç Hazne"), Is.Not.Null,
+                "The closed street dumpster was not converted into an open container.");
+
+            Vector3[] officeDoors = Object.FindObjectsByType<ManagementOffice>(
+                    FindObjectsInactive.Include, FindObjectsSortMode.None)
+                .Select(office => office.GetComponentsInChildren<Transform>(true)
+                    .First(item => item.name == "Kapı").position)
+                .OrderBy(position => position.z)
+                .ToArray();
+            Assert.That(officeDoors, Has.Length.EqualTo(2));
+            Vector3 doorMidpoint = (officeDoors[0] + officeDoors[1]) * 0.5f;
+            Assert.That(bin.transform.position.z, Is.EqualTo(doorMidpoint.z).Within(0.02f),
+                "The dumpster is not centred between the two office doors.");
+            Assert.That(bin.transform.position.x - doorMidpoint.x, Is.EqualTo(1f).Within(0.02f),
+                "The dumpster is not standing at the safe east-wall offset.");
+
+            Renderer[] visible = bin.GetComponentsInChildren<Renderer>(true)
+                .Where(renderer => renderer.enabled && renderer.gameObject.activeInHierarchy)
+                .ToArray();
+            Assert.That(visible, Is.Not.Empty, "The trash bin has no visible authored renderer.");
+            Bounds bounds = visible[0].bounds;
+            for (int i = 1; i < visible.Length; i++) bounds.Encapsulate(visible[i].bounds);
+            Assert.That(bounds.size.x, Is.InRange(1.15f, 1.35f));
+            Assert.That(bounds.size.z, Is.InRange(1.90f, 2.10f));
+            Assert.That(bounds.size.y, Is.GreaterThan(1.15f),
+                "The replacement trash container is still the small pedal-bin scale.");
+
+            const float DoorHalfWidth = 0.85f;
+            foreach (Vector3 door in officeDoors)
+            {
+                float clearance = Mathf.Abs(door.z - bounds.center.z) -
+                                  bounds.extents.z - DoorHalfWidth;
+                Assert.That(clearance, Is.GreaterThanOrEqualTo(1.08f),
+                    "The larger dumpster intrudes into an office doorway approach.");
+            }
+
+            Renderer cavity = bin.transform.Find("İç Hazne").GetComponent<Renderer>();
+            float rimTop = bin.GetComponentsInChildren<Renderer>(true)
+                .Where(renderer => renderer.enabled && renderer.name.StartsWith("Üst Biyet"))
+                .Max(renderer => renderer.bounds.max.y);
+            Assert.That(rimTop - cavity.bounds.max.y, Is.GreaterThan(0.15f),
+                "The dumpster mouth reads as a flat closed lid instead of an open cavity.");
+
+            Transform collisionObject = bin.transform.Find("Konteyner Çarpışma");
+            Assert.That(collisionObject, Is.Not.Null);
+            BoxCollider solid = collisionObject.GetComponent<BoxCollider>();
+            Assert.That(solid, Is.Not.Null);
+            Assert.That(solid.enabled, Is.True);
+            Assert.That(collisionObject.GetComponent<Renderer>().enabled, Is.False);
+            Assert.That(solid.size.x, Is.EqualTo(1f).Within(0.001f));
+            Assert.That(collisionObject.localScale.x, Is.EqualTo(2.02f).Within(0.01f));
+            Assert.That(collisionObject.localScale.z, Is.EqualTo(1.27f).Within(0.01f));
+
+            Transform workerApproach = bin.transform.Find("Çalışan Yaklaşma Noktası");
+            Assert.That(workerApproach, Is.Not.Null);
+            Assert.That(workerApproach.position.x, Is.GreaterThan(bounds.max.x + 0.5f),
+                "The busser still targets the solid middle of the large dumpster.");
+
+            Camera camera = Camera.main;
+            Assert.That(camera, Is.Not.Null);
+            MobileCameraRig rig = camera.GetComponent<MobileCameraRig>();
+            Assert.That(rig, Is.Not.Null);
+            Vector3 originalPlayerPosition = rig.FollowTarget.position;
+            try
+            {
+                Bounds floor = world.BaseModule.WalkableBounds;
+                rig.FollowTarget.position = new Vector3(
+                    floor.center.x, originalPlayerPosition.y, floor.center.z);
+                rig.SendMessage("LateUpdate", SendMessageOptions.RequireReceiver);
+
+                for (int corner = 0; corner < 8; corner++)
+                {
+                    Vector3 point = new(
+                        (corner & 1) == 0 ? bounds.min.x : bounds.max.x,
+                        (corner & 2) == 0 ? bounds.min.y : bounds.max.y,
+                        (corner & 4) == 0 ? bounds.min.z : bounds.max.z);
+                    Vector3 viewport = camera.WorldToViewportPoint(point);
+                    Assert.That(viewport.z, Is.GreaterThan(0f));
+                    Assert.That(viewport.x, Is.InRange(0.05f, 0.95f));
+                    Assert.That(viewport.y, Is.InRange(0.05f, 0.95f));
+                }
+
+                Physics.SyncTransforms();
+                RaycastHit firstSolid = Physics.RaycastAll(
+                        camera.transform.position,
+                        bounds.center - camera.transform.position,
+                        Vector3.Distance(camera.transform.position, bounds.center))
+                    .Where(hit => hit.collider != null && hit.collider.enabled && !hit.collider.isTrigger)
+                    .OrderBy(hit => hit.distance)
+                    .FirstOrDefault();
+                Assert.That(firstSolid.collider, Is.Not.Null);
+                Assert.That(firstSolid.collider.transform.IsChildOf(bin.transform), Is.True,
+                    $"'{firstSolid.collider.name}' still blocks the camera's view of the trash bin.");
+            }
+            finally
+            {
+                rig.FollowTarget.position = originalPlayerPosition;
+                rig.SendMessage("LateUpdate", SendMessageOptions.RequireReceiver);
+            }
+
+            PlaceableObject placeable = bin.GetComponent<PlaceableObject>();
+            BuildModeController buildMode = Object.FindFirstObjectByType<BuildModeController>();
+            Assert.That(placeable, Is.Not.Null);
+            Assert.That(placeable.StableId, Is.EqualTo("utility.trash_dumpster"),
+                "The old saved pedal-bin placement can still override the new fixed default.");
+            Assert.That(buildMode, Is.Not.Null);
+            placeable.EnsureInitialized();
+            Assert.That(placeable.FootprintBounds.size.x, Is.GreaterThan(1.15f));
+            Assert.That(placeable.FootprintBounds.size.z, Is.GreaterThan(1.90f));
+            Assert.That(buildMode.CanPlace(placeable), Is.True,
+                "The restored trash-bin position overlaps another gameplay object.");
+        }
+
+        [Test]
+        public void OrderBubbles_FaceCameraAndUseLargePlainCounts()
+        {
+            GameObject customer = new("Sipariş Rozeti Test Müşterisi");
+            try
+            {
+                OrderBubble bubble = OrderBubble.Create(customer.transform, 2.2f);
+                CustomerOrder order = new();
+                order.Add(ItemType.Wrap, 2);
+                order.Add(ItemType.Drink, 1);
+                bubble.Show(order);
+
+                TextMesh[] counts = bubble.GetComponentsInChildren<TextMesh>(true)
+                    .Where(label => label.name == "Adet")
+                    .ToArray();
+                Assert.That(counts.Select(label => label.text),
+                    Is.EquivalentTo(new[] { "2", "1" }),
+                    "Order quantities should be plain numbers, not small x-count strings.");
+                Assert.That(counts.All(label => label.font == UI.UITheme.DisplayFont), Is.True);
+                Assert.That(counts.All(label => label.characterSize >= 0.07f), Is.True,
+                    "The order count is still too small to read at gameplay distance.");
+                Assert.That(bubble.GetComponentsInChildren<Transform>(true)
+                    .Count(item => item.name == "İkon Halkası"), Is.EqualTo(2));
+                Assert.That(bubble.GetComponentsInChildren<Collider>(true)
+                    .All(collider => !collider.enabled), Is.True);
+
+                customer.transform.rotation = Quaternion.Euler(0f, 137f, 0f);
+                bubble.SendMessage("LateUpdate", SendMessageOptions.DontRequireReceiver);
+                Assert.That(Quaternion.Angle(
+                        bubble.transform.rotation, Quaternion.Euler(55f, 0f, 0f)),
+                    Is.LessThan(1f),
+                    "A turning customer rotates the order badge away from the camera.");
+            }
+            finally
+            {
+                Object.DestroyImmediate(customer);
+            }
+        }
+
+        [Test]
         public void Stations_DrawOnlyUsefulTrays_AndDrinkLineFitsTheFloor()
         {
+            Assert.That(Object.FindObjectsByType<Transform>(
+                    FindObjectsInactive.Include, FindObjectsSortMode.None)
+                .Any(item => item.name == "255_food_barrel Visual"), Is.False,
+                "The decorative barrel behind the service counter has returned.");
+
             ItemStation meat = FindStation("ET DEPOSU");
             ItemStation oven = FindStation("OCAK");
             ItemStation service = FindStation("SERVİS");
@@ -514,8 +873,10 @@ namespace ShawarmaTycoon.Tests
                 "The repaired drink rack starts in an invalid build-mode position.");
             Assert.That(controller.CanPlace(fridge.GetComponent<PlaceableObject>()), Is.True,
                 "The repaired fridge starts in an invalid build-mode position.");
-            Assert.That(fridge.transform.position.x, Is.GreaterThan(10f),
-                "The fridge has drifted back into the centre of the dining floor.");
+            Assert.That(fridge.transform.position.x, Is.GreaterThan(service.transform.position.x + 1.8f),
+                "The fridge is not finishing the east end of the counter run.");
+            Assert.That(fridge.transform.position.z, Is.GreaterThan(service.transform.position.z + 1.2f),
+                "The fridge has drifted from the back wall into the customer aisle.");
         }
 
         /// <summary>

@@ -296,9 +296,9 @@ namespace ShawarmaTycoon
             // The bill, before the tip. Set so a meal plus a good shop's tip comes
             // to about what the whole meal used to be worth, which is what the
             // economy was measured and priced against.
-            // Stepped through three heights along the queue, which is what keeps
-            // full-size bubbles off each other's neighbours.
-            agent.SetBubbleLift(spawnNumber % 3 * 0.36f);
+            // Compact icon-and-count badges stay close to the head. A tiny two-step
+            // offset prevents exact overlap without making orders look airborne.
+            agent.SetBubbleLift(spawnNumber % 2 * 0.18f);
             float diningSeconds = Random.Range(
                 Mathf.Min(minimumDiningSeconds, maximumDiningSeconds),
                 Mathf.Max(minimumDiningSeconds, maximumDiningSeconds));

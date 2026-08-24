@@ -47,8 +47,7 @@ namespace ShawarmaTycoon
         /// </summary>
         private static bool ShopRunsItself =>
             GameProgress.GetInt("belt.raw", 0) > 0 ||
-            GameProgress.GetInt("belt.oven", 0) > 0 ||
-            GameProgress.GetInt("belt.cutting", 0) > 0;
+            GameProgress.GetInt("belt.oven", 0) > 0;
 
         private void Update()
         {

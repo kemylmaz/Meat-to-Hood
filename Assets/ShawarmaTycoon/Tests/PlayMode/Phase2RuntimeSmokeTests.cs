@@ -11,6 +11,7 @@ namespace ShawarmaTycoon.Tests
         [OneTimeSetUp]
         public void BuildPrototypeForFixture()
         {
+            UI.StartupPresentation.BypassGameplayPauseForTests = true;
             if (GameObject.Find("Shawarma Prototype Runtime") != null) return;
             SaveRepository.ResetStateForTests();
             SaveRepository.InitializeForTests(new MemorySaveProvider());
@@ -25,6 +26,7 @@ namespace ShawarmaTycoon.Tests
             GameObject runtime = GameObject.Find("Shawarma Prototype Runtime");
             if (runtime != null) Object.DestroyImmediate(runtime);
             if (bootstrapHost != null) Object.DestroyImmediate(bootstrapHost);
+            UI.StartupPresentation.BypassGameplayPauseForTests = false;
             SaveRepository.ResetStateForTests();
         }
 

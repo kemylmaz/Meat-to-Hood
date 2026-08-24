@@ -104,6 +104,23 @@ namespace ShawarmaTycoon
                     new Vector3(1.7f, 0.85f, 0.7f), PrototypeVisuals.Cream);
             }
 
+            // The old all-in-one manager prefab included a 1.92 m cubicle wall,
+            // which read as a second room partition and swallowed most of this
+            // compact office. The new desk is deliberately modular: a low desk
+            // stays inside the taped footprint and this monitor supplies the
+            // management-terminal detail without rebuilding the wall-sized prop.
+            if (MeshyVisuals.TryAttachAuthored(
+                    desk.transform, "217_office_monitor",
+                    new Vector3(0f, 0.68f, 0.02f), Vector3.zero) == null)
+            {
+                PrototypeVisuals.CreatePrimitive("Monitör Ekranı", PrimitiveType.Cube,
+                    desk.transform, new Vector3(0f, 0.91f, 0.02f),
+                    new Vector3(0.52f, 0.32f, 0.07f), new Color(0.10f, 0.16f, 0.23f));
+                PrototypeVisuals.CreatePrimitive("Monitör Ayağı", PrimitiveType.Cube,
+                    desk.transform, new Vector3(0f, 0.73f, 0.02f),
+                    new Vector3(0.08f, 0.16f, 0.08f), new Color(0.20f, 0.25f, 0.28f));
+            }
+
             GameObject collisionProxy = new("Masa Çarpışma Kutusu");
             collisionProxy.transform.SetParent(desk.transform, false);
             collisionProxy.transform.localPosition = new Vector3(0f, 0.58f, 0.15f);

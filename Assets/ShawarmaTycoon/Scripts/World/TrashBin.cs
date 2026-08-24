@@ -10,15 +10,25 @@ namespace ShawarmaTycoon
         private Transform player;
         private CarryInventory inventory;
         private TextMesh label;
+        private Collider interactionSurface;
+        private Transform workerApproach;
         private float cooldown;
         private float dwell;
+
+        /// <summary>
+        /// A clear point on the dining-room side of the large container. Workers
+        /// target this instead of its solid centre, which they cannot enter.
+        /// </summary>
+        public Transform WorkerApproach => workerApproach != null ? workerApproach : transform;
 
         public void Configure(Transform playerTransform, CarryInventory playerInventory)
         {
             player = playerTransform;
             inventory = playerInventory;
+            interactionSurface = transform.Find("Konteyner Çarpışma")?.GetComponent<Collider>();
+            workerApproach = transform.Find("Çalışan Yaklaşma Noktası");
             label = PrototypeVisuals.CreateCozyBadge(
-                "AT", transform, Vector3.up * 1.25f, 0.74f,
+                "AT", transform, Vector3.up * 1.52f, 0.74f,
                 UI.UITheme.CreamLight, UI.UITheme.Ink);
             label.gameObject.SetActive(false);
         }
@@ -30,7 +40,10 @@ namespace ShawarmaTycoon
             if (player == null || inventory == null) return;
 
             bool carrying = inventory.TrashCount > 0 || inventory.Count > 0;
-            bool nearby = Vector3.SqrMagnitude(player.position - transform.position) <= interactionRadius * interactionRadius;
+            Vector3 nearest = interactionSurface != null
+                ? interactionSurface.ClosestPoint(player.position)
+                : transform.position;
+            bool nearby = Vector3.SqrMagnitude(player.position - nearest) <= interactionRadius * interactionRadius;
             if (label != null)
             {
                 label.gameObject.SetActive(nearby && carrying);

@@ -43,8 +43,8 @@ namespace ShawarmaTycoon
         /// </summary>
         private static readonly Vector3[] MainFloorSlots =
         {
-            new(-9f, 0.25f, 1.4f), new(-6.2f, 0.25f, 1.4f), new(-3.4f, 0.25f, 1.4f),
-            new(-9f, 0.25f, -2f), new(-6.2f, 0.25f, -2f), new(-3.4f, 0.25f, -2f)
+            new(-2.8f, 0.25f, 1.4f), new(0f, 0.25f, 1.4f), new(2.8f, 0.25f, 1.4f),
+            new(-2.8f, 0.25f, -2f), new(0f, 0.25f, -2f), new(2.8f, 0.25f, -2f)
         };
 
         private Transform runtimeRoot;
@@ -57,7 +57,13 @@ namespace ShawarmaTycoon
 
         private void Awake()
         {
-            if (buildOnAwake) BuildPrototype();
+            if (!buildOnAwake) return;
+
+            UI.StartupPresentation presentation = Application.isPlaying
+                ? UI.StartupPresentation.Ensure(transform)
+                : null;
+            BuildPrototype();
+            presentation?.NotifyWorldReady();
         }
 
         /// <summary>
@@ -170,11 +176,12 @@ namespace ShawarmaTycoon
             cutting.Prime(3);
             oven.Prime(3);
 
-            // Where the queue pays. Set beside the till on the shop-floor side, so
-            // it is collected on the way past rather than reached over the counter.
+            // The register belongs on the staff side of the checkout. Both the
+            // owner and a hired cashier now have to stand behind the counter;
+            // waiting in the customer queue can no longer complete a sale.
             GameObject tillObject = new("Kasa Parası");
             tillObject.transform.SetParent(service.transform, false);
-            tillObject.transform.localPosition = new Vector3(-1.35f, 0f, -0.9f);
+            tillObject.transform.localPosition = new Vector3(0f, 0f, 1.35f);
             CashPile till = tillObject.AddComponent<CashPile>();
             till.Configure(playerTransform);
 
@@ -190,15 +197,11 @@ namespace ShawarmaTycoon
             ConveyorLink ovenBelt = CreateConveyor(
                 shopWorld.KitchenRoot, "Ocak Bandı", oven, cutting, layout.Oven, layout.Cutting);
             MarkPlaceable(ovenBelt.gameObject, "belt.oven", "Ocak Bandı");
-            ConveyorLink cuttingBelt = CreateConveyor(
-                shopWorld.KitchenRoot, "Kesim Bandı", cutting, service, layout.Cutting, layout.Service);
-            MarkPlaceable(cuttingBelt.gameObject, "belt.cutting", "Kesim Bandı");
             CreateConveyorPad(shopWorld.KitchenRoot, "Et Bandı Pedi",
                 layout.MeatBeltPad, "belt.raw", rawBelt, 0);
             CreateConveyorPad(shopWorld.KitchenRoot, "Ocak Bandı Pedi",
-                layout.OvenBeltPad, "belt.oven", ovenBelt, 1);
-            CreateConveyorPad(shopWorld.KitchenRoot, "Kesim Bandı Pedi",
-                layout.CuttingBeltPad, "belt.cutting", cuttingBelt, 2);
+                layout.OvenBeltPad, "belt.oven", ovenBelt, 1,
+                () => rawBelt.IsUnlocked);
 
             // --- utilities ----------------------------------------------------
             GameObject trashBinObject = CreateTrashBin(shopWorld.UtilityRoot, layout.TrashBin);
@@ -223,7 +226,9 @@ namespace ShawarmaTycoon
                 shopWorld.UtilityRoot, "BUZDOLABI", layout.Fridge,
                 new Vector3(1.5f, 1.0f, 1.0f), new Color(0.86f, 0.90f, 0.93f), StationMode.Service,
                 ItemType.Drink, ItemType.None, 0.1f, 1, 12, 1f);
-            fridge.transform.localRotation = Quaternion.Euler(0f, 90f, 0f);
+            // The authored fridge already faces the shop in its zero rotation.
+            // A second 180-degree turn showed its back to the dining room.
+            fridge.transform.localRotation = Quaternion.identity;
             MarkPlaceable(fridge.gameObject, "station.fridge", "Buzdolabı");
             DecorateFridge(fridge.transform);
             // A fridge has shelves, not a processor's pair of metal trays. Stock
@@ -250,6 +255,9 @@ namespace ShawarmaTycoon
             drinkCrate.transform.SetParent(drinksRoot.transform, true);
             fridge.transform.SetParent(drinksRoot.transform, true);
             RepairLegacyDrinkLineLayout(layout, drinkCrate, fridge);
+            MigrateCheckoutIslandLayout(layout, meatSource, oven, cutting, service, fridge,
+                rawBelt, ovenBelt);
+            MigrateFridgeFacing(fridge);
             drinksRoot.SetActive(false);
             dessertOven.gameObject.SetActive(false);
 
@@ -260,17 +268,15 @@ namespace ShawarmaTycoon
             GameObject managementRoot = new("Yönetim Odaları");
             managementRoot.transform.SetParent(shopWorld.ManagementRoot, false);
 
-            // Two rooms, built into the south-west corner against the perimeter
-            // wall, each properly closed with a doorway onto the dining room. They
-            // stand from the first second but empty; the money pad inside puts the
-            // desk and the clerk in. Recruiting moved onto the HR desk, which is
-            // where hiring belongs anyway - three rooms for two jobs was one door
-            // too many to walk through.
-            CreateOffice(managementRoot.transform, "İK Odası", "25_hr_manager_desk",
-                OfficeWestX, ManagementMenu.HumanResources, "PERSONEL", "office.hr",
+            // The former east-west row is rotated exactly 90 degrees clockwise:
+            // two rooms now run north-south along the west wall, and both east-wall
+            // entrances face the restaurant interior. They stand from the first
+            // second but empty; the staged money pads furnish them later.
+            CreateOffice(managementRoot.transform, "İK Odası", "218_office_desk",
+                OfficeSouthZ, false, ManagementMenu.HumanResources, "PERSONEL", "office.hr",
                 ShopPrices.HumanResourcesOffice, managementHud);
-            CreateOffice(managementRoot.transform, "GM Odası", "27_general_manager_desk",
-                OfficeWestX + OfficeWidth, ManagementMenu.GeneralManager, "GM",
+            CreateOffice(managementRoot.transform, "GM Odası", "218_office_desk",
+                OfficeSouthZ + OfficeLength, true, ManagementMenu.GeneralManager, "GM",
                 "office.gm", ShopPrices.GeneralManagerOffice, managementHud);
 
             CreatePlanter(managementRoot.transform, new Vector3(2.6f, 0.25f, -7.4f), "office.planter.1");
@@ -370,17 +376,22 @@ namespace ShawarmaTycoon
                 layout.FridgePad, "shop.fridge", new[] { ShopPrices.Fridge },
                 (_, __) => drinksRoot.SetActive(true),
                 previewAsset: "190_kitchen_fridge",
-                previewSize: new Vector3(0.72f, 0.94f, 0.66f), previewYaw: 90f);
+                previewSize: new Vector3(0.72f, 0.94f, 0.66f), previewYaw: 90f,
+                availability: () => GameProgress.GetInt("tables", 0) >= 2);
             CreatePurchasePad(shopWorld.UtilityRoot, "Tatlı Fırını Pedi",
                 layout.DessertPad, "shop.dessert", new[] { ShopPrices.DessertOven },
                 (_, __) => dessertOven.gameObject.SetActive(true),
                 previewAsset: "151_shop_oven",
-                previewSize: new Vector3(0.76f, 0.78f, 0.68f));
+                previewSize: new Vector3(0.76f, 0.78f, 0.68f),
+                availability: () => GameProgress.GetInt("shop.fridge", 0) > 0 &&
+                                      GameProgress.GetInt("tables", 0) >= 3);
             CreatePurchasePad(shopWorld.UtilityRoot, "Kurye Pedi",
                 layout.CourierPad, "shop.courier", new[] { ShopPrices.Courier },
                 (_, __) => courier.transform.parent.gameObject.SetActive(true),
                 previewAsset: "244_food_bag",
-                previewSize: new Vector3(0.62f, 0.72f, 0.48f));
+                previewSize: new Vector3(0.62f, 0.72f, 0.48f),
+                availability: () => GameProgress.GetInt("shop.dessert", 0) > 0 &&
+                                      GameProgress.GetInt("tables", 0) >= 5);
 
             FloorSpillSystem floorSpills = null;
             if (gameConfig.Features.FloorSpills)
@@ -391,13 +402,14 @@ namespace ShawarmaTycoon
 
             // --- staff and management ----------------------------------------
             HumanResourcesSystem humanResources = root.AddComponent<HumanResourcesSystem>();
-            humanResources.Configure(playerTransform, new[] { rawBelt, ovenBelt, cuttingBelt });
+            humanResources.Configure(playerTransform, new[] { rawBelt, ovenBelt });
             PlayerUpgradeSystem playerUpgrades = root.AddComponent<PlayerUpgradeSystem>();
             playerUpgrades.Configure(playerTransform, playerMotor, inventory);
             RecruitmentSystem recruitment = root.AddComponent<RecruitmentSystem>();
+            TrashBin trashBin = trashBinObject.GetComponent<TrashBin>();
             recruitment.Configure(
                 customerManager, cutting, service, driveThru, till, floorSpills,
-                shopWorld.BaseModule.ContentRoot, trashBinObject.transform,
+                shopWorld.BaseModule.ContentRoot, trashBin.WorkerApproach,
                 StaffPosts(layout, driveThru));
             managementHud.Configure(humanResources, playerUpgrades, recruitment);
 
@@ -458,7 +470,7 @@ namespace ShawarmaTycoon
             Vector3 window = driveThru != null ? driveThru.transform.localPosition : layout.DriveThruCounter;
             return new[]
             {
-                layout.Service + new Vector3(-1.3f, 0f, 0.95f),
+                layout.Service + new Vector3(0f, 0f, 1.35f),
                 window + new Vector3(0.9f, 0f, -1.1f),
                 new Vector3((layout.Cutting.x + window.x) * 0.5f, layout.Cutting.y, layout.Cutting.z - 2.2f),
                 // The bussers wait at either end of the dining room's first row,
@@ -664,12 +676,15 @@ namespace ShawarmaTycoon
         {
             GameObject belt = new(beltName);
             belt.transform.SetParent(parent, false);
-            belt.transform.localPosition = new Vector3(
-                (fromPosition.x + toPosition.x) * 0.5f, fromPosition.y, fromPosition.z);
+            Vector3 delta = toPosition - fromPosition;
+            Vector3 midpoint = (fromPosition + toPosition) * 0.5f;
+            belt.transform.localPosition = new Vector3(midpoint.x, fromPosition.y, midpoint.z);
 
             GameObject visual = new("Bant Görseli");
             visual.transform.SetParent(belt.transform, false);
-            float gap = Mathf.Abs(toPosition.x - fromPosition.x);
+            float gap = new Vector2(delta.x, delta.z).magnitude;
+            visual.transform.localRotation = Quaternion.Euler(
+                0f, Mathf.Atan2(-delta.z, delta.x) * Mathf.Rad2Deg, 0f);
             PrototypeVisuals.CreatePrimitive("Bant", PrimitiveType.Cube, visual.transform,
                 Vector3.up * 0.38f, new Vector3(Mathf.Max(0.7f, gap - 1.9f), 0.14f, 0.56f),
                 new Color(0.35f, 0.32f, 0.30f));
@@ -683,13 +698,14 @@ namespace ShawarmaTycoon
 
         private void CreateConveyorPad(
             Transform parent, string padName, Vector3 position, string saveKey, ConveyorLink belt,
-            int priceIndex)
+            int priceIndex, System.Func<bool> availability = null)
         {
             CreatePurchasePad(parent, padName, position, saveKey,
                 new[] { ShopPrices.Belt[Mathf.Clamp(priceIndex, 0, ShopPrices.Belt.Length - 1)] },
                 (level, _) => belt.SetLevel(level),
                 previewAsset: "13_conveyor_straight",
-                previewSize: new Vector3(0.90f, 0.30f, 0.52f));
+                previewSize: new Vector3(0.90f, 0.30f, 0.52f),
+                availability: availability);
         }
 
         private PurchasePad CreatePurchasePad(
@@ -699,18 +715,19 @@ namespace ShawarmaTycoon
             string saveKey,
             int[] costs,
             System.Action<int, bool> onLevel,
-            string padAsset = "19_upgrade_pad",
             string previewAsset = null,
             Vector3? previewSize = null,
-            float previewYaw = 0f)
+            float previewYaw = 0f,
+            System.Func<bool> availability = null)
         {
             GameObject pad = new(padName);
             pad.transform.SetParent(parent, false);
             pad.transform.localPosition = position;
             PurchasePad purchase = pad.AddComponent<PurchasePad>();
-            purchase.Configure(playerTransform, saveKey, costs, onLevel, padAsset);
+            purchase.Configure(playerTransform, saveKey, costs, onLevel);
             if (!string.IsNullOrEmpty(previewAsset) && previewSize.HasValue)
                 purchase.SetPreview(previewAsset, previewSize.Value, previewYaw);
+            purchase.SetAvailability(availability);
             return purchase;
         }
 
@@ -866,8 +883,9 @@ namespace ShawarmaTycoon
         }
 
         /// <summary>
-        /// Four spots around the dining room that can be dressed. Each one lifts
-        /// the shop's standing for good, and standing is what the tip is.
+        /// Four spots around the dining room that can be dressed. The pad joins
+        /// the progression after the first paid table, when decoration is a real
+        /// choice rather than one more marker cluttering the opening floor.
         /// </summary>
         private void CreateDecorations(Transform parent, RestaurantLayoutConfig layout)
         {
@@ -876,8 +894,8 @@ namespace ShawarmaTycoon
 
             Vector3[] spots =
             {
-                new(-10.4f, 0.25f, 3.4f), new(-10.4f, 0.25f, -3.6f),
-                new(1.4f, 0.25f, 3.2f), new(1.4f, 0.25f, -3.4f)
+                new(-4.8f, 0.25f, 4.5f), new(-4.8f, 0.25f, -6.2f),
+                new(4.4f, 0.25f, 3.2f), new(0.5f, 0.25f, -5.6f)
             };
 
             List<GameObject> props = new();
@@ -895,7 +913,8 @@ namespace ShawarmaTycoon
                     ReputationSystem.Instance?.AddStandingFloor(ShopPrices.DecorationStanding);
                 },
                 previewAsset: "73_planter",
-                previewSize: new Vector3(0.66f, 0.82f, 0.66f));
+                previewSize: new Vector3(0.66f, 0.82f, 0.66f),
+                availability: () => GameProgress.GetInt("tables", 0) >= 1);
         }
 
         /// <summary>
@@ -1097,11 +1116,6 @@ namespace ShawarmaTycoon
                 new Vector3(storeX + 0.82f, floorY, wallZ - 0.45f), new Vector3(0f, -6f, 0f));
             MeshyVisuals.TryAttachAuthored(parent, ShopCrate,
                 new Vector3(storeX + 0.1f, floorY + 0.3f, wallZ - 0.52f), new Vector3(0f, 15f, 0f));
-            // At the far end of the line rather than beside the crates: the corner
-            // between the west wall and the drive-through bay is only two metres
-            // wide, and the barrel was standing in the bay itself.
-            MeshyVisuals.TryAttachAuthored(parent, "255_food_barrel",
-                new Vector3(layout.Service.x + 1.4f, floorY, wallZ - 0.55f), Vector3.zero);
         }
 
         private GameObject CreateTrashBin(Transform parent, Vector3 position)
@@ -1109,23 +1123,98 @@ namespace ShawarmaTycoon
             GameObject trashBinObject = new("Çöp Kutusu");
             trashBinObject.transform.SetParent(parent, false);
             trashBinObject.transform.localPosition = position;
-            PrototypeVisuals.CreatePrimitive("Çöp Gövdesi", PrimitiveType.Cube, trashBinObject.transform,
-                new Vector3(0f, 0.52f, 0f), new Vector3(0.82f, 0.96f, 0.70f), new Color(0.34f, 0.52f, 0.43f),
-                colliderEnabled: true);
-            PrototypeVisuals.CreatePrimitive("Çöp Kapak", PrimitiveType.Cube, trashBinObject.transform,
-                new Vector3(0f, 1.04f, 0f), new Vector3(0.91f, 0.12f, 0.79f), new Color(0.20f, 0.34f, 0.28f));
-            PrototypeVisuals.CreatePrimitive("Çöp Açıklığı", PrimitiveType.Cube, trashBinObject.transform,
-                new Vector3(0f, 0.83f, -0.36f), new Vector3(0.50f, 0.22f, 0.035f), new Color(0.10f, 0.16f, 0.14f));
-            PrototypeVisuals.CreatePrimitive("Ayak Pedalı", PrimitiveType.Cube, trashBinObject.transform,
-                new Vector3(0f, 0.08f, -0.42f), new Vector3(0.32f, 0.08f, 0.22f), new Color(0.88f, 0.68f, 0.26f));
+            // The office doors are stacked along Z. Turning the two-metre side of
+            // the container onto that same axis leaves equal 1.15 m approaches.
+            trashBinObject.transform.localRotation = Quaternion.Euler(0f, 90f, 0f);
+            BuildLargeTrashContainer(trashBinObject.transform);
+
+            GameObject approach = new("Çalışan Yaklaşma Noktası");
+            approach.transform.SetParent(trashBinObject.transform, false);
+            // Root yaw 90 maps local +Z to world +X: the open dining-room side.
+            approach.transform.localPosition = new Vector3(0f, 0f, 1.28f);
+
             TrashBin trashBin = trashBinObject.AddComponent<TrashBin>();
             trashBin.Configure(playerTransform, inventory);
-            MarkPlaceable(trashBinObject, "utility.trash_bin", "Çöp Kutusu");
-            MeshyVisuals.TryReplaceDirectAuthored(
-                trashBinObject.transform, "17_trash_bin",
-                Vector3.zero, FacingCustomer,
-                "Çöp Gövdesi", "Çöp Kapak", "Çöp Açıklığı", "Ayak Pedalı");
+            // New stable id deliberately ignores any placement stored for the old
+            // small pedal bin; this request fixes the dumpster between the doors.
+            MarkPlaceable(trashBinObject, "utility.trash_dumpster", "Çöp Konteyneri");
             return trashBinObject;
+        }
+
+        private static void BuildLargeTrashContainer(Transform parent)
+        {
+            Color body = new(0.20f, 0.42f, 0.31f);
+            Color rim = new(0.14f, 0.28f, 0.23f);
+            Color cavity = new(0.055f, 0.075f, 0.065f);
+
+            // One hidden, correctly-sized solid keeps player/build-mode physics
+            // aligned with the two-metre visual without filling the open mouth.
+            GameObject collision = PrototypeVisuals.CreatePrimitive(
+                "Konteyner Çarpışma", PrimitiveType.Cube, parent,
+                new Vector3(0f, 0.63f, 0f), new Vector3(2.02f, 1.26f, 1.27f), body,
+                colliderEnabled: true);
+            Renderer collisionRenderer = collision.GetComponent<Renderer>();
+            if (collisionRenderer != null) collisionRenderer.enabled = false;
+
+            // Complete open-shell fallback. The authored dumpster hides these
+            // five panels when present, while the open rim below remains shared.
+            PrototypeVisuals.CreatePrimitive(
+                "Konteyner Taban", PrimitiveType.Cube, parent,
+                new Vector3(0f, 0.16f, 0f), new Vector3(1.88f, 0.26f, 1.08f), body);
+            PrototypeVisuals.CreatePrimitive(
+                "Konteyner Ön", PrimitiveType.Cube, parent,
+                new Vector3(0f, 0.62f, -0.49f), new Vector3(1.88f, 0.92f, 0.12f), body);
+            PrototypeVisuals.CreatePrimitive(
+                "Konteyner Arka", PrimitiveType.Cube, parent,
+                new Vector3(0f, 0.62f, 0.49f), new Vector3(1.88f, 0.92f, 0.12f), body);
+            PrototypeVisuals.CreatePrimitive(
+                "Konteyner Sol", PrimitiveType.Cube, parent,
+                new Vector3(-0.88f, 0.62f, 0f), new Vector3(0.12f, 0.92f, 0.86f), body);
+            PrototypeVisuals.CreatePrimitive(
+                "Konteyner Sağ", PrimitiveType.Cube, parent,
+                new Vector3(0.88f, 0.62f, 0f), new Vector3(0.12f, 0.92f, 0.86f), body);
+
+            // The Poly dumpster has the right industrial body but one closed mesh
+            // for both lids. Lowering it turns that lid into the cavity floor;
+            // the dark inset and raised shell make the opening unmistakable.
+            MeshyVisuals.TryReplaceDirectAuthored(
+                parent, "124_street_dumpster", new Vector3(0f, -0.12f, 0f), Vector3.zero,
+                "Konteyner Taban", "Konteyner Ön", "Konteyner Arka",
+                "Konteyner Sol", "Konteyner Sağ");
+
+            PrototypeVisuals.CreatePrimitive(
+                "İç Hazne", PrimitiveType.Cube, parent,
+                new Vector3(0f, 1.015f, 0f), new Vector3(1.62f, 0.035f, 0.78f), cavity);
+            PrototypeVisuals.CreatePrimitive(
+                "Ağız Ön", PrimitiveType.Cube, parent,
+                new Vector3(0f, 1.10f, -0.52f), new Vector3(1.96f, 0.28f, 0.12f), body);
+            PrototypeVisuals.CreatePrimitive(
+                "Ağız Arka", PrimitiveType.Cube, parent,
+                new Vector3(0f, 1.10f, 0.52f), new Vector3(1.96f, 0.28f, 0.12f), body);
+            PrototypeVisuals.CreatePrimitive(
+                "Ağız Sol", PrimitiveType.Cube, parent,
+                new Vector3(-0.92f, 1.10f, 0f), new Vector3(0.12f, 0.28f, 0.94f), body);
+            PrototypeVisuals.CreatePrimitive(
+                "Ağız Sağ", PrimitiveType.Cube, parent,
+                new Vector3(0.92f, 1.10f, 0f), new Vector3(0.12f, 0.28f, 0.94f), body);
+
+            PrototypeVisuals.CreatePrimitive(
+                "Üst Biyet Ön", PrimitiveType.Cube, parent,
+                new Vector3(0f, 1.25f, -0.52f), new Vector3(2.00f, 0.08f, 0.16f), rim);
+            PrototypeVisuals.CreatePrimitive(
+                "Üst Biyet Arka", PrimitiveType.Cube, parent,
+                new Vector3(0f, 1.25f, 0.52f), new Vector3(2.00f, 0.08f, 0.16f), rim);
+            PrototypeVisuals.CreatePrimitive(
+                "Üst Biyet Sol", PrimitiveType.Cube, parent,
+                new Vector3(-0.92f, 1.25f, 0f), new Vector3(0.16f, 0.08f, 1.02f), rim);
+            PrototypeVisuals.CreatePrimitive(
+                "Üst Biyet Sağ", PrimitiveType.Cube, parent,
+                new Vector3(0.92f, 1.25f, 0f), new Vector3(0.16f, 0.08f, 1.02f), rim);
+
+            PrototypeVisuals.CreatePrimitive(
+                "Atık Kağıt", PrimitiveType.Cube, parent,
+                new Vector3(-0.32f, 1.055f, -0.04f), new Vector3(0.28f, 0.045f, 0.20f),
+                UI.UITheme.CreamLight, new Vector3(0f, 22f, 7f));
         }
 
         /// <summary>
@@ -1176,9 +1265,12 @@ namespace ShawarmaTycoon
             PurchasePad driveThruPad = unlockPad.AddComponent<PurchasePad>();
             driveThruPad.Configure(
                 playerTransform, "drivethru.unlocked", new[] { ShopPrices.DriveThru },
-                (_, __) => OpenDriveThru(window), "18_money_collection_pad");
+                (_, __) => OpenDriveThru(window));
             driveThruPad.SetPreview(
                 "244_food_bag", new Vector3(0.62f, 0.72f, 0.48f));
+            driveThruPad.SetAvailability(() =>
+                GameProgress.GetInt("office.gm", 0) > 0 &&
+                GameProgress.GetInt("tables", 0) >= 4);
             return window;
         }
 
@@ -1195,65 +1287,70 @@ namespace ShawarmaTycoon
         }
 
         /// <summary>
-        /// The office block, hard into the lot's south-west corner. Two rooms
-        /// sharing the wall between them, using the lot's own west wall as the far
-        /// side of the first.
+        /// The office block, hard into the lot's south-west corner. Rotating the
+        /// old 12-by-4 metre row 90 degrees makes this a 4-by-12 metre column. Both
+        /// rooms use the lot's west wall and share the horizontal divider.
         /// </summary>
         private const float OfficeWestX = -10.9f;
-        private const float OfficeWidth = 6f;
+        private const float OfficeWidth = 4f;
+        private const float OfficeLength = 6f;
         private const float OfficeSouthZ = -8.1f;
-        private const float OfficeNorthZ = -4.1f;
 
         /// <summary>Wall base, level with the lot surface.</summary>
         private const float WallBaseY = 0.20f;
 
         /// <summary>
-        /// One closed office: south wall, east wall, and a north wall with a 3 m
-        /// doorway onto the dining room. The desk stands against the west side
-        /// facing east, which is both the way the camera looks and the side the
-        /// player walks up to it from.
-        ///
-        /// The rooms used to be three loose wall runs sitting mid-floor on a
-        /// staircase of offsets, which read as a pile of walls rather than rooms.
+        /// Builds one room in the rotated two-office column. Both entrances sit on
+        /// the east wall and face the dining room. The desk and its preview rotate
+        /// with the shell, so the whole room—not only the door—turns 90 degrees.
         /// </summary>
         private void CreateOffice(
-            Transform parent, string roomName, string deskAsset, float westX,
-            ManagementMenu menu, string title, string saveKey, int cost, ManagementMenuHUD hud)
+            Transform parent, string roomName, string deskAsset, float southZ, bool sharesSouthWall,
+            ManagementMenu menu, string title, string saveKey, int cost, ManagementMenuHUD hud,
+            System.Func<bool> availability = null)
         {
             GameObject room = new(roomName);
             room.transform.SetParent(parent, false);
 
-            float eastX = westX + OfficeWidth;
-            float centreZ = (OfficeSouthZ + OfficeNorthZ) * 0.5f;
-            float doorWestX = eastX - DoorWidth;
+            float eastX = OfficeWestX + OfficeWidth;
+            float northZ = southZ + OfficeLength;
+            float centreZ = (southZ + northZ) * 0.5f;
+            float doorSouthZ = centreZ - DoorWidth * 0.5f;
+            float doorNorthZ = centreZ + DoorWidth * 0.5f;
 
-            // Runs are laid corner to corner and panelled to fit, so a side never
-            // ends in a stub of wall standing beside the room. Each yaw turns the
-            // panel's finished +Z face into the room.
+            // The western side borrows the lot shell. The southern room owns the
+            // bottom edge; its north wall is the shared divider for the next room.
+            if (!sharesSouthWall)
+                AddRoomWall(room.transform,
+                    new Vector3(OfficeWestX, WallBaseY, southZ),
+                    new Vector3(eastX, WallBaseY, southZ), false, 0f);
             AddRoomWall(room.transform,
-                new Vector3(westX, WallBaseY, OfficeSouthZ),
-                new Vector3(eastX, WallBaseY, OfficeSouthZ), false, 0f);
-            AddRoomWall(room.transform,
-                new Vector3(eastX, WallBaseY, OfficeSouthZ),
-                new Vector3(eastX, WallBaseY, OfficeNorthZ), true, -90f);
+                new Vector3(OfficeWestX, WallBaseY, northZ),
+                new Vector3(eastX, WallBaseY, northZ), false, 180f);
 
-            // North wall: panelled from the west corner up to the door, then the
-            // door in the last stretch.
+            // Split the east wall around a centred, east-facing opening. The door
+            // leaf swings westward into its own room, leaving the dining aisle open.
             AddRoomWall(room.transform,
-                new Vector3(westX, WallBaseY, OfficeNorthZ),
-                new Vector3(doorWestX, WallBaseY, OfficeNorthZ), false, 180f);
+                new Vector3(eastX, WallBaseY, southZ),
+                new Vector3(eastX, WallBaseY, doorSouthZ), true, -90f);
+            AddRoomWall(room.transform,
+                new Vector3(eastX, WallBaseY, doorNorthZ),
+                new Vector3(eastX, WallBaseY, northZ), true, -90f);
             AddDoorway(room.transform,
-                new Vector3((doorWestX + eastX) * 0.5f, WallBaseY, OfficeNorthZ), DoorWidth);
+                new Vector3(eastX, WallBaseY, centreZ), DoorWidth, 90f, 108f);
 
             ManagementOffice office = room.AddComponent<ManagementOffice>();
             office.Configure(playerTransform, hud, menu, deskAsset, title,
-                new Vector3(westX + 1.3f, 0.25f, centreZ), 90f);
+                new Vector3(OfficeWestX + 1.15f, 0.25f, centreZ), 90f);
 
             CreatePurchasePad(parent, roomName + " Pedi",
-                new Vector3(eastX - 1.6f, 0.28f, centreZ), saveKey,
-                new[] { cost }, (_, __) => office.Furnish(), "18_money_collection_pad",
+                // Share the taped desk footprint's exact centre. The old pad sat
+                // by the east wall, so its price card was hidden behind the room.
+                new Vector3(OfficeWestX + 1.15f, 0.28f, centreZ), saveKey,
+                new[] { cost }, (_, __) => office.Furnish(),
                 previewAsset: "218_office_desk",
-                previewSize: new Vector3(0.82f, 0.68f, 0.68f), previewYaw: 90f);
+                previewSize: new Vector3(0.82f, 0.68f, 0.68f), previewYaw: 90f,
+                availability: availability);
         }
 
         /// <summary>Clear width of an office door.</summary>
@@ -1294,11 +1391,13 @@ namespace ShawarmaTycoon
         /// A framed door standing open. The opening stays walkable - the leaf is
         /// swung back against the wall and nothing here blocks the way through.
         /// </summary>
-        private static void AddDoorway(Transform room, Vector3 centre, float width)
+        private static void AddDoorway(
+            Transform room, Vector3 centre, float width, float doorwayYaw, float leafYaw)
         {
             GameObject door = new("Kapı");
             door.transform.SetParent(room, false);
             door.transform.localPosition = centre;
+            door.transform.localEulerAngles = new Vector3(0f, doorwayYaw, 0f);
 
             float half = width * 0.5f;
             foreach (float x in new[] { -half, half })
@@ -1309,12 +1408,13 @@ namespace ShawarmaTycoon
                 new Vector3(0f, RoomWallHeight - 0.32f, 0f),
                 new Vector3(width + 0.16f, 0.64f, 0.37f), WallPanel);
 
-            // Hinged on the west jamb and swung into the room, so the doorway it
-            // frames stays clear.
+            // The leaf angle is supplied in doorway-local space. This keeps its
+            // hinge/frame construction reusable while guaranteeing that an east-
+            // wall door swings westward into the office instead of into dining.
             GameObject leaf = new("Kanat");
             leaf.transform.SetParent(door.transform, false);
             leaf.transform.localPosition = new Vector3(-half + 0.08f, 0f, 0f);
-            leaf.transform.localEulerAngles = new Vector3(0f, -108f, 0f);
+            leaf.transform.localEulerAngles = new Vector3(0f, leafYaw, 0f);
             if (MeshyVisuals.TryAttachAuthored(leaf.transform, "186_shop_door_glazed",
                     new Vector3(0f, 0f, width * 0.46f), new Vector3(0f, 90f, 0f)) != null)
                 return;
@@ -1427,6 +1527,73 @@ namespace ShawarmaTycoon
                 cratePlaceable?.Commit();
                 fridgePlaceable?.Commit();
             }
+
+            GameProgress.SetInt(migrationKey, 1);
+            GameProgress.FlushNow();
+        }
+
+        /// <summary>
+        /// Applies the authored checkout-island arrangement once to existing
+        /// saves. Kitchen stations and belts are player-placeable, so changing the
+        /// config alone would leave an old save on its wall-bound register layout.
+        /// After this one migration every object remains freely placeable again.
+        /// </summary>
+        private static void MigrateCheckoutIslandLayout(
+            RestaurantLayoutConfig layout,
+            ItemStation meatSource,
+            ItemStation oven,
+            ItemStation cutting,
+            ItemStation service,
+            ItemStation fridge,
+            params ConveyorLink[] belts)
+        {
+            const string migrationKey = "visual_fix.checkout_island.v1";
+            if (GameProgress.GetInt(migrationKey, 0) > 0) return;
+
+            PlaceableObject[] stations =
+            {
+                meatSource.GetComponent<PlaceableObject>(),
+                oven.GetComponent<PlaceableObject>(),
+                cutting.GetComponent<PlaceableObject>(),
+                service.GetComponent<PlaceableObject>(),
+                fridge.GetComponent<PlaceableObject>()
+            };
+
+            for (int i = 0; i < stations.Length; i++)
+            {
+                stations[i]?.EnsureInitialized();
+                stations[i]?.ResetToDefault();
+                stations[i]?.Commit();
+            }
+
+            for (int i = 0; belts != null && i < belts.Length; i++)
+            {
+                PlaceableObject placeable = belts[i] != null
+                    ? belts[i].GetComponent<PlaceableObject>()
+                    : null;
+                placeable?.EnsureInitialized();
+                placeable?.ResetToDefault();
+                placeable?.Commit();
+            }
+
+            GameProgress.SetInt(migrationKey, 1);
+            GameProgress.FlushNow();
+        }
+
+        /// <summary>
+        /// Corrects the 180-degree fridge rotation saved by the first checkout
+        /// migration. Resetting only this placeable preserves every other layout
+        /// choice while applying the new authored forward direction.
+        /// </summary>
+        private static void MigrateFridgeFacing(ItemStation fridge)
+        {
+            const string migrationKey = "visual_fix.fridge_facing.v1";
+            if (GameProgress.GetInt(migrationKey, 0) > 0 || fridge == null) return;
+
+            PlaceableObject placeable = fridge.GetComponent<PlaceableObject>();
+            placeable?.EnsureInitialized();
+            placeable?.ResetToDefault();
+            placeable?.Commit();
 
             GameProgress.SetInt(migrationKey, 1);
             GameProgress.FlushNow();
